@@ -27,7 +27,6 @@ const SEARCH_PLACEHOLDERS = [
 ];
 
 export default function HomePage() {
-  const [isSplashLoading, setIsSplashLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All Dishes");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,10 +63,7 @@ export default function HomePage() {
     }
   }, [deliveryLocation, detectLocation]);
 
-  useEffect(() => {
-    const splashTimer = setTimeout(() => setIsSplashLoading(false), 2000);
-    return () => clearTimeout(splashTimer);
-  }, []);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -126,31 +122,7 @@ export default function HomePage() {
 
   const userName = localStorage.getItem('moms_magic_user_name') || 'Guest';
 
-  if (isSplashLoading) {
-    return (
-      <div className="h-screen w-full bg-white flex flex-col items-center justify-center relative overflow-hidden z-[9999]">
-        <div className="absolute top-0 right-0 w-[80%] h-[60%] bg-orange-500/10 blur-[150px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[60%] h-[40%] bg-blue-500/10 blur-[150px] rounded-full pointer-events-none" />
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', damping: 15, stiffness: 100 }}
-          className="w-auto px-6 h-24 bg-orange-500 rounded-[32px] flex items-center justify-center shadow-2xl shadow-orange-500/40 relative z-10"
-        >
-          <span className="text-gray-900 text-5xl font-black italic">Mintoo</span>
-        </motion.div>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mt-6 text-center"
-        >
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Mintoo</h1>
-          <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">Fast Delivery</p>
-        </motion.div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-transparent pb-[180px] relative">
