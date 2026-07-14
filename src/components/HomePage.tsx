@@ -41,7 +41,7 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const { items: cartItems, addItem, removeItem, updateQuantity } = useCartStore();
-  const { deliveryLocation, openLocationPicker } = useLocationStore();
+  const { deliveryLocation, openLocationPicker, detectLocation } = useLocationStore();
   const navigate = useNavigate();
 
   // Redirect to Auth if no guest or phone
@@ -52,6 +52,17 @@ export default function HomePage() {
       navigate('/');
     }
   }, [navigate]);
+
+  // Auto-detect location on mount
+  useEffect(() => {
+    const hasRequested = sessionStorage.getItem('has_requested_location');
+    if (!deliveryLocation && !hasRequested) {
+      sessionStorage.setItem('has_requested_location', 'true');
+      detectLocation().catch((err) => {
+        console.error("Auto location failed:", err);
+      });
+    }
+  }, [deliveryLocation, detectLocation]);
 
   useEffect(() => {
     const splashTimer = setTimeout(() => setIsSplashLoading(false), 2000);
