@@ -99,11 +99,7 @@ export default function App() {
   const listenToMenu = useMenuStore(state => state.listenToMenu);
   const { deliveryLocation, openLocationPicker } = useLocationStore();
 
-  useEffect(() => {
-    if (!deliveryLocation) {
-      openLocationPicker();
-    }
-  }, [deliveryLocation, openLocationPicker]);
+
 
   // Synchronize dynamic admin settings and menu on app initialization
   useEffect(() => {
