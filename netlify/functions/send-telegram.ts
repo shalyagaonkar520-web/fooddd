@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
 
-const TELEGRAM_BOT_TOKEN = '8828362126:AAGbOzb8Q9Jhi29Bp6sQ_Q6hRo4Xj2SGfQg';
+const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
 const TELEGRAM_CHAT_ID = '-1003803637741';
 
 export const handler: Handler = async (event) => {

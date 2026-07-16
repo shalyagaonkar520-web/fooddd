@@ -157,8 +157,8 @@ export default function TrackingPage() {
     });
 
     const riderIcon = L.divIcon({
-      html: '<div class="w-9 h-9 rounded-full bg-orange-500/100 border-2 border-white flex items-center justify-center shadow-2xl font-bold text-sm animate-bounce shadow-[#FC8019]/50">🛵</div>',
-      className: 'custom-div-icon',
+      html: '<div class="w-9 h-9 rounded-full bg-orange-500/100 border-2 border-white flex items-center justify-center shadow-2xl font-bold text-sm shadow-[#FC8019]/50 rider-bike-icon">🛵</div>',
+      className: 'custom-div-icon rider-smooth-move',
       iconSize: [36, 36],
       iconAnchor: [18, 18]
     });
@@ -271,6 +271,18 @@ export default function TrackingPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative pb-32">
+      <style>{`
+        .rider-smooth-move {
+          transition: transform 1.5s ease-out;
+        }
+        .rider-bike-icon {
+          animation: riderBounce 2s infinite ease-in-out;
+        }
+        @keyframes riderBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+      `}</style>
       {/* 1. Leaflet Interactive Map View */}
       <div className="flex-1 w-full relative z-10 min-h-[50vh] md:min-h-[60vh] bg-gray-100">
         <div ref={mapRef} className="w-full h-full absolute inset-0" />

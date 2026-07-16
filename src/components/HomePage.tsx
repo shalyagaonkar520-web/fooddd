@@ -211,7 +211,7 @@ export default function HomePage() {
 
           {/* Realistic White Steam rising up */}
           <div className="absolute inset-x-0 bottom-0 h-[60%] overflow-hidden pointer-events-none z-10 flex justify-center space-x-6">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 50, scale: 0.8 }}

@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, ChevronRight } from 'lucide-react';
 import { useSEO } from '../utils/seo';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../firebase';
+import toast from 'react-hot-toast';
 
 const FloatingFood = ({ src, delay, className, size = "w-24 h-24" }: { src: string, delay: number, className: string, size?: string }) => (
   <motion.div
@@ -75,6 +78,9 @@ export default function AuthPage() {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
     const isGuest = localStorage.getItem('moms_magic_guest');
@@ -84,20 +90,88 @@ export default function AuthPage() {
     }
   }, [navigate]);
 
-  const handleLogin = () => {
+  useEffect(() => {
+    if (showLogin && !(window as any).recaptchaVerifier) {
+      try {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible',
+          'callback': () => {
+            // reCAPTCHA solved
+          }
+        });
+      } catch (err) {
+        console.error("Recaptcha init failed", err);
+      }
+    }
+  }, [showLogin]);
+
+  const handleLogin = async () => {
     if (phone.length < 10) return;
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const appVerifier = (window as any).recaptchaVerifier;
+      const phoneNumber = `+91${phone}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      setConfirmationResult(confirmation);
+      setShowOTP(true);
+      toast.success('OTP sent successfully!');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to send OTP.');
+      // Reset recaptcha if error
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.render().then((widgetId: any) => {
+          (window as any).grecaptcha.reset(widgetId);
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otp.length < 6 || !confirmationResult) return;
+    setIsLoading(true);
+    try {
+      await confirmationResult.confirm(otp);
       localStorage.setItem('moms_magic_user_phone', phone);
       localStorage.removeItem('moms_magic_guest');
+      toast.success('Login successful!');
       navigate('/home');
-    }, 1000);
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Invalid OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGuest = () => {
     localStorage.setItem('moms_magic_guest', 'true');
     localStorage.removeItem('moms_magic_user_phone');
     navigate('/home');
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      // Save user info locally
+      localStorage.setItem('moms_magic_user_phone', user.phoneNumber || user.email || user.uid);
+      localStorage.removeItem('moms_magic_guest');
+      toast.success(`Welcome, ${user.displayName || 'there'}! 🍽️`);
+      navigate('/home');
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast.error('Google sign-in was cancelled.');
+      } else {
+        toast.error(error.message || 'Google sign-in failed.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!showLogin) {
@@ -251,44 +325,88 @@ export default function AuthPage() {
         animate={{ y: 0, opacity: 1 }}
         className="w-full max-w-md bg-[#141414] border border-white/10 rounded-[40px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.5)] relative z-10"
       >
+        <div id="recaptcha-container"></div>
         <div className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center shadow-[0_10px_30px_rgba(212,175,55,0.2)] border border-[#D4AF37]/30 bg-gradient-to-br from-[#D4AF37]/20 to-transparent mb-8">
           <span className="text-[#FFD86B] text-3xl font-black italic" style={{ fontFamily: "'Clash Display', sans-serif" }}>M</span>
         </div>
         
         <h1 className="text-3xl font-bold text-white text-center mb-2 tracking-wide" style={{ fontFamily: "'Clash Display', sans-serif" }}>Mintoo</h1>
-        <p className="text-center text-[#A5A5A5] text-sm font-medium mb-8" style={{ fontFamily: "'Inter', sans-serif" }}>Enter your phone number to continue</p>
+        <p className="text-center text-[#A5A5A5] text-sm font-medium mb-8" style={{ fontFamily: "'Inter', sans-serif" }}>
+          {showOTP ? 'Enter the OTP sent to your phone' : 'Enter your phone number to continue'}
+        </p>
         
         <div className="space-y-4" style={{ fontFamily: "'Inter', sans-serif" }}>
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <span className="text-white font-bold border-r border-white/20 pr-3">+91</span>
-            </div>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              placeholder="Enter mobile number"
-              className="w-full pl-[4.5rem] pr-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-lg shadow-inner"
-            />
-          </div>
-          
-          <button
-            onClick={handleLogin}
-            disabled={phone.length < 10 || isLoading}
-            className="w-full h-14 bg-gradient-to-r from-[#D4AF37] to-[#FFD86B] text-[#080808] rounded-2xl font-bold text-[13px] uppercase tracking-[2px] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center"
-            style={{ fontFamily: "'Poppins', sans-serif" }}
-          >
-            {isLoading ? <div className="w-5 h-5 border-2 border-[#080808]/30 border-t-[#080808] rounded-full animate-spin" /> : 'Continue'}
-          </button>
+          {!showOTP ? (
+            <>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                  <span className="text-white font-bold border-r border-white/20 pr-3">+91</span>
+                </div>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="Enter mobile number"
+                  className="w-full pl-[4.5rem] pr-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-lg shadow-inner"
+                />
+              </div>
+              
+              <button
+                onClick={handleLogin}
+                disabled={phone.length < 10 || isLoading}
+                className="w-full h-14 bg-gradient-to-r from-[#D4AF37] to-[#FFD86B] text-[#080808] rounded-2xl font-bold text-[13px] uppercase tracking-[2px] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                {isLoading ? <div className="w-5 h-5 border-2 border-[#080808]/30 border-t-[#080808] rounded-full animate-spin" /> : 'Continue'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter 6-digit OTP"
+                  className="w-full px-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white text-center tracking-[0.5em] placeholder:text-gray-600 text-xl shadow-inner placeholder:tracking-normal"
+                />
+              </div>
+              
+              <button
+                onClick={handleVerifyOTP}
+                disabled={otp.length < 6 || isLoading}
+                className="w-full h-14 bg-gradient-to-r from-[#D4AF37] to-[#FFD86B] text-[#080808] rounded-2xl font-bold text-[13px] uppercase tracking-[2px] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                {isLoading ? <div className="w-5 h-5 border-2 border-[#080808]/30 border-t-[#080808] rounded-full animate-spin" /> : 'Verify OTP'}
+              </button>
+            </>
+          )}
           
           <div className="relative py-4">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-            <div className="relative flex justify-center"><span className="px-4 text-[10px] text-[#A5A5A5] font-bold uppercase tracking-widest bg-[#141414]">Or Continue As</span></div>
+            <div className="relative flex justify-center"><span className="px-4 text-[10px] text-[#A5A5A5] font-bold uppercase tracking-widest bg-[#141414]">Or Continue With</span></div>
           </div>
           
+          {/* Google Sign-In Button */}
+          <button
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-full h-14 bg-white hover:bg-gray-50 active:scale-95 text-gray-800 rounded-2xl font-bold text-[13px] uppercase tracking-[1.5px] transition-all flex items-center justify-center gap-3 shadow-sm disabled:opacity-50 cursor-pointer"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Continue with Google
+          </button>
+
           <button
             onClick={handleGuest}
-            className="w-full h-14 bg-[#080808] border border-white/10 text-white rounded-2xl font-bold text-[12px] uppercase tracking-[2px] hover:border-[#D4AF37]/50 hover:bg-[#1A1A1A] transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="w-full h-14 bg-[#080808] border border-white/10 text-white rounded-2xl font-bold text-[12px] uppercase tracking-[2px] hover:border-[#D4AF37]/50 hover:bg-[#1A1A1A] transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             <User className="w-4 h-4 text-[#D4AF37]" /> Guest

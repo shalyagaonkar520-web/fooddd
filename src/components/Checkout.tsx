@@ -18,7 +18,7 @@ import { haversineDistance } from '../lib/location';
 
 import DeliveryAnimation from './DeliveryAnimation';
 
-const TELEGRAM_BOT_TOKEN = '8828362126:AAGbOzb8Q9Jhi29Bp6sQ_Q6hRo4Xj2SGfQg';
+const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
 const TELEGRAM_CHAT_ID   = '-1003803637741';
 const WHATSAPP_BULK_NUMBER = '917483187572';
 const WHATSAPP_FOOD_NUMBER = '919606001790';
@@ -929,7 +929,7 @@ export default function Checkout() {
                     type="radio"
                     name="payment_method"
                     checked={paymentMethod === 'online'}
-                    onChange={() => setPaymentMethod('online')}
+                    onChange={() => toast.error('Pay Online is coming soon!')}
                     className="w-4 h-4 accent-orange-500"
                   />
                   <div className="flex-1">

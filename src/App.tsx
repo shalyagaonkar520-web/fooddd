@@ -14,6 +14,7 @@ const ProfilePage = lazy(() => import('./components/ProfilePage'));
 const TrackingPage = lazy(() => import('./components/TrackingPage'));
 const DeliveryDashboard = lazy(() => import('./components/DeliveryDashboard'));
 const BulkOrderPage = lazy(() => import('./components/BulkOrderPage'));
+const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 import BottomNav from './components/BottomNav';
 import BottomCartBar from './components/BottomCartBar';
 import OperatingHoursGate from './components/OperatingHoursGate';
@@ -26,7 +27,9 @@ import UndoManager from './components/UndoManager';
 
 
 
+const HotelPanel = lazy(() => import('./components/HotelPanel'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
+const StaffLogin = lazy(() => import('./components/StaffLogin'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
 
 
@@ -39,7 +42,7 @@ function GoldenParticles() {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
       <div className="hidden md:block">
-        {[...Array(15)].map((_, i) => (
+        {[...Array(5)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute w-1.5 h-1.5 bg-green-500/20 rounded-full blur-[0.5px]"
@@ -56,7 +59,7 @@ function GoldenParticles() {
               duration: Math.random() * 8 + 8, 
               repeat: Infinity, 
               ease: "linear",
-              delay: Math.random() * 15
+              delay: Math.random() * 5
             }}
           />
         ))}
@@ -221,7 +224,10 @@ export default function App() {
                     <Route path="/delivery" element={<DeliveryDashboard />} />
                     <Route path="/bulk" element={<BulkOrderPage />} />
                     <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/hotel" element={<HotelPanel />} />
+                    <Route path="/staff" element={<StaffLogin />} />
                     <Route path="/orders" element={<OrdersPage />} />
+                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   </Routes>
                 </Suspense>
               </PageTransition>

@@ -18,6 +18,7 @@ export interface AdminSettings {
   taxRate: number;
   deliveryFee: number;
   minOrderValue: number;
+  adminPhones: string[];
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -59,7 +60,8 @@ const DEFAULT_SETTINGS: AdminSettings = {
   ],
   taxRate: 5,
   deliveryFee: 40,
-  minOrderValue: 150
+  minOrderValue: 150,
+  adminPhones: ['+917483187572', '+919606001790', '7483187572', '9606001790']
 };
 
 import { db } from '../firebase';

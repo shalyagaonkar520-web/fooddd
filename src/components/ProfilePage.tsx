@@ -131,6 +131,28 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (window.confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) {
+      try {
+        if (user) {
+          // If we had a real backend, we'd call a cloud function here to delete Firestore data too.
+          await user.delete();
+        }
+        localStorage.removeItem('moms_magic_user_phone');
+        localStorage.removeItem('moms_magic_guest');
+        await logout();
+        toast.success('Account deleted successfully.');
+        navigate('/');
+      } catch (e: any) {
+        if (e.code === 'auth/requires-recent-login') {
+          toast.error('Please log out and log back in to delete your account.');
+        } else {
+          toast.error('Failed to delete account. Please try again later.');
+        }
+      }
+    }
+  };
+
   const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addressText.trim() || !addressLabel.trim()) {
@@ -236,7 +258,8 @@ export default function ProfilePage() {
           {[
             { id: 'refer', label: 'Refer & Earn', icon: Share2 },
             { id: 'terms', label: 'T&C / Privacy', icon: FileText },
-            { id: 'logout', label: 'Sign Out', icon: LogOut }
+            { id: 'logout', label: 'Sign Out', icon: LogOut },
+            { id: 'delete', label: 'Delete Account', icon: Trash2 }
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -245,6 +268,8 @@ export default function ProfilePage() {
                 onClick={() => {
                   if (tab.id === 'logout') {
                     handleLogout();
+                  } else if (tab.id === 'delete') {
+                    handleDeleteAccount();
                   } else {
                     setActiveTab(tab.id as any);
                   }
@@ -252,7 +277,7 @@ export default function ProfilePage() {
                 className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all cursor-pointer ${
                   activeTab === tab.id 
                     ? 'bg-orange-500 text-black shadow-lg shadow-[#FC8019]/20' 
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                    : tab.id === 'delete' ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 <Icon className="w-4 h-4" />
