@@ -208,7 +208,7 @@ export default function DeliveryDashboard() {
       (snapshot) => {
         const available: any[] = [];
         snapshot.forEach((docSnap) => {
-          const o = { id: docSnap.id, ...docSnap.data() };
+          const o: any = { id: docSnap.id, ...docSnap.data() };
           if (!o.riderId || o.riderId === '') available.push(o);
         });
         available.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

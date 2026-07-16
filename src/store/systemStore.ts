@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
   emergencyStop: false,
   festivalMode: false,
   deliveryPause: false,
+  adminPhones: [],
   orderLimit: 50,
   lastUpdated: new Date().toISOString(),
   whatsappNumber: '+917483187572',
