@@ -6,7 +6,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  signOut
+  signOut,
+  signInWithPopup,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -112,6 +114,36 @@ export default function StaffLogin() {
       } else {
         toast.error(err.message || 'Registration failed.');
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const cred = await signInWithPopup(auth, provider);
+      
+      // Check if rider/staff record already exists in Firestore
+      const snap = await getDoc(doc(db, 'staff', cred.user.uid));
+      if (snap.exists()) {
+        const role = snap.data().role;
+        toast.success(`Welcome back! Redirecting to ${role} panel... 🎯`);
+        setTimeout(() => redirectToPanel(role), 800);
+      } else {
+        // If registering for the first time via Google, we use the selected role in the UI
+        await setDoc(doc(db, 'staff', cred.user.uid), {
+          uid: cred.user.uid,
+          email: cred.user.email || '',
+          role: selectedRole,
+          createdAt: new Date().toISOString(),
+        });
+        toast.success(`Account created with Google! Welcome to the ${selectedRole} panel. 🎉`);
+        setTimeout(() => redirectToPanel(selectedRole), 800);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Google authentication failed.');
     } finally {
       setIsLoading(false);
     }
@@ -247,6 +279,28 @@ export default function StaffLogin() {
                 )}
               </button>
             </form>
+
+            <div className="relative my-4 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <span className="relative px-3 bg-white text-[10px] text-gray-400 font-bold uppercase tracking-widest">or</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="w-full bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 mb-4"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.186 4.114-3.518 0-6.386-2.87-6.386-6.386 0-3.517 2.868-6.386 6.386-6.386 1.622 0 3.097.61 4.237 1.614l3.076-3.076C19.345 2.502 16.035 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c5.898 0 10.748-4.229 10.748-11.24 0-.768-.076-1.503-.223-1.955H12.24z"
+                />
+              </svg>
+              Continue with Google
+            </button>
 
             {/* Footer */}
             <div className="flex items-center justify-center gap-2 text-gray-400 text-[9px] font-black uppercase tracking-widest">
