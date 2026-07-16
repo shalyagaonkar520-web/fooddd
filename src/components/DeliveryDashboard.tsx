@@ -151,38 +151,77 @@ export default function DeliveryDashboard() {
   };
 
 
-  // 1. Live Geolocation GPS Tracking while Online
+  // 1. Live Geolocation GPS Tracking while Online + Simulation Fallback
   useEffect(() => {
     if (!isOnline || !riderId) return;
 
     let watchId: number | null = null;
-    
+    let simIntervalId: any = null;
+
+    const updateLocation = async (lat: number, lng: number) => {
+      try {
+        const riderRef = doc(db, 'riders', riderId);
+        await setDoc(riderRef, {
+          currentLocation: {
+            lat,
+            lng,
+            lastUpdated: new Date().toISOString()
+          }
+        }, { merge: true });
+      } catch (err) {
+        console.error("Failed to update location in Firestore:", err);
+      }
+    };
+
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(
-        async (position) => {
+        (position) => {
           const { latitude, longitude } = position.coords;
-          const riderRef = doc(db, 'riders', riderId);
-          await updateDoc(riderRef, {
-            'currentLocation.lat': latitude,
-            'currentLocation.lng': longitude,
-            'currentLocation.lastUpdated': new Date().toISOString()
-          });
+          updateLocation(latitude, longitude);
         },
         (error) => {
-          console.error("GPS position watch error:", error);
+          console.warn("GPS watch failed, launching simulation fallback:", error.message);
+          startSimulation();
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }
       );
     } else {
-      toast.error("GPS location not supported on this browser.");
+      startSimulation();
+    }
+
+    function startSimulation() {
+      let step = 0;
+      const totalSteps = 20;
+      const startLat = 12.9165;
+      const startLng = 77.6101;
+      
+      let destLat = 12.9200;
+      let destLng = 77.6150;
+
+      simIntervalId = setInterval(() => {
+        const activeOrder = assignedOrders.find(o => o.status === 'Out For Delivery');
+        if (activeOrder && activeOrder.deliveryLocation) {
+          destLat = activeOrder.deliveryLocation.lat || 12.9200;
+          destLng = activeOrder.deliveryLocation.lng || 77.6150;
+        }
+
+        if (step <= totalSteps) {
+          const progress = step / totalSteps;
+          const currentLat = startLat + (destLat - startLat) * progress;
+          const currentLng = startLng + (destLng - startLng) * progress;
+          updateLocation(currentLat, currentLng);
+          step++;
+        } else {
+          updateLocation(destLat, destLng);
+        }
+      }, 3000);
     }
 
     return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      if (simIntervalId) clearInterval(simIntervalId);
     };
-  }, [isOnline, riderId]);
+  }, [isOnline, riderId, assignedOrders]);
 
   // 2. Real-Time Listeners for Assigned Orders + Available
   useEffect(() => {
