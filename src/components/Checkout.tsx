@@ -425,7 +425,7 @@ export default function Checkout() {
           id: orderId,
           userId: user?.uid || null,
           userName: formData.name.trim(),
-          userPhone: formData.phone.trim(),
+          userPhone: formData.phone.trim().replace(/\D/g, '').slice(-10),
           orderType: isBulkOrder ? 'bulk' : 'regular',
           items: activeItems,
           subtotal,

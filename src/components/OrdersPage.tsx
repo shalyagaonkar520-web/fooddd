@@ -4,6 +4,8 @@ import { ChevronLeft, PackageSearch, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../utils/seo';
 import { useAuthStore } from '../store/authStore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface OrderItem {
   name: string;
@@ -34,29 +36,60 @@ export default function OrdersPage() {
   const localPhone = localStorage.getItem('moms_magic_user_phone');
   
   useEffect(() => {
-    const fetchOrders = () => {
-      try {
-        const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        
-        const normalizePhone = (p: string) => p ? p.replace(/\D/g, '').slice(-10) : '';
-        const userPhoneToMatch = normalizePhone(profile?.phone || user?.phoneNumber || localPhone || '');
-        
-        const userOrders = storedOrders.filter((o: any) => {
-          const isPhoneMatch = userPhoneToMatch && normalizePhone(o.userPhone) === userPhoneToMatch;
-          const isUserMatch = user && o.userId === user.uid;
-          return isPhoneMatch || isUserMatch;
-        });
-        
-        userOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setOrders(userOrders);
-      } catch (err) {
-        console.error('Error loading orders:', err);
-      } finally {
-        setLoading(false);
-      }
+    const normalizePhone = (p: string) => p ? p.replace(/\D/g, '').slice(-10) : '';
+    const userPhoneToMatch = normalizePhone(profile?.phone || user?.phoneNumber || localPhone || '');
+
+    if (!userPhoneToMatch && (!user || !user.uid)) {
+      setLoading(false);
+      return;
+    }
+
+    let unsubUser: (() => void) | null = null;
+    let unsubPhone: (() => void) | null = null;
+
+    let userOrdersList: Order[] = [];
+    let phoneOrdersList: Order[] = [];
+
+    const combineAndSet = () => {
+      const merged = [...userOrdersList, ...phoneOrdersList];
+      const unique = merged.filter((item, index, self) =>
+        index === self.findIndex((t) => t.id === item.id)
+      );
+      unique.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setOrders(unique);
+      setLoading(false);
     };
 
-    fetchOrders();
+    if (user && user.uid) {
+      const qUser = query(collection(db, 'orders'), where('userId', '==', user.uid));
+      unsubUser = onSnapshot(qUser, (snapshot) => {
+        const arr: Order[] = [];
+        snapshot.forEach(d => arr.push({ id: d.id, ...d.data() } as Order));
+        userOrdersList = arr;
+        combineAndSet();
+      }, (error) => {
+        console.error("User orders fetch error:", error);
+        combineAndSet();
+      });
+    }
+
+    if (userPhoneToMatch) {
+      const qPhone = query(collection(db, 'orders'), where('userPhone', '==', userPhoneToMatch));
+      unsubPhone = onSnapshot(qPhone, (snapshot) => {
+        const arr: Order[] = [];
+        snapshot.forEach(d => arr.push({ id: d.id, ...d.data() } as Order));
+        phoneOrdersList = arr;
+        combineAndSet();
+      }, (error) => {
+        console.error("Phone orders fetch error:", error);
+        combineAndSet();
+      });
+    }
+
+    return () => {
+      if (unsubUser) unsubUser();
+      if (unsubPhone) unsubPhone();
+    };
   }, [user, profile, localPhone]);
 
   if (loading) {

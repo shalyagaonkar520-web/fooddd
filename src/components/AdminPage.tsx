@@ -61,25 +61,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (!adminId) return;
 
-    const loadLocalOrders = () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        stored.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setOrders(stored);
-      } catch (e) {}
-    };
-
-    loadLocalOrders();
-
     const unsubOrders = onSnapshot(
       query(collection(db, 'orders')),
       (snapshot) => {
         const arr: any[] = [];
         snapshot.forEach(d => arr.push({ id: d.id, ...d.data() }));
         arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        if (arr.length > 0) setOrders(arr);
+        setOrders(arr);
       },
-      () => loadLocalOrders()
+      (error) => console.error('Error fetching orders:', error)
     );
 
     const unsubRiders = onSnapshot(
@@ -89,15 +79,12 @@ export default function AdminPage() {
         snapshot.forEach(d => arr.push({ id: d.id, ...d.data() }));
         setRiders(arr);
       },
-      () => {}
+      (error) => console.error('Error fetching riders:', error)
     );
-
-    const interval = setInterval(loadLocalOrders, 5000);
 
     return () => {
       unsubOrders();
       unsubRiders();
-      clearInterval(interval);
     };
   }, [adminId]);
 

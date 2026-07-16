@@ -145,31 +145,6 @@ export default function DeliveryDashboard() {
   useEffect(() => {
     if (!riderId) return;
 
-    const loadLocalAvailable = () => {
-      try {
-        const stored: any[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        const available = stored.filter(o => o.status === 'Ready for Delivery' && (!o.riderId || o.riderId === ''));
-        available.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setAvailableOrders(available);
-      } catch (e) { /* ignore */ }
-    };
-
-    const loadLocalAssigned = () => {
-      try {
-        const stored: any[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        const active = stored.filter(o => o.riderId === riderId && o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled');
-        const past = stored.filter(o => o.riderId === riderId && (o.status === 'delivered' || o.status === 'completed' || o.status === 'cancelled'));
-        active.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        past.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setAssignedOrders(active);
-        setPastDeliveries(past);
-      } catch (e) { /* ignore */ }
-    };
-
-    // Load immediately
-    loadLocalAvailable();
-    loadLocalAssigned();
-
     // Try Firestore for assigned orders
     const ordersQuery = query(
       collection(db, 'orders'),
@@ -194,7 +169,7 @@ export default function DeliveryDashboard() {
         setAssignedOrders(active);
         setPastDeliveries(past);
       },
-      () => loadLocalAssigned()
+      (error) => console.error('Error fetching assigned orders:', error)
     );
 
     // Try Firestore for available orders
@@ -212,22 +187,14 @@ export default function DeliveryDashboard() {
           if (!o.riderId || o.riderId === '') available.push(o);
         });
         available.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        if (available.length > 0) setAvailableOrders(available);
-        else loadLocalAvailable();
+        setAvailableOrders(available);
       },
-      () => loadLocalAvailable()
+      (error) => console.error('Error fetching available orders:', error)
     );
-
-    // Poll localStorage every 5 seconds
-    const interval = setInterval(() => {
-      loadLocalAvailable();
-      loadLocalAssigned();
-    }, 5000);
 
     return () => {
       unsubscribeAssigned();
       unsubscribeAvailable();
-      clearInterval(interval);
     };
   }, [riderId]);
 
@@ -264,7 +231,7 @@ export default function DeliveryDashboard() {
     if (riderId && riderId !== 'mock-rider-id-12345') {
       try {
         const riderRef = doc(db, 'riders', riderId);
-        await updateDoc(riderRef, { status: 'offline' });
+        await setDoc(riderRef, { status: 'offline' }, { merge: true });
       } catch (_) {}
     }
     await signOut(auth);
@@ -281,7 +248,7 @@ export default function DeliveryDashboard() {
 
     try {
       const riderRef = doc(db, 'riders', riderId);
-      await updateDoc(riderRef, { status: nextStatus ? 'online' : 'offline' });
+      await setDoc(riderRef, { status: nextStatus ? 'online' : 'offline' }, { merge: true });
       toast.success(`You are now ${nextStatus ? 'ONLINE 🟢' : 'OFFLINE 🔴'}`);
     } catch (err) {
       toast.error("Failed to update status.");
@@ -350,7 +317,7 @@ export default function DeliveryDashboard() {
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { status: 'delivered', riderStatus: 'delivered', deliveredAt: new Date().toISOString() });
       const riderRef = doc(db, 'riders', riderId);
-      await updateDoc(riderRef, { earnings: newEarnings });
+      await setDoc(riderRef, { earnings: newEarnings }, { merge: true });
     } catch (err) { /* silently ignore */ }
   };
 

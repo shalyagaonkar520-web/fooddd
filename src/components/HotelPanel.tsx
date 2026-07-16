@@ -47,17 +47,6 @@ export default function HotelPanel() {
 
     const ACTIVE_STATUSES = ['pending', 'Preparing'];
 
-    const loadLocalOrders = () => {
-      try {
-        const stored: any[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        const filtered = stored.filter(o => ACTIVE_STATUSES.includes(o.status));
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setActiveOrders(filtered);
-      } catch (_) {}
-    };
-
-    loadLocalOrders();
-
     const ordersQuery = query(collection(db, 'orders'), where('status', 'in', ACTIVE_STATUSES));
     const unsubscribe = onSnapshot(
       ordersQuery,
@@ -65,14 +54,12 @@ export default function HotelPanel() {
         const orders: any[] = [];
         snapshot.forEach(d => orders.push({ id: d.id, ...d.data() }));
         orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        if (orders.length > 0) setActiveOrders(orders);
-        else loadLocalOrders();
+        setActiveOrders(orders);
       },
-      () => loadLocalOrders()
+      (error) => console.error('Error fetching kitchen orders:', error)
     );
 
-    const interval = setInterval(loadLocalOrders, 5000);
-    return () => { unsubscribe(); clearInterval(interval); };
+    return () => unsubscribe();
   }, [hotelId]);
 
   const handleLogout = async () => {
