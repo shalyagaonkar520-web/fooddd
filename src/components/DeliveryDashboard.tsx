@@ -46,6 +46,10 @@ export default function DeliveryDashboard() {
   // Status Toggles
   const [isOnline, setIsOnline] = useState(false);
 
+  // Phone config prompt
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+  const [newPhone, setNewPhone] = useState('');
+
   // Active / History Orders State
   const [assignedOrders, setAssignedOrders] = useState<any[]>([]);
   const [pastDeliveries, setPastDeliveries] = useState<any[]>([]);
@@ -73,6 +77,9 @@ export default function DeliveryDashboard() {
             const data = riderSnap.data();
             setRiderProfile(data);
             setIsOnline(data.status === 'online');
+            if (!data.phone || data.phone.trim() === '') {
+              setShowPhonePrompt(true);
+            }
           } else {
             // Create a basic profile from staff record
             const staffData = staffSnap.data();
@@ -85,6 +92,9 @@ export default function DeliveryDashboard() {
             setRiderProfile(initialProfile);
             // Create in Firestore collection immediately
             await setDoc(doc(db, 'riders', user.uid), initialProfile);
+            if (!initialProfile.phone || initialProfile.phone.trim() === '') {
+              setShowPhonePrompt(true);
+            }
           }
           return;
         }
@@ -101,19 +111,44 @@ export default function DeliveryDashboard() {
           const data = riderSnap.data();
           setRiderProfile(data);
           setIsOnline(data.status === 'online');
+          if (!data.phone || data.phone.trim() === '') {
+            setShowPhonePrompt(true);
+          }
         } else {
           // Also allow if mock rider login was bypassed
           setRiderId(user.uid);
-          setRiderProfile({ name: user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' });
+          const initialProfile = { name: user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' };
+          setRiderProfile(initialProfile);
+          setShowPhonePrompt(true);
         }
       } catch (_) {
         setRiderId(user.uid);
-        setRiderProfile({ name: user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' });
+        const initialProfile = { name: user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' };
+        setRiderProfile(initialProfile);
+        setShowPhonePrompt(true);
       }
     });
 
     return () => unsubscribe();
   }, [navigate]);
+
+  const handleSavePhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPhone.length !== 10) {
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    
+    try {
+      const riderRef = doc(db, 'riders', riderId);
+      await setDoc(riderRef, { phone: newPhone }, { merge: true });
+      setRiderProfile((prev: any) => ({ ...prev, phone: newPhone }));
+      setShowPhonePrompt(false);
+      toast.success("Phone number saved successfully! 📱");
+    } catch (err) {
+      toast.error("Failed to save phone number.");
+    }
+  };
 
 
   // 1. Live Geolocation GPS Tracking while Online
@@ -682,6 +717,51 @@ export default function DeliveryDashboard() {
         </div>
 
       </div>
+
+      {/* Phone Number Prompt Modal */}
+      <AnimatePresence>
+        {showPhonePrompt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-gray-200 rounded-[30px] w-full max-w-sm p-6 shadow-2xl space-y-6 text-center"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto">
+                <Phone className="w-6 h-6 text-orange-500" />
+              </div>
+              
+              <div className="space-y-1">
+                <h3 className="text-xl font-black uppercase tracking-tight text-gray-900">Enter Phone Number</h3>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">
+                  Customers need your phone number to contact you for deliveries.
+                </p>
+              </div>
+
+              <form onSubmit={handleSavePhone} className="space-y-4">
+                <input
+                  type="tel"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  placeholder="10-DIGIT MOBILE NUMBER"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ''))}
+                  required
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 outline-none focus:border-orange-300 transition-all font-bold text-center text-sm text-gray-900 tracking-[2px]"
+                />
+                
+                <button
+                  type="submit"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-md cursor-pointer active:scale-95"
+                >
+                  Save & Continue
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
