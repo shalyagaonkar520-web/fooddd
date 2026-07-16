@@ -329,17 +329,17 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3.5 text-left">
               <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-lg text-emerald-600 font-black">
-                {rider.name.charAt(0).toUpperCase()}
+                {rider.name ? rider.name.charAt(0).toUpperCase() : 'R'}
               </div>
               <div>
                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Delivery Partner</p>
-                <h4 className="text-sm font-black text-gray-900 mt-0.5">{rider.name}</h4>
+                <h4 className="text-sm font-black text-gray-900 mt-0.5">{rider.name || 'Delivery Partner'}</h4>
                 <p className="text-[10px] text-emerald-600 font-extrabold">★ 4.9 Super Rider</p>
               </div>
             </div>
             
             <a 
-              href={`tel:${rider.phone}`}
+              href={rider.phone ? `tel:${rider.phone}` : '#'}
               className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-500 hover:text-white flex items-center justify-center text-emerald-600 transition-all shadow-sm active:scale-95 shrink-0"
             >
               <Phone className="w-4 h-4 fill-current" />

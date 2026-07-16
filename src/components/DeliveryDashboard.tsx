@@ -76,7 +76,15 @@ export default function DeliveryDashboard() {
           } else {
             // Create a basic profile from staff record
             const staffData = staffSnap.data();
-            setRiderProfile({ name: staffData.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' });
+            const initialProfile = { 
+              name: staffData.email?.split('@')[0] || 'Rider', 
+              earnings: 0, 
+              status: 'offline', 
+              phone: staffData.phone || '' 
+            };
+            setRiderProfile(initialProfile);
+            // Create in Firestore collection immediately
+            await setDoc(doc(db, 'riders', user.uid), initialProfile);
           }
           return;
         }
@@ -248,7 +256,11 @@ export default function DeliveryDashboard() {
 
     try {
       const riderRef = doc(db, 'riders', riderId);
-      await setDoc(riderRef, { status: nextStatus ? 'online' : 'offline' }, { merge: true });
+      await setDoc(riderRef, { 
+        status: nextStatus ? 'online' : 'offline',
+        name: riderProfile?.name || 'Rider',
+        phone: riderProfile?.phone || ''
+      }, { merge: true });
       toast.success(`You are now ${nextStatus ? 'ONLINE 🟢' : 'OFFLINE 🔴'}`);
     } catch (err) {
       toast.error("Failed to update status.");
