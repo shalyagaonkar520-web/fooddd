@@ -58,6 +58,8 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
   const mapInstance = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const polylineRef = useRef<L.Polyline | null>(null);
+  const hasFitBounds = useRef(false);
+  const lastOrderId = useRef<string | null>(null);
 
   // 1. Initialize Map
   useEffect(() => {
@@ -87,6 +89,11 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
   useEffect(() => {
     const map = mapInstance.current;
     if (!map || !order) return;
+
+    if (lastOrderId.current !== order.id) {
+      hasFitBounds.current = false;
+      lastOrderId.current = order.id;
+    }
 
     const restCoords: [number, number] = [12.9165, 77.6101]; // Kitchen Coordinates (BTM Layout)
     const custCoords: [number, number] = [
@@ -175,9 +182,12 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
 
     drawRoute(map, routePoints, polylineRef);
 
-    // Zoom/Center Map to keep all points visible
-    const bounds = L.latLngBounds(routePoints);
-    map.fitBounds(bounds, { padding: [80, 80] });
+    // Zoom/Center Map to keep all points visible (only once to prevent annoying jumps during tracking)
+    if (!hasFitBounds.current) {
+      const bounds = L.latLngBounds(routePoints);
+      map.fitBounds(bounds, { padding: [80, 80] });
+      hasFitBounds.current = true;
+    }
 
   }, [order, rider]);
 

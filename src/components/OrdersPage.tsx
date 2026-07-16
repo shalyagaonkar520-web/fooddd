@@ -174,16 +174,14 @@ export default function OrdersPage() {
                   )}
                 </div>
 
-                {order.trackingLink && (
+                {order.status !== 'delivered' && order.status !== 'cancelled' && (
                   <div className="mt-6 pt-4 border-t border-gray-200">
-                    <a 
-                      href={order.trackingLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-full block text-center py-3 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border border-purple-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                    <button
+                      onClick={() => navigate(`/track/${order.id}`)}
+                      className="w-full text-center py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       📍 Track Order Live
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
