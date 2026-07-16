@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Clock,
   Compass,
-  PhoneCall
+  PhoneCall,
+  MessageSquare
 } from 'lucide-react';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { 
@@ -364,7 +365,12 @@ export default function DeliveryDashboard() {
     // Try Firestore in background
     try {
       const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, { riderId: riderId, riderStatus: 'accepted' });
+      await updateDoc(orderRef, { 
+        riderId: riderId, 
+        riderStatus: 'accepted',
+        riderName: riderProfile?.name || 'Rider',
+        riderPhone: riderProfile?.phone || ''
+      });
     } catch (err) { /* silently ignore */ }
   };
 
@@ -708,12 +714,20 @@ export default function DeliveryDashboard() {
                             </a>
                           )}
 
-                          <a
-                            href={`tel:${order.userPhone}`}
-                            className="bg-gray-50 border border-gray-200 hover:border-orange-500 text-gray-900 px-4 py-4 rounded-xl flex items-center justify-center transition-all"
-                          >
-                            <PhoneCall className="w-4 h-4 text-orange-500" />
-                          </a>
+                           <div className="flex gap-2">
+                            <a
+                              href={`tel:${order.userPhone}`}
+                              className="bg-gray-50 border border-gray-200 hover:border-orange-500 text-gray-900 px-4 py-4 rounded-xl flex items-center justify-center transition-all"
+                            >
+                              <PhoneCall className="w-4 h-4 text-orange-500" />
+                            </a>
+                            <button
+                              onClick={() => navigate(`/chat/${order.id}`)}
+                              className="bg-gray-50 border border-gray-200 hover:border-orange-500 text-gray-900 px-4 py-4 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+                            >
+                              <MessageSquare className="w-4 h-4 text-orange-500" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

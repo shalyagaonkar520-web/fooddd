@@ -7,7 +7,9 @@ import {
   Power,
   Store,
   Bike,
-  RefreshCw
+  RefreshCw,
+  Phone,
+  MessageSquare
 } from 'lucide-react';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { 
@@ -15,7 +17,8 @@ import {
   query, 
   onSnapshot,
   doc,
-  getDoc
+  getDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import toast from 'react-hot-toast';
@@ -87,6 +90,32 @@ export default function AdminPage() {
       unsubRiders();
     };
   }, [adminId]);
+
+  const handleAssignRider = async (orderId: string, riderId: string) => {
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      if (riderId === '') {
+        await updateDoc(orderRef, {
+          riderId: '',
+          riderStatus: '',
+          riderName: '',
+          riderPhone: ''
+        });
+        toast.success("Rider unassigned.");
+      } else {
+        const selectedRider = riders.find(r => r.id === riderId);
+        await updateDoc(orderRef, {
+          riderId: riderId,
+          riderStatus: 'accepted',
+          riderName: selectedRider?.name || 'Rider',
+          riderPhone: selectedRider?.phone || ''
+        });
+        toast.success(`Assigned rider: ${selectedRider?.name || 'Partner'}! 🛵`);
+      }
+    } catch (err) {
+      toast.error("Failed to assign rider.");
+    }
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -162,18 +191,87 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">No active orders</p>
               </div>
             ) : (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
                 {liveOrders.map(order => (
-                  <div key={order.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex justify-between items-center text-left">
-                    <div>
-                      <p className="text-gray-900 font-bold text-sm">{order.userName}</p>
-                      <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">ID: {order.id.slice(0,8)}</p>
+                  <div key={order.id} className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4 text-left shadow-sm">
+                    {/* Header */}
+                    <div className="flex justify-between items-center border-b border-gray-200/50 pb-3">
+                      <div>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">ORDER ID: #{order.id.slice(0, 8)}</p>
+                        <h4 className="text-sm font-black text-gray-900 mt-1">{order.userName}</h4>
+                      </div>
+                      <div className="text-right">
+                        <span className="bg-orange-500/10 text-orange-600 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-orange-500/20">
+                          {order.status}
+                        </span>
+                        <p className="text-gray-900 font-black mt-1.5 text-sm">₹{order.grandTotal}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="bg-orange-500/10 text-orange-600 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border border-orange-500/20">
-                        {order.status}
-                      </span>
-                      <p className="text-gray-900 font-black mt-1 text-xs">₹{order.grandTotal}</p>
+
+                    {/* Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
+                      <div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Customer Info</p>
+                        <p className="text-gray-900 font-bold">{order.userName}</p>
+                        <p className="text-gray-500 text-[10px] mt-0.5">{order.userPhone}</p>
+                        <p className="text-gray-500 text-[10px] mt-0.5 truncate max-w-xs">{order.deliveryLocation?.address}</p>
+                        
+                        <div className="flex gap-2 mt-2">
+                          <a 
+                            href={`tel:${order.userPhone}`}
+                            className="px-4 py-2 bg-white border border-gray-200 hover:border-orange-500 rounded-xl text-[9px] font-black uppercase tracking-wider text-orange-500 flex items-center gap-1.5 transition-all shadow-sm shrink-0"
+                          >
+                            <Phone className="w-3 h-3" /> Call Customer
+                          </a>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rider Info</p>
+                        {order.riderId ? (
+                          <>
+                            <p className="text-gray-900 font-bold">{order.riderName || 'Assigned Rider'}</p>
+                            <p className="text-gray-500 text-[10px] mt-0.5">{order.riderPhone || 'No phone'}</p>
+                            <div className="flex gap-2 mt-2">
+                              {order.riderPhone && (
+                                <a 
+                                  href={`tel:${order.riderPhone}`}
+                                  className="px-4 py-2 bg-white border border-gray-200 hover:border-orange-500 rounded-xl text-[9px] font-black uppercase tracking-wider text-orange-500 flex items-center gap-1.5 transition-all shadow-sm shrink-0"
+                                >
+                                  <Phone className="w-3 h-3" /> Call Rider
+                                </a>
+                              )}
+                              <button
+                                onClick={() => navigate(`/chat/${order.id}`)}
+                                className="px-4 py-2 bg-white border border-gray-200 hover:border-orange-500 rounded-xl text-[9px] font-black uppercase tracking-wider text-orange-500 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                              >
+                                <MessageSquare className="w-3 h-3" /> View Chat
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-gray-400 italic">No rider assigned yet</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Rider Assign Dropdown Selector */}
+                    <div className="pt-3 border-t border-gray-200/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Assign/Change Rider</label>
+                        <select
+                          value={order.riderId || ''}
+                          onChange={(e) => handleAssignRider(order.id, e.target.value)}
+                          className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 outline-none focus:border-orange-300 font-bold text-xs text-gray-900"
+                        >
+                          <option value="">-- Select Rider --</option>
+                          {riders.map(r => (
+                            <option key={r.id} value={r.id}>
+                              {r.name} ({r.status === 'online' ? '🟢 Online' : '🔴 Offline'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 ))}

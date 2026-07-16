@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, MapPin, Phone, Truck, Clock, Store, Navigation, 
-  ShieldCheck, Share2, RefreshCw, CheckCircle2, AlertTriangle
+  ShieldCheck, Share2, RefreshCw, CheckCircle2, AlertTriangle, MessageSquare
 } from 'lucide-react';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -285,6 +285,7 @@ interface OrderStatusCardProps {
 }
 
 const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics, onRefresh, onShare }) => {
+  const navigate = useNavigate();
   return (
     <div className="bg-white border border-gray-100 rounded-t-[35px] shadow-[0_-15px_40px_rgba(0,0,0,0.06)] p-6 space-y-5 relative z-20 backdrop-blur-lg">
       {/* Top Slide Handle */}
@@ -338,12 +339,20 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics
               </div>
             </div>
             
-            <a 
-              href={rider.phone ? `tel:${rider.phone}` : '#'}
-              className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-500 hover:text-white flex items-center justify-center text-emerald-600 transition-all shadow-sm active:scale-95 shrink-0"
-            >
-              <Phone className="w-4 h-4 fill-current" />
-            </a>
+            <div className="flex gap-2 shrink-0">
+              <a 
+                href={rider.phone ? `tel:${rider.phone}` : '#'}
+                className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-500 hover:text-white flex items-center justify-center text-emerald-600 transition-all shadow-sm active:scale-95"
+              >
+                <Phone className="w-4 h-4 fill-current" />
+              </a>
+              <button
+                onClick={() => navigate(`/chat/${order.id}`)}
+                className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-500 hover:text-white flex items-center justify-center text-emerald-600 transition-all shadow-sm active:scale-95"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="text-left py-1">

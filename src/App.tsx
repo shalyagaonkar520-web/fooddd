@@ -31,6 +31,7 @@ const HotelPanel = lazy(() => import('./components/HotelPanel'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 const StaffLogin = lazy(() => import('./components/StaffLogin'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
+const ChatPage = lazy(() => import('./components/ChatPage'));
 
 
 // Store
@@ -227,6 +228,7 @@ export default function App() {
                     <Route path="/hotel" element={<HotelPanel />} />
                     <Route path="/staff" element={<StaffLogin />} />
                     <Route path="/orders" element={<OrdersPage />} />
+                    <Route path="/chat/:orderId" element={<ChatPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   </Routes>
                 </Suspense>
