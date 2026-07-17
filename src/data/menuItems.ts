@@ -57,7 +57,7 @@ export const MENU_ITEMS: Product[] = [
     price: 69,
     category: 'Fast Food',
     type: 'food',
-    image: '/masala_papad.png',
+    image: 'https://images.unsplash.com/photo-1630409351217-8beea4e5e774?w=800&q=80',
     description: 'Crispy papad topped with spicy onion, tomato, and masala mix.',
     isTopPick: false,
     fires: 1,
@@ -81,7 +81,7 @@ export const MENU_ITEMS: Product[] = [
     price: 40,
     category: 'Fast Food',
     type: 'food',
-    image: '/kheema_pav.png',
+    image: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=800&q=80',
     description: 'Spicy minced meat served with buttered pav buns.',
     fires: 0,
     isVeg: false
@@ -119,7 +119,7 @@ export const MENU_ITEMS: Product[] = [
     price: 109,
     category: 'Rice & Noodles',
     type: 'food',
-    image: '/gobi_manchurian.png',
+    image: 'https://images.unsplash.com/photo-1645177628172-a5b92fb99e6e?w=800&q=80',
     description: 'Crispy cauliflower florets in tangy Manchurian sauce.',
     isTopPick: false,
     fires: 1,
@@ -141,7 +141,7 @@ export const MENU_ITEMS: Product[] = [
     price: 129,
     category: 'Rice & Noodles',
     type: 'food',
-    image: '/egg_fried_rice.png',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80',
     fires: 0,
     isVeg: false
   },
@@ -161,7 +161,7 @@ export const MENU_ITEMS: Product[] = [
     price: 149,
     category: 'Rice & Noodles',
     type: 'food',
-    image: '/chicken_fried_rice.png',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80',
     fires: 0,
     isVeg: false
   },
@@ -171,7 +171,7 @@ export const MENU_ITEMS: Product[] = [
     price: 149,
     category: 'Rice & Noodles',
     type: 'food',
-    image: '/gobi_chilli.png',
+    image: 'https://images.unsplash.com/photo-1645177628172-a5b92fb99e6e?w=800&q=80',
     fires: 1,
     isVeg: true
   },
@@ -201,7 +201,7 @@ export const MENU_ITEMS: Product[] = [
     price: 200,
     category: 'Rice & Noodles',
     type: 'food',
-    image: '/mutton_fried_rice.png',
+    image: 'https://images.unsplash.com/photo-1633945274405-b4693f0c45aa?w=800&q=80',
     description: 'Fragrant basmati rice stir-fried with tender mutton chunks, fresh vegetables, and aromatic spices.',
     isTopPick: true,
     fires: 2,
@@ -247,7 +247,7 @@ export const MENU_ITEMS: Product[] = [
     price: 99,
     category: 'Biryani',
     type: 'food',
-    image: '/kushka.png',
+    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80',
     description: 'Plain aromatic biryani rice served with raita.',
     fires: 1,
     isVeg: true
@@ -258,7 +258,7 @@ export const MENU_ITEMS: Product[] = [
     price: 149,
     category: 'Biryani',
     type: 'food',
-    image: '/egg_biryani.png',
+    image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&q=80',
     description: 'Biryani rice served with boiled eggs and spices.',
     isTopPick: true,
     fires: 1,
@@ -280,7 +280,7 @@ export const MENU_ITEMS: Product[] = [
     price: 129,
     category: 'Biryani',
     type: 'food',
-    image: '/chicken_biryani_new.png',
+    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80',
     isTopPick: true,
     fires: 5,
     rating: 5.0,
@@ -292,7 +292,7 @@ export const MENU_ITEMS: Product[] = [
     price: 179,
     category: 'Biryani',
     type: 'food',
-    image: '/chicken_biryani_new.png',
+    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80',
     isTopPick: true,
     fires: 5,
     rating: 5.0,
@@ -304,7 +304,7 @@ export const MENU_ITEMS: Product[] = [
     price: 179,
     category: 'Biryani',
     type: 'food',
-    image: '/mutton_biryani.png',
+    image: 'https://images.unsplash.com/photo-1633945274405-b4693f0c45aa?w=800&q=80',
     fires: 0
 ,  
     isVeg: false},
@@ -314,7 +314,7 @@ export const MENU_ITEMS: Product[] = [
     price: 190,
     category: 'Biryani',
     type: 'food',
-    image: '/paneer_biryani.png',
+    image: 'https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?w=800&q=80',
     fires: 1
 ,  
     isVeg: true},
@@ -336,7 +336,7 @@ export const MENU_ITEMS: Product[] = [
     price: 249,
     category: 'Veg / Gravy',
     type: 'food',
-    image: '/mutton_sukka.png',
+    image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&q=80',
     description: 'Dry mutton roast with authentic South Indian spices and coconut.',
     isTopPick: true,
     fires: 2,
@@ -350,7 +350,7 @@ export const MENU_ITEMS: Product[] = [
     price: 220,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_crispy.png',
+    image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=800&q=80',
     description: 'Ultra-crispy chicken strips with a tangy glaze.',
     isTopPick: true,
     fires: 3
@@ -362,7 +362,7 @@ export const MENU_ITEMS: Product[] = [
     price: 200,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_65.png',
+    image: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=800&q=80',
     description: 'Spicy, deep-fried chicken pieces from South India.',
     isTopPick: true,
     fires: 1
@@ -374,7 +374,7 @@ export const MENU_ITEMS: Product[] = [
     price: 180,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_kabab.png',
+    image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=800&q=80',
     description: 'Succulent grilled chicken marinated in aromatic spices.',
     isTopPick: true,
     fires: 1
@@ -386,7 +386,7 @@ export const MENU_ITEMS: Product[] = [
     price: 209,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_lollipop.png',
+    image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=800&q=80',
     fires: 0
 ,  
     isVeg: false},
@@ -396,7 +396,7 @@ export const MENU_ITEMS: Product[] = [
     price: 220,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_tikka.png',
+    image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&q=80',
     fires: 1
 ,  
     isVeg: false},
@@ -406,7 +406,7 @@ export const MENU_ITEMS: Product[] = [
     price: 240,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_65_chinese.png',
+    image: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=800&q=80',
     fires: 1
 ,  
     isVeg: false},
@@ -416,7 +416,7 @@ export const MENU_ITEMS: Product[] = [
     price: 119,
     category: 'Starters',
     type: 'food',
-    image: '/chicken_kabab_half.png',
+    image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=800&q=80',
     fires: 0
 ,  
     isVeg: false},
@@ -426,7 +426,7 @@ export const MENU_ITEMS: Product[] = [
     price: 250,
     category: 'Starters',
     type: 'food',
-    image: '/fish_fry.png',
+    image: 'https://images.unsplash.com/photo-1519984388953-d2406bc725e1?w=800&q=80',
     fires: 1,
     isVeg: false
   },
@@ -450,7 +450,7 @@ export const MENU_ITEMS: Product[] = [
     price: 200,
     category: 'Veg / Gravy',
     type: 'food',
-    image: '/palak_paneer.jpg',
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80',
     description: 'Soft paneer cubes in a creamy spinach gravy.',
     isTopPick: true,
     fires: 1
@@ -493,7 +493,7 @@ export const MENU_ITEMS: Product[] = [
     price: 250,
     category: 'Veg / Gravy',
     type: 'food',
-    image: '/kaju_masala.png',
+    image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80',
     fires: 1
 ,  
     isVeg: true},
@@ -513,7 +513,7 @@ export const MENU_ITEMS: Product[] = [
     price: 150,
     category: 'Veg / Gravy',
     type: 'food',
-    image: '/dal_tadka.png',
+    image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&q=80',
     fires: 1
 ,  
     isVeg: true},
@@ -525,7 +525,7 @@ export const MENU_ITEMS: Product[] = [
     price: 49,
     category: 'Roti',
     type: 'food',
-    image: '/chapati.jpg',
+    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
     description: 'Soft whole wheat flatbread.',
     isTopPick: true,
     fires: 0
@@ -537,7 +537,7 @@ export const MENU_ITEMS: Product[] = [
     price: 39,
     category: 'Roti',
     type: 'food',
-    image: '/parota.jpg',
+    image: 'https://images.unsplash.com/photo-1600628421060-f685e4e69e72?w=800&q=80',
     description: 'Layered and flaky flatbread.',
     isTopPick: true,
     fires: 0
@@ -549,7 +549,7 @@ export const MENU_ITEMS: Product[] = [
     price: 29,
     category: 'Roti',
     type: 'food',
-    image: '/butter_parota.jpg',
+    image: 'https://images.unsplash.com/photo-1600628421060-f685e4e69e72?w=800&q=80',
     description: 'Flaky parota topped with melting butter.',
     isTopPick: true,
     fires: 0
@@ -573,7 +573,7 @@ export const MENU_ITEMS: Product[] = [
     price: 59,
     category: 'Roti',
     type: 'food',
-    image: '/butter_roti.png',
+    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
     fires: 0
 ,  
     isVeg: true},
@@ -583,7 +583,7 @@ export const MENU_ITEMS: Product[] = [
     price: 60,
     category: 'Roti',
     type: 'food',
-    image: '/butter_naan.png',
+    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80',
     fires: 0
 ,  
     isVeg: true},
@@ -593,7 +593,7 @@ export const MENU_ITEMS: Product[] = [
     price: 65,
     category: 'Roti',
     type: 'food',
-    image: '/butter_kulcha.png',
+    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80',
     fires: 0
 ,  
     isVeg: true},
@@ -693,7 +693,7 @@ export const MENU_ITEMS: Product[] = [
     price: 263,
     category: 'Pizzas & Momos',
     type: 'food',
-    image: '/fried_momos.png',
+    image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800&q=80',
     fires: 1
 ,  
     isVeg: false},
@@ -703,7 +703,7 @@ export const MENU_ITEMS: Product[] = [
     price: 263,
     category: 'Pizzas & Momos',
     type: 'food',
-    image: '/fried_momos.png',
+    image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800&q=80',
     fires: 0
 ,  
     isVeg: false},
@@ -715,7 +715,7 @@ export const MENU_ITEMS: Product[] = [
     price: 99,
     category: 'Drinks',
     type: 'food',
-    image: '/butterscotch_shake_user.png',
+    image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&q=80',
     description: 'Rich butterscotch flavor blended to perfection with crunchy toppings.',
     fires: 1,
     isVeg: true
@@ -739,7 +739,7 @@ export const MENU_ITEMS: Product[] = [
     price: 50,
     category: 'Drinks',
     type: 'food',
-    image: '/coke_range.png',
+    image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=800&q=80',
     description: 'Ice-cold Coca-Cola 500ml bottle.',
     fires: 2,
     isVeg: true
@@ -764,7 +764,7 @@ export const MENU_ITEMS: Product[] = [
     originalPrice: 299,
     category: 'Rice & Noodles',
     type: 'food',
-    image: '/mutton_fried_rice.png',
+    image: 'https://images.unsplash.com/photo-1633945274405-b4693f0c45aa?w=800&q=80',
     description: 'Special Edition! Tender mutton stir-fried with fragrant rice and secret spices. Limited time offer!',
     isTopPick: true,
     fires: 3,
