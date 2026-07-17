@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow read/write access to all collections for testing and demo purposes
+    // (Ensure cross-device syncing works flawlessly)
+    match /menu/{item} {
+      allow read, write: if true;
+    }
+    
+    match /hotels/{hotel} {
+      allow read, write: if true;
+    }
+    
+    match /orders/{order} {
+      allow read, write: if true;
+    }
+    
+    match /deviceTokens/{token} {
+      allow read, write: if true;
+    }
+    
+    match /system/{setting} {
+      allow read, write: if true;
+    }
+    
+    match /chats/{chat}/messages/{message} {
+      allow read, write: if true;
+    }
+    
+    match /riders/{rider} {
+      allow read, write: if true;
+    }
+    
+    match /staff/{member} {
+      allow read, write: if true;
+    }
+    
+    match /walletTransactions/{trans} {
+      allow read, write: if true;
+    }
+    
+    // Catch-all fallback
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
