@@ -276,7 +276,7 @@ export default function ProfilePage() {
                   if (tab.id === 'logout') {
                     handleLogout();
                   } else if (tab.id === 'delete') {
-                    handleDeleteAccount();
+                    navigate('/delete-account');
                   } else {
                     setActiveTab(tab.id as any);
                   }

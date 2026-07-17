@@ -22,6 +22,7 @@ import MaintenanceGate from './components/MaintenanceGate';
 import CityGateway from './components/CityGateway';
 import LocationPicker from './components/LocationPicker';
 import UndoManager from './components/UndoManager';
+import CapacitorBackButtonHandler from './components/CapacitorBackButtonHandler';
 
 
 
@@ -32,6 +33,7 @@ const AdminPage = lazy(() => import('./components/AdminPage'));
 const StaffLogin = lazy(() => import('./components/StaffLogin'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
 const ChatPage = lazy(() => import('./components/ChatPage'));
+const DeleteAccountPage = lazy(() => import('./components/DeleteAccountPage'));
 
 
 // Store
@@ -190,6 +192,7 @@ export default function App() {
       />
       <LocationPicker />
       <UndoManager />
+      <CapacitorBackButtonHandler />
 
       
       <MaintenanceGate>
@@ -231,6 +234,7 @@ export default function App() {
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/chat/:orderId" element={<ChatPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                    <Route path="/delete-account" element={<DeleteAccountPage />} />
                   </Routes>
                 </Suspense>
               </PageTransition>

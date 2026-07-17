@@ -141,7 +141,7 @@ export default function LocationPicker() {
             </div>
             <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Location Access Needed</h2>
             <p className="text-sm text-gray-600 font-medium leading-relaxed">
-              Mintoo collects location data to accurately assign delivery partners, calculate delivery fees, and estimate delivery time to your address even when the app is in the background.
+              Mintoo collects location data to calculate delivery fees, check delivery feasibility, and estimate delivery times to your address. This location data is only accessed while the app is active and you choose to detect your current position.
             </p>
             <div className="pt-4 flex gap-3">
               <button onClick={() => setShowDisclosure(false)} className="flex-1 py-3 bg-gray-100 text-gray-900 font-bold uppercase text-xs rounded-xl hover:bg-gray-200">

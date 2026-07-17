@@ -43,7 +43,7 @@ export default function PrivacyPolicyPage() {
 
             <section className="space-y-2">
               <h2 className="text-lg font-black uppercase text-gray-900">4. Account Deletion</h2>
-              <p>You have the right to request deletion of your account and personal data. You can do this at any time by navigating to your Profile and selecting "Delete Account". This action is irreversible.</p>
+              <p>You have the right to request deletion of your account and personal data. You can request deletion directly in the app via your Profile settings, or submit a request directly using our <a href="/delete-account" className="text-orange-500 underline font-bold">Account Deletion Form</a>. This action is irreversible and all data will be cleared.</p>
             </section>
 
             <section className="space-y-2">
