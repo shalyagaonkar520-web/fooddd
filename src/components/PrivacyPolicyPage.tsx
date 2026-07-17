@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
 
             <section className="space-y-2">
               <h2 className="text-lg font-black uppercase text-gray-900">5. Contact Us</h2>
-              <p>If you have any questions or concerns about our privacy practices, please contact our support team through the app or at support@mintoo.com.</p>
+              <p>If you have any questions or concerns about our privacy practices, please contact our support team through the app or at shalyagaonkar@gmail.com.</p>
             </section>
           </div>
         </motion.div>

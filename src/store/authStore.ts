@@ -25,6 +25,7 @@ import {
 import { auth, db } from '../firebase';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { useCartStore } from './cartStore';
 
 export interface UserProfile {
   uid: string;
@@ -193,6 +194,7 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       try {
         await signOut(auth);
         localStorage.removeItem('moms_magic_user_phone');
+        useCartStore.getState().clearCart();
         set({ user: null, profile: null });
       } catch (error) {
         console.error('Logout error:', error);

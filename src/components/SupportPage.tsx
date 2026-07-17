@@ -30,7 +30,7 @@ export default function SupportPage() {
     },
     {
       q: "How do I request a refund?",
-      a: "If there is an issue with your order (e.g., wrong items, missing food), please reach out to us using the contact form below or email support@mintoo.com with details and your order ID."
+      a: "If there is an issue with your order (e.g., wrong items, missing food), please reach out to us using the contact form below or email shalyagaonkar@gmail.com with details and your order ID."
     }
   ];
 
@@ -89,8 +89,8 @@ export default function SupportPage() {
                 <Mail className="w-5 h-5 text-[#FC8019]" />
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase">Email Us</h3>
-                  <a href="mailto:support@mintoo.com" className="text-sm font-bold text-gray-800 hover:underline">
-                    support@mintoo.com
+                  <a href="mailto:shalyagaonkar@gmail.com" className="text-sm font-bold text-gray-800 hover:underline">
+                    shalyagaonkar@gmail.com
                   </a>
                 </div>
               </div>
@@ -99,19 +99,9 @@ export default function SupportPage() {
                 <Phone className="w-5 h-5 text-[#FC8019]" />
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase">Call Us</h3>
-                  <a href="tel:+918023456789" className="text-sm font-bold text-gray-800 hover:underline">
-                    +91 802 345 6789
+                  <a href="tel:+917483187572" className="text-sm font-bold text-gray-800 hover:underline">
+                    +91 74831 87572
                   </a>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-2xl">
-                <MapPin className="w-5 h-5 text-[#FC8019]" />
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase">Headquarters</h3>
-                  <p className="text-xs font-bold text-gray-800 leading-tight">
-                    BTM Layout, Bengaluru,<br />Karnataka 560076
-                  </p>
                 </div>
               </div>
             </div>

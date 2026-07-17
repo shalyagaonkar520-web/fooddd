@@ -1,12 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '../store/cartStore';
 import { useLocationStore } from '../store/locationStore';
-import { ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Zap, Sparkles, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSystemStore } from '../store/systemStore';
 
 export default function BottomCartBar() {
-  const { items, total } = useCartStore();
+  const { items, total, clearCart } = useCartStore();
   const { deliveryLocation } = useLocationStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,7 +16,7 @@ export default function BottomCartBar() {
   const distanceKm = deliveryLocation?.distance ?? 999;
   const isOrderingPaused = settings.websiteStatus === 'OFF' || settings.emergencyStop;
 
-  if (itemCount === 0 || location.pathname === '/checkout' || isOrderingPaused) return null;
+  if (itemCount === 0 || location.pathname === '/' || location.pathname === '/checkout' || isOrderingPaused) return null;
 
   return (
     <AnimatePresence>
@@ -68,20 +68,33 @@ export default function BottomCartBar() {
               </div>
             </div>
  
-            <motion.button 
-              whileHover={{ x: 5 }}
-              whileTap={{ scale: 0.90 }}
-              onClick={() => navigate('/checkout')}
-              className="h-10 md:h-14 px-3 md:px-6 ml-2 md:ml-4 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-[1px] md:tracking-[2px] text-gray-900 flex items-center justify-center gap-1 md:gap-2 relative overflow-hidden group/btn shadow-[0_0_15px_rgba(200,155,60,0.3)] shrink-0 whitespace-nowrap"
-              style={{
-                background: 'linear-gradient(135deg, #C89B3C, #E6D2AD)'
-              }}
-            >
-              <div className="absolute inset-0 bg-orange-600 -translate-x-full group-hover/btn:translate-x-0 transition-transform duration-500" />
-              <span className="relative z-10 hidden sm:inline">Order Now</span>
-              <span className="relative z-10 sm:hidden">Order</span>
-              <ArrowRight className="w-4 h-4 md:w-5 md:h-5 relative z-10 group-hover/btn:translate-x-1 transition-transform" />
-            </motion.button>
+            <div className="flex items-center gap-2 md:gap-3 shrink-0 ml-2 md:ml-4">
+              <motion.button 
+                whileHover={{ x: 3 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/checkout')}
+                className="h-10 md:h-14 px-3 md:px-6 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-[1px] md:tracking-[2px] text-gray-900 flex items-center justify-center gap-1 md:gap-2 relative overflow-hidden group/btn shadow-[0_0_15px_rgba(200,155,60,0.3)] shrink-0 whitespace-nowrap cursor-pointer"
+                style={{
+                  background: 'linear-gradient(135deg, #C89B3C, #E6D2AD)'
+                }}
+              >
+                <div className="absolute inset-0 bg-orange-600 -translate-x-full group-hover/btn:translate-x-0 transition-transform duration-500" />
+                <span className="relative z-10 hidden sm:inline">Order Now</span>
+                <span className="relative z-10 sm:hidden">Order</span>
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 relative z-10 group-hover/btn:translate-x-1 transition-transform" />
+              </motion.button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearCart();
+                }}
+                className="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shrink-0 cursor-pointer"
+                title="Clear Cart"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
