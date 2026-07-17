@@ -1,0 +1,1 @@
+import{r as n}from"./vendor-react-D_LmuMGY.js";function a(t,o){n.useEffect(()=>{if(document.title=t==="Mintoo"?"Mintoo":`${t} | Mintoo`,o){let e=document.querySelector('meta[name="description"]');e||(e=document.createElement("meta"),e.setAttribute("name","description"),document.head.appendChild(e)),e.setAttribute("content",o)}},[t,o])}export{a as u};

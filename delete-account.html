@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account Request - Mintoo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (compat mode for easy inline script usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #080808;
+            --card-bg: #121212;
+            --border-color: #222222;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --brand-color: #FC8019;
+            --danger-color: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            padding: 3rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 2rem;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 250px;
+            height: 250px;
+            background: var(--danger-glow);
+            border-radius: 50%;
+            filter: blur(70px);
+            pointer-events: none;
+        }
+
+        header {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 900;
+            font-style: italic;
+            color: var(--brand-color);
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .alert-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 1rem;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .alert-icon {
+            color: var(--danger-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .alert-box p {
+            margin-bottom: 0;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .alert-box strong {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1rem 1.2rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        textarea {
+            resize: none;
+            height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            margin-top: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .checkbox-group input {
+            margin-top: 0.25rem;
+            accent-color: var(--danger-color);
+        }
+
+        .checkbox-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1.1rem;
+            border: none;
+            border-radius: 1rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger:disabled {
+            background-color: #333333;
+            color: #666666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Success State */
+        .success-state {
+            display: none;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .success-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #22c55e;
+            font-size: 2rem;
+            margin: 0 auto 2rem auto;
+        }
+
+        .success-state h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        .success-state p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Form Screen -->
+        <div id="form-screen">
+            <header>
+                <div class="logo-text">Mintoo</div>
+                <h1>Delete Account Request</h1>
+                <p class="subtitle">Submit a request to permanently delete your account & data</p>
+            </header>
+
+            <div class="alert-box">
+                <span class="alert-icon">⚠️</span>
+                <p><strong>This action is permanent and irreversible.</strong> Deleting your account will erase your order history, active wallet balance, referral credits, and saved delivery addresses.</p>
+            </div>
+
+            <form id="delete-form">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" required placeholder="E.g., John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="contact">Phone Number or Email Address</label>
+                    <input type="text" id="contact" required placeholder="E.g., +919876543210 or user@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Reason for leaving (Optional)</label>
+                    <textarea id="reason" placeholder="Please let us know how we could improve..."></textarea>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="confirm-check" required>
+                    <label for="confirm-check" class="checkbox-label">
+                        I confirm that I want to delete my Mintoo account and understand that all my personal data will be permanently wiped within 7 business days.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-danger" id="submit-btn">
+                    <span>Confirm Account Deletion</span>
+                </button>
+
+                <div class="error-message" id="err-msg"></div>
+            </form>
+        </div>
+
+        <!-- Success Screen -->
+        <div class="success-state" id="success-screen">
+            <div class="success-icon">✓</div>
+            <h2>Request Received</h2>
+            <p>Your request to delete your account and clear all associated data has been submitted successfully. We will process it within 7 business days.</p>
+            <button class="btn btn-secondary" onclick="window.location.reload()">Submit Another Request</button>
+        </div>
+    </div>
+
+    <script>
+        // Production Firebase configuration from workspace environment
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDkCRDVMyjpfHbe8ggKFk0UXke_oYWiCg",
+            authDomain: "food-btm.firebaseapp.com",
+            projectId: "food-btm",
+            storageBucket: "food-btm.firebasestorage.app",
+            messagingSenderId: "561759113989",
+            appId: "1:561759113989:web:01490e54a3ea7b4e4edd6c"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const form = document.getElementById('delete-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const errMsg = document.getElementById('err-msg');
+        const formScreen = document.getElementById('form-screen');
+        const successScreen = document.getElementById('success-screen');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const reason = document.getElementById('reason').value.trim();
+            const confirmCheck = document.getElementById('confirm-check').checked;
+
+            if (!name || !contact || !confirmCheck) {
+                showError("Please complete all required fields.");
+                return;
+            }
+
+            // Disable button during network request
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing Request...";
+            errMsg.style.display = 'none';
+
+            try {
+                // Write deletion request to Firestore deletionRequests collection
+                await db.collection('deletionRequests').add({
+                    userId: 'web_request',
+                    name: name,
+                    phoneOrEmail: contact,
+                    reason: reason,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                });
+
+                // Display success screen
+                formScreen.style.display = 'none';
+                successScreen.style.display = 'block';
+            } catch (error) {
+                console.error("Firestore database write error: ", error);
+                showError("Unable to submit request. Please verify your connection or try again later.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Confirm Account Deletion";
+            }
+        });
+
+        function showError(message) {
+            errMsg.innerText = message;
+            errMsg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

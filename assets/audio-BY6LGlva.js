@@ -1,0 +1,1 @@
+const a={CLICK:"https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav",ORDER_SUCCESS:"https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav"},e=t=>{try{const o=new Audio(t);o.volume=.4,o.play().catch(s=>{console.warn("Audio play deferred/blocked by browser policy:",s)})}catch(o){console.error("Audio initialization error:",o)}};export{a as S,e as p};
