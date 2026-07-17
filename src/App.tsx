@@ -15,6 +15,8 @@ const TrackingPage = lazy(() => import('./components/TrackingPage'));
 const DeliveryDashboard = lazy(() => import('./components/DeliveryDashboard'));
 const BulkOrderPage = lazy(() => import('./components/BulkOrderPage'));
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./components/TermsPage'));
+const SupportPage = lazy(() => import('./components/SupportPage'));
 import BottomNav from './components/BottomNav';
 import BottomCartBar from './components/BottomCartBar';
 import OperatingHoursGate from './components/OperatingHoursGate';
@@ -234,6 +236,8 @@ export default function App() {
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/chat/:orderId" element={<ChatPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/support" element={<SupportPage />} />
                     <Route path="/delete-account" element={<DeleteAccountPage />} />
                   </Routes>
                 </Suspense>

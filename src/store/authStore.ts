@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  signInWithCredential
 } from 'firebase/auth';
 import { 
   doc, 
@@ -22,6 +23,8 @@ import {
   arrayRemove 
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 export interface UserProfile {
   uid: string;
@@ -134,8 +137,22 @@ export const useAuthStore = create<AuthStore>((set, get) => {
     loginWithGoogle: async () => {
       set({ loading: true });
       try {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        if (Capacitor.isNativePlatform()) {
+          // Native Google Sign-In flow
+          const user = await GoogleAuth.signIn();
+          const idToken = user.authentication.idToken;
+          
+          if (!idToken) {
+            throw new Error('Google Sign-In failed: No ID Token returned');
+          }
+          
+          const credential = GoogleAuthProvider.credential(idToken);
+          await signInWithCredential(auth, credential);
+        } else {
+          // Web Google Sign-In flow
+          const provider = new GoogleAuthProvider();
+          await signInWithPopup(auth, provider);
+        }
       } catch (error) {
         console.error('Google sign-in error:', error);
         throw error;

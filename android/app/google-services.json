@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "561759113989",
+    "project_id": "food-btm",
+    "storage_bucket": "food-btm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:561759113989:android:a2742c551a3c098e4edd6c",
+        "android_client_info": {
+          "package_name": "com.minto.food"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "561759113989-34in7c5scpd39b1keq5e3i9hadqlrddc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8TvNBpDp2K3Zs17RmVRRg9jSOq65Iwpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "561759113989-34in7c5scpd39b1keq5e3i9hadqlrddc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

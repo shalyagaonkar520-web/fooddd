@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Conditions - Mintoo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #080808;
+            --card-bg: #121212;
+            --border-color: #222222;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --brand-color: #FC8019;
+            --brand-glow: rgba(252, 128, 25, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 2rem;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: var(--brand-glow);
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        .logo-text {
+            font-size: 2.2rem;
+            font-weight: 900;
+            font-style: italic;
+            color: var(--brand-color);
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--brand-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+        }
+
+        li {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+
+        li::before {
+            content: '•';
+            color: var(--brand-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .alert-box {
+            background: rgba(252, 128, 25, 0.05);
+            border: 1px solid rgba(252, 128, 25, 0.2);
+            border-radius: 1rem;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .alert-box p {
+            margin-bottom: 0;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        a {
+            color: var(--brand-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            opacity: 0.9;
+        }
+
+        footer {
+            margin-top: 4rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1.5rem;
+                border-radius: 1.5rem;
+            }
+            .logo-text {
+                font-size: 1.8rem;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-text">Mintoo</div>
+            <h1>Terms & Conditions</h1>
+            <div class="last-updated">Last Updated: July 2026</div>
+        </header>
+
+        <main>
+            <div class="alert-box">
+                <p><strong>Please read these terms carefully before using Mintoo.</strong> These terms govern your access to and use of our food delivery application and website services.</p>
+            </div>
+
+            <section>
+                <h2>1. Acceptance of Terms</h2>
+                <p>By registering, downloading, or using the Mintoo food delivery application, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the application.</p>
+            </section>
+
+            <section>
+                <h2>2. Service Description</h2>
+                <p>Mintoo acts as an intermediary marketplace connecting customers with local kitchens and restaurants. We facilitate ordering, payment processing, and delivery coordination. We strive for excellence but are not directly responsible for food preparation quality, which remains the sole responsibility of the preparing restaurant/kitchen.</p>
+            </section>
+
+            <section>
+                <h2>3. User Accounts</h2>
+                <p>To place orders, you must create an account. You are responsible for maintaining the confidentiality of your credentials (email, password, etc.) and for all activity that occurs under your account. You agree to provide accurate, current, and complete information during signup.</p>
+            </section>
+
+            <section>
+                <h2>4. Payments, Prices & Refunds</h2>
+                <p>All prices listed in the app are set by the partner kitchens or Mintoo and may include delivery fees or packaging fees. Payments are processed securely through our payment gateway partner (Razorpay). Once an order is prepared or out for delivery, cancellations and refunds are not guaranteed and are subject to store and merchant policies.</p>
+            </section>
+
+            <section>
+                <h2>5. Limitation of Liability</h2>
+                <p>Mintoo, its owners, and affiliates shall not be liable for any indirect, incidental, or consequential damages arising out of your use of the service, including foodborne illnesses or delivery delays caused by traffic, weather, or other force majeure events.</p>
+            </section>
+
+            <section>
+                <h2>6. Governing Law</h2>
+                <p>These terms shall be governed by and construed in accordance with the laws of India, without regard to its conflict of law provisions.</p>
+            </section>
+
+            <section>
+                <h2>7. Changes to Terms</h2>
+                <p>We reserves the right to modify these terms at any time. Your continued use of the application following any updates constitutes acceptance of the new terms.</p>
+            </section>
+        </main>
+
+        <footer>
+            &copy; 2026 Mintoo. All rights reserved. Premium Gourmet Delivery.
+        </footer>
+    </div>
+</body>
+</html>

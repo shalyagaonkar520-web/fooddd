@@ -38,7 +38,7 @@ export default function PrivacyPolicyPage() {
 
             <section className="space-y-2">
               <h2 className="text-lg font-black uppercase text-gray-900">3. Location Data</h2>
-              <p>We require background and foreground location access to determine your precise delivery address and estimate delivery times accurately. You can disable this in your device settings, but it may affect delivery accuracy.</p>
+              <p>We require active/foreground location access to determine your precise delivery address and estimate delivery times accurately. You can disable this in your device settings, but it may affect delivery accuracy.</p>
             </section>
 
             <section className="space-y-2">

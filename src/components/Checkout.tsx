@@ -4,7 +4,7 @@ import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
 import { useLocationStore } from '../store/locationStore';
 import { motion } from 'framer-motion';
-import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, ChevronRight, Loader2, Compass, Search } from 'lucide-react';
+import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, ChevronRight, Loader2, Compass, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge } from '../types';
@@ -15,6 +15,7 @@ import { useAuthStore } from '../store/authStore';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { haversineDistance } from '../lib/location';
+import { Capacitor } from '@capacitor/core';
 
 import DeliveryAnimation from './DeliveryAnimation';
 
@@ -81,7 +82,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const isBulkOrder = localStorage.getItem('moms_magic_order_type') === 'bulk';
 
-  const { items: cartItems, total: cartTotal, clearCart } = useCartStore();
+  const { items: cartItems, total: cartTotal, clearCart, removeItem } = useCartStore();
   const bulkStore = useBulkOrderStore();
   const { bulkItems, getGrandTotal: getBulkTotal, cake, decoration, additionalServices, resetBulkOrder } = bulkStore;
 
@@ -226,6 +227,12 @@ export default function Checkout() {
       setFormData((prev) => ({ ...prev, name: savedName || '', phone: savedPhone || '' }));
     }
   }, [settings, navigate, user]);
+
+  React.useEffect(() => {
+    if (!isBulkOrder && cartItems.length === 0) {
+      navigate('/home');
+    }
+  }, [isBulkOrder, cartItems, navigate]);
 
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
@@ -514,12 +521,31 @@ export default function Checkout() {
         modal: { ondismiss: () => setIsSubmitting(false) },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', (r: any) => {
-        toast.error('Payment Failed: ' + r.error.description);
-        setIsSubmitting(false);
-      });
-      rzp.open();
+      if (Capacitor.isNativePlatform() && (window as any).RazorpayCheckout) {
+        // Native Razorpay Flow for Capacitor
+        (window as any).RazorpayCheckout.on('payment.success', async (successCallback: any) => {
+          await completeOrder(successCallback.razorpay_payment_id);
+          setIsSubmitting(false);
+        });
+        (window as any).RazorpayCheckout.on('payment.cancel', (errorCallback: any) => {
+          toast.error('Payment Cancelled');
+          setIsSubmitting(false);
+        });
+        (window as any).RazorpayCheckout.on('payment.failed', (errorCallback: any) => {
+          toast.error('Payment Failed: ' + errorCallback.description);
+          setIsSubmitting(false);
+        });
+        
+        (window as any).RazorpayCheckout.open(options);
+      } else {
+        // Standard Web Razorpay Flow
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', (r: any) => {
+          toast.error('Payment Failed: ' + r.error.description);
+          setIsSubmitting(false);
+        });
+        rzp.open();
+      }
     } else {
       setIsSubmitting(true);
       try {
@@ -771,9 +797,23 @@ export default function Checkout() {
                     </ul>
                   )}
                 </div>
-                <p className="text-base sm:text-lg font-black text-gray-900 shrink-0">
-                  ₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}
-                </p>
+                <div className="flex items-center gap-3 shrink-0">
+                  <p className="text-base sm:text-lg font-black text-gray-900">
+                    ₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}
+                  </p>
+                  {!isBulkOrder && (
+                    <button
+                      onClick={() => {
+                        removeItem(item.id!);
+                        toast.success(`${item.name} removed from cart`);
+                      }}
+                      className="p-1 hover:text-red-500 text-gray-400 transition-colors cursor-pointer"
+                      title="Remove item"
+                    >
+                      <X className="w-4.5 h-4.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

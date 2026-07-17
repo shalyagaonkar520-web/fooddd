@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Mintoo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #080808;
+            --card-bg: #121212;
+            --border-color: #222222;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --brand-color: #FC8019;
+            --brand-glow: rgba(252, 128, 25, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 2rem;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: var(--brand-glow);
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        .logo-text {
+            font-size: 2.2rem;
+            font-weight: 900;
+            font-style: italic;
+            color: var(--brand-color);
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--brand-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+        }
+
+        li {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+
+        li::before {
+            content: '•';
+            color: var(--brand-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .alert-box {
+            background: rgba(252, 128, 25, 0.05);
+            border: 1px solid rgba(252, 128, 25, 0.2);
+            border-radius: 1rem;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .alert-box p {
+            margin-bottom: 0;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        a {
+            color: var(--brand-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            opacity: 0.9;
+        }
+
+        footer {
+            margin-top: 4rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1.5rem;
+                border-radius: 1.5rem;
+            }
+            .logo-text {
+                font-size: 1.8rem;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-text">Mintoo</div>
+            <h1>Privacy Policy</h1>
+            <div class="last-updated">Last Updated: July 2026</div>
+        </header>
+
+        <main>
+            <div class="alert-box">
+                <p><strong>Google Play Developer Policy Compliance:</strong> This privacy policy explains how the Mintoo application collects, stores, protects, and handles personal data including locations, phone numbers, and profile details.</p>
+            </div>
+
+            <section>
+                <h2>1. Information We Collect</h2>
+                <p>Mintoo collects personal data to facilitate premium food delivery services. This includes:</p>
+                <ul>
+                    <li><strong>Personal Identity:</strong> Your full name, email address, and phone number when registering an account.</li>
+                    <li><strong>Delivery Addresses:</strong> Saved physical address labels and detailed text entered by you.</li>
+                    <li><strong>Device Information:</strong> Push notification tokens used strictly to deliver real-time order tracking updates.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>2. Location Data</h2>
+                <p>To calculate delivery feasibility, estimate delivery partner arrival times, and dynamically compute delivery fees, Mintoo accesses your device's precise location (via GPS coordinates).</p>
+                <p><strong>Foreground Access:</strong> Location data is only requested and processed in the foreground when you actively click the "Detect Location" button inside our app interface and explicitly grant permission. We do NOT access background location.</p>
+            </section>
+
+            <section>
+                <h2>3. How We Use & Protect Data</h2>
+                <p>All information collected is processed securely via HTTPS encryption and stored inside Google Firebase Cloud database infrastructure. We strictly do not sell, distribute, or share user personal data with third-party advertising companies.</p>
+            </section>
+
+            <section>
+                <h2>4. Account Deletion & User Rights</h2>
+                <p>You retain full ownership and control over your personal data. You have the right to request full account and data deletion at any time:</p>
+                <ul>
+                    <li><strong>In-App Deletion:</strong> Navigate to your <strong>Profile Tab</strong> inside the application, select <strong>Delete Account</strong>, and follow the confirmation prompts.</li>
+                    <li><strong>Web-based Deletion:</strong> If you do not have the app installed, you can submit an online request directly using our public <a href="/delete-account.html">Account Deletion Request Form</a>.</li>
+                </ul>
+                <p>Upon request, all profile details, saved addresses, wallet ledger records, and order history linked to your user ID will be permanently purged from our databases within 7 business days.</p>
+            </section>
+
+            <section>
+                <h2>5. Contact Us</h2>
+                <p>If you have any questions or feedback regarding our privacy standards or wish to follow up on a data deletion request, please reach out to our privacy officer at <a href="mailto:support@mintoo.com">support@mintoo.com</a>.</p>
+            </section>
+        </main>
+
+        <footer>
+            &copy; 2026 Mintoo. All rights reserved. Premium Gourmet Delivery.
+        </footer>
+    </div>
+</body>
+</html>

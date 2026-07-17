@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, ChevronRight } from 'lucide-react';
 import { useSEO } from '../utils/seo';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebase';
+import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 
 const FloatingFood = ({ src, delay, className, size = "w-24 h-24" }: { src: string, delay: number, className: string, size?: string }) => (
@@ -75,12 +74,14 @@ const GoldenParticles = () => (
 export default function AuthPage() {
   useSEO("MINTOO - Luxury Dining", "Freshly crafted. Delivered beautifully.");
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [showOTP, setShowOTP] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
+  const { loginWithGoogle, loginWithEmail, signUpWithEmail } = useAuthStore();
 
   useEffect(() => {
     const isGuest = localStorage.getItem('moms_magic_guest');
@@ -90,57 +91,36 @@ export default function AuthPage() {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    if (showLogin && !(window as any).recaptchaVerifier) {
-      try {
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible',
-          'callback': () => {
-            // reCAPTCHA solved
-          }
-        });
-      } catch (err) {
-        console.error("Recaptcha init failed", err);
-      }
+  const handleEmailAuth = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      toast.error('Please fill in all credentials.');
+      return;
     }
-  }, [showLogin]);
+    if (isSignUp && !name.trim()) {
+      toast.error('Please enter your name.');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters.');
+      return;
+    }
 
-  const handleLogin = async () => {
-    if (phone.length < 10) return;
     setIsLoading(true);
     try {
-      const appVerifier = (window as any).recaptchaVerifier;
-      const phoneNumber = `+91${phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      setConfirmationResult(confirmation);
-      setShowOTP(true);
-      toast.success('OTP sent successfully!');
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || 'Failed to send OTP.');
-      // Reset recaptcha if error
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.render().then((widgetId: any) => {
-          (window as any).grecaptcha.reset(widgetId);
-        });
+      if (isSignUp) {
+        await signUpWithEmail(email.trim(), password.trim(), name.trim());
+        toast.success(`Welcome to Mintoo, ${name.trim()}! 🎁`);
+      } else {
+        await loginWithEmail(email.trim(), password.trim());
+        toast.success('Login successful! 🍳');
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    if (otp.length < 6 || !confirmationResult) return;
-    setIsLoading(true);
-    try {
-      await confirmationResult.confirm(otp);
-      localStorage.setItem('moms_magic_user_phone', phone);
+      localStorage.setItem('moms_magic_user_phone', email.trim());
       localStorage.removeItem('moms_magic_guest');
-      toast.success('Login successful!');
       navigate('/home');
-    } catch (error: any) {
-      console.error(error);
-      toast.error('Invalid OTP. Please try again.');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Authentication failed. Please check credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -155,20 +135,18 @@ export default function AuthPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      // Save user info locally
-      localStorage.setItem('moms_magic_user_phone', user.phoneNumber || user.email || user.uid);
+      await loginWithGoogle();
+      const userObj = useAuthStore.getState().user;
+      if (userObj) {
+        localStorage.setItem('moms_magic_user_phone', userObj.email || userObj.uid);
+      } else {
+        localStorage.setItem('moms_magic_user_phone', 'google_user');
+      }
       localStorage.removeItem('moms_magic_guest');
-      toast.success(`Welcome, ${user.displayName || 'there'}! 🍽️`);
+      toast.success(`Welcome back! 🍽️`);
       navigate('/home');
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        toast.error('Google sign-in was cancelled.');
-      } else {
-        toast.error(error.message || 'Google sign-in failed.');
-      }
+      toast.error(error.message || 'Google sign-in failed.');
     } finally {
       setIsLoading(false);
     }
@@ -325,63 +303,78 @@ export default function AuthPage() {
         animate={{ y: 0, opacity: 1 }}
         className="w-full max-w-md bg-[#141414] border border-white/10 rounded-[40px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.5)] relative z-10"
       >
-        <div id="recaptcha-container"></div>
         <div className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center shadow-[0_10px_30px_rgba(212,175,55,0.2)] border border-[#D4AF37]/30 bg-gradient-to-br from-[#D4AF37]/20 to-transparent mb-8">
           <span className="text-[#FFD86B] text-3xl font-black italic" style={{ fontFamily: "'Clash Display', sans-serif" }}>M</span>
         </div>
         
         <h1 className="text-3xl font-bold text-white text-center mb-2 tracking-wide" style={{ fontFamily: "'Clash Display', sans-serif" }}>Mintoo</h1>
         <p className="text-center text-[#A5A5A5] text-sm font-medium mb-8" style={{ fontFamily: "'Inter', sans-serif" }}>
-          {showOTP ? 'Enter the OTP sent to your phone' : 'Enter your phone number to continue'}
+          {isSignUp ? 'Create your account' : 'Welcome back to Mintoo'}
         </p>
-        
         <div className="space-y-4" style={{ fontFamily: "'Inter', sans-serif" }}>
-          {!showOTP ? (
-            <>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <span className="text-white font-bold border-r border-white/20 pr-3">+91</span>
-                </div>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="Enter mobile number"
-                  className="w-full pl-[4.5rem] pr-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-lg shadow-inner"
-                />
-              </div>
-              
-              <button
-                onClick={handleLogin}
-                disabled={phone.length < 10 || isLoading}
-                className="w-full h-14 bg-gradient-to-r from-[#D4AF37] to-[#FFD86B] text-[#080808] rounded-2xl font-bold text-[13px] uppercase tracking-[2px] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                {isLoading ? <div className="w-5 h-5 border-2 border-[#080808]/30 border-t-[#080808] rounded-full animate-spin" /> : 'Continue'}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="relative group">
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter 6-digit OTP"
-                  className="w-full px-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white text-center tracking-[0.5em] placeholder:text-gray-600 text-xl shadow-inner placeholder:tracking-normal"
-                />
-              </div>
-              
-              <button
-                onClick={handleVerifyOTP}
-                disabled={otp.length < 6 || isLoading}
-                className="w-full h-14 bg-gradient-to-r from-[#D4AF37] to-[#FFD86B] text-[#080808] rounded-2xl font-bold text-[13px] uppercase tracking-[2px] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                {isLoading ? <div className="w-5 h-5 border-2 border-[#080808]/30 border-t-[#080808] rounded-full animate-spin" /> : 'Verify OTP'}
-              </button>
-            </>
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+          <div className="flex bg-[#080808] p-1 rounded-xl border border-white/10 mb-4">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(false)}
+              className={`flex-1 py-2 text-center text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${
+                !isSignUp ? 'bg-[#D4AF37] text-black' : 'text-gray-500 hover:text-white'
+              }`}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSignUp(true)}
+              className={`flex-1 py-2 text-center text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${
+                isSignUp ? 'bg-[#D4AF37] text-black' : 'text-gray-500 hover:text-white'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {isSignUp && (
+            <div className="relative group">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Full Name"
+                className="w-full px-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-sm shadow-inner"
+              />
+            </div>
           )}
+
+          <div className="relative group">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email Address"
+              className="w-full px-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-sm shadow-inner"
+            />
+          </div>
+
+          <div className="relative group">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full px-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-sm shadow-inner"
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isLoading || !email.trim() || !password.trim()}
+            className="w-full h-14 bg-gradient-to-r from-[#D4AF37] to-[#FFD86B] text-[#080808] rounded-2xl font-bold text-[13px] uppercase tracking-[2px] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            {isLoading ? <div className="w-5 h-5 border-2 border-[#080808]/30 border-t-[#080808] rounded-full animate-spin" /> : (isSignUp ? 'Create Account' : 'Login')}
+          </button>
+        </form>
           
           <div className="relative py-4">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
