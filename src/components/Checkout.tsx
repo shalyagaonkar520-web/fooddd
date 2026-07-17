@@ -199,6 +199,14 @@ export default function Checkout() {
   React.useEffect(() => {
     const adminToken = localStorage.getItem('moms_magic_admin_token');
     const userPhone  = localStorage.getItem('moms_magic_user_phone');
+    const isGuest = localStorage.getItem('moms_magic_guest') === 'true';
+
+    if (!isGuest && !userPhone && !user) {
+      toast.error('Please log in or continue as guest to checkout.', { id: 'checkout-auth-required' });
+      navigate('/');
+      return;
+    }
+
     const isAdmin =
       adminToken === 'mock-jwt-admin-token-123456' ||
       userPhone === '+917483187572' ||
@@ -217,7 +225,7 @@ export default function Checkout() {
     if (savedName || savedPhone) {
       setFormData((prev) => ({ ...prev, name: savedName || '', phone: savedPhone || '' }));
     }
-  }, [settings, navigate]);
+  }, [settings, navigate, user]);
 
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
@@ -492,7 +500,7 @@ export default function Checkout() {
       }
 
       const options = {
-        key: 'rzp_live_T1Y1yu09Jbjo6b',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T1Y1yu09Jbjo6b',
         amount: Math.round(payableAmount * 100),
         currency: 'INR',
         name: 'Mintoo',

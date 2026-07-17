@@ -223,6 +223,7 @@ export default function App() {
                     <Route path="/track" element={<TrackingPage />} />
                     <Route path="/track/:orderId" element={<TrackingPage />} />
                     <Route path="/delivery" element={<DeliveryDashboard />} />
+                    <Route path="/rider" element={<DeliveryDashboard />} />
                     <Route path="/bulk" element={<BulkOrderPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="/hotel" element={<HotelPanel />} />

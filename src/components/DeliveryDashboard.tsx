@@ -15,9 +15,18 @@ import {
   Clock,
   Compass,
   PhoneCall,
-  MessageSquare
+  MessageSquare,
+  Plus,
+  EyeOff,
+  RotateCcw
 } from 'lucide-react';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword, 
+  signOut,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'firebase/auth';
 import { 
   doc, 
   getDoc, 
@@ -37,12 +46,21 @@ export default function DeliveryDashboard() {
   useSEO("Rider Portal", "Delivery Partner dashboard for live tracking, routing, and earnings updates.");
   const navigate = useNavigate();
 
-  // Auth States
+  // Auth Tab config
+  const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
+
+  // Login States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [riderId, setRiderId] = useState<string | null>(null);
   const [riderProfile, setRiderProfile] = useState<any>(null);
+
+  // Registration States
+  const [registerName, setRegisterName] = useState('');
+  const [registerPhone, setRegisterPhone] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
 
   // Status Toggles
   const [isOnline, setIsOnline] = useState(false);
@@ -57,13 +75,23 @@ export default function DeliveryDashboard() {
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'assigned' | 'available' | 'history'>('available');
 
+  // Dismissed orders locally
+  const [clearedOrderIds, setClearedOrderIds] = useState<string[]>([]);
+
+  // Load Cleared Orders list from local storage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('moms_magic_cleared_rider_orders');
+      if (stored) setClearedOrderIds(JSON.parse(stored));
+    } catch (_) {}
+  }, []);
+
   // Verify Auth State on mount
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
         setRiderId(null);
         setRiderProfile(null);
-        navigate('/staff', { replace: true });
         return;
       }
 
@@ -116,15 +144,15 @@ export default function DeliveryDashboard() {
             setShowPhonePrompt(true);
           }
         } else {
-          // Also allow if mock rider login was bypassed
+          // Allow custom/Google login to bypass standard staff registration if in riders
           setRiderId(user.uid);
-          const initialProfile = { name: user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' };
+          const initialProfile = { name: user.displayName || user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' };
           setRiderProfile(initialProfile);
           setShowPhonePrompt(true);
         }
       } catch (_) {
         setRiderId(user.uid);
-        const initialProfile = { name: user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' };
+        const initialProfile = { name: user.displayName || user.email?.split('@')[0] || 'Rider', earnings: 0, status: 'offline', phone: '' };
         setRiderProfile(initialProfile);
         setShowPhonePrompt(true);
       }
@@ -141,7 +169,7 @@ export default function DeliveryDashboard() {
     }
     
     try {
-      const riderRef = doc(db, 'riders', riderId);
+      const riderRef = doc(db, 'riders', riderId!);
       await setDoc(riderRef, { phone: newPhone }, { merge: true });
       setRiderProfile((prev: any) => ({ ...prev, phone: newPhone }));
       setShowPhonePrompt(false);
@@ -150,7 +178,6 @@ export default function DeliveryDashboard() {
       toast.error("Failed to save phone number.");
     }
   };
-
 
   // 1. Live Geolocation GPS Tracking while Online + Simulation Fallback
   useEffect(() => {
@@ -228,7 +255,6 @@ export default function DeliveryDashboard() {
   useEffect(() => {
     if (!riderId) return;
 
-    // Try Firestore for assigned orders
     const ordersQuery = query(
       collection(db, 'orders'),
       where('riderId', '==', riderId)
@@ -255,7 +281,6 @@ export default function DeliveryDashboard() {
       (error) => console.error('Error fetching assigned orders:', error)
     );
 
-    // Try Firestore for available orders
     const availableQuery = query(
       collection(db, 'orders'),
       where('status', '==', 'Ready for Delivery')
@@ -280,7 +305,6 @@ export default function DeliveryDashboard() {
       unsubscribeAvailable();
     };
   }, [riderId]);
-
 
   // Login handler
   const handleRiderLogin = async (e: React.FormEvent) => {
@@ -309,8 +333,89 @@ export default function DeliveryDashboard() {
     }
   };
 
+  // Google Login Handler
+  const handleRiderGoogleLogin = async () => {
+    setLoginLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const riderRef = doc(db, 'riders', user.uid);
+      const riderSnap = await getDoc(riderRef);
+      
+      if (riderSnap.exists()) {
+        setRiderId(user.uid);
+        const data = riderSnap.data();
+        setRiderProfile(data);
+        setIsOnline(data.status === 'online');
+        toast.success(`Welcome back, ${data.name || 'Partner'}! 🛵`);
+      } else {
+        const initialProfile = {
+          name: user.displayName || user.email?.split('@')[0] || 'Rider Partner',
+          email: user.email || '',
+          earnings: 0,
+          status: 'offline',
+          phone: user.phoneNumber || '',
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(riderRef, initialProfile);
+        setRiderId(user.uid);
+        setRiderProfile(initialProfile);
+        toast.success("Rider profile created successfully! 🎉");
+        if (!initialProfile.phone) {
+          setShowPhonePrompt(true);
+        }
+      }
+    } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        toast.error("Google login cancelled.");
+      } else {
+        toast.error(err.message || "Google login failed.");
+      }
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // Register Handler
+  const handleRiderRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerName.trim() || !registerPhone.trim() || !registerEmail.trim() || !registerPassword.trim()) {
+      toast.error("All fields are required.");
+      return;
+    }
+    if (registerPhone.trim().length !== 10) {
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    setLoginLoading(true);
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, registerEmail.trim(), registerPassword.trim());
+      const user = cred.user;
+
+      const initialProfile = {
+        name: registerName.trim(),
+        email: registerEmail.trim(),
+        phone: registerPhone.trim(),
+        earnings: 0,
+        status: 'offline',
+        createdAt: new Date().toISOString()
+      };
+      await setDoc(doc(db, 'riders', user.uid), initialProfile);
+      
+      setRiderId(user.uid);
+      setRiderProfile(initialProfile);
+      toast.success("Rider account registered successfully! 🛵");
+    } catch (err: any) {
+      toast.error(err.message || "Registration failed.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
   const handleRiderLogout = async () => {
-    // Set offline on logout if we have a real rider doc
     if (riderId && riderId !== 'mock-rider-id-12345') {
       try {
         const riderRef = doc(db, 'riders', riderId);
@@ -321,7 +426,6 @@ export default function DeliveryDashboard() {
     toast.success("Signed out successfully.");
     navigate('/staff', { replace: true });
   };
-
 
   // Toggle Online/Offline State
   const toggleOnlineStatus = async () => {
@@ -357,12 +461,10 @@ export default function DeliveryDashboard() {
 
   // Accept Order
   const handleAcceptOrder = async (orderId: string) => {
-    // Update localStorage immediately
     updateLocalOrder(orderId, { riderId: riderId, riderStatus: 'accepted' });
     setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
     toast.success("Order accepted! 📦");
     setActiveTab('assigned');
-    // Try Firestore in background
     try {
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { 
@@ -396,15 +498,18 @@ export default function DeliveryDashboard() {
     } catch (err) { /* silently ignore */ }
   };
 
-  // Complete Delivery (Crediting ₹40 commission automatically)
+  // Complete Delivery (Dynamic payout ₹15/km calculation)
   const handleCompleteDelivery = async (orderId: string) => {
     if (!riderId) return;
-    const newEarnings = (riderProfile?.earnings || 0) + 40;
+    const order = assignedOrders.find(o => o.id === orderId);
+    const distanceVal = order?.deliveryLocation?.distance || 3;
+    const payout = Math.round(distanceVal * 15);
+    const newEarnings = (riderProfile?.earnings || 0) + payout;
+
     updateLocalOrder(orderId, { status: 'delivered', riderStatus: 'delivered', deliveredAt: new Date().toISOString() });
     setAssignedOrders(prev => prev.filter(o => o.id !== orderId));
     setRiderProfile((prev: any) => ({ ...prev, earnings: newEarnings }));
-    toast.success("Order Delivered successfully! +₹40 earned. 💵");
-    // Try Firestore in background
+    toast.success(`Order Delivered successfully! +₹${payout} earned. 💵`);
     try {
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { status: 'delivered', riderStatus: 'delivered', deliveredAt: new Date().toISOString() });
@@ -413,6 +518,20 @@ export default function DeliveryDashboard() {
     } catch (err) { /* silently ignore */ }
   };
 
+  // Dismiss/Clear order locally
+  const dismissRiderOrder = (orderId: string) => {
+    const updated = [...clearedOrderIds, orderId];
+    setClearedOrderIds(updated);
+    localStorage.setItem('moms_magic_cleared_rider_orders', JSON.stringify(updated));
+    toast.success("Order dismissed from view.");
+  };
+
+  // Restore cleared orders
+  const restoreRiderOrders = () => {
+    setClearedOrderIds([]);
+    localStorage.removeItem('moms_magic_cleared_rider_orders');
+    toast.success("Cleared orders restored!");
+  };
 
   // Render Login Panel
   if (!riderId) {
@@ -421,10 +540,10 @@ export default function DeliveryDashboard() {
         <motion.div 
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white border border-gray-200 rounded-[35px] w-full max-w-md p-8 shadow-sm space-y-8 relative overflow-hidden"
+          className="bg-white border border-gray-200 rounded-[35px] w-full max-w-md p-8 shadow-sm space-y-6 relative overflow-hidden text-left"
         >
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-red-500 to-orange-500" />
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-red-500/5 blur-[80px] rounded-full pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-orange-500" />
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-orange-500/5 blur-[80px] rounded-full pointer-events-none" />
 
           <div className="space-y-2 mt-4 text-center">
             <Truck className="w-12 h-12 text-orange-500 mx-auto animate-pulse" />
@@ -432,50 +551,158 @@ export default function DeliveryDashboard() {
               RIDER <span className="text-orange-500">PORTAL</span>
             </h2>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none">
-              Authorized Delivery Login Required
+              Delivery Partner Portal Access
             </p>
           </div>
 
-          <form onSubmit={handleRiderLogin} className="space-y-4">
-            <input
-              type="email"
-              placeholder="RIDER EMAIL"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-500 tracking-[1px]"
-            />
-            <input
-              type="password"
-              placeholder="PASSWORD"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-500 tracking-[1px]"
-            />
+          <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl shadow-inner">
             <button
-              type="submit"
-              disabled={loginLoading}
-              className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:brightness-105 active:scale-95 text-gray-900 font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              type="button"
+              onClick={() => setAuthTab('login')}
+              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                authTab === 'login' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+              }`}
             >
-              {loginLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <>Log In Partner <LogIn className="w-4 h-4" /></>}
+              Log In
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => setAuthTab('register')}
+              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                authTab === 'register' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Register
+            </button>
+          </div>
+
+          {authTab === 'login' ? (
+            <form onSubmit={handleRiderLogin} className="space-y-4">
+              <div>
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Rider Email</label>
+                <input
+                  type="email"
+                  placeholder="rider@mintoo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Password</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:brightness-105 active:scale-95 text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {loginLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <>Log In Partner <LogIn className="w-4 h-4" /></>}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRiderRegister} className="space-y-4">
+              <div>
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  placeholder="10-digit number"
+                  value={registerPhone}
+                  onChange={(e) => setRegisterPhone(e.target.value.replace(/\D/g, ''))}
+                  required
+                  maxLength={10}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Email Address</label>
+                <input
+                  type="email"
+                  placeholder="partner@minto.com"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Password</label>
+                <input
+                  type="password"
+                  placeholder="Min 6 characters"
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:brightness-105 active:scale-95 text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {loginLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <>Register Partner <Plus className="w-4 h-4" /></>}
+              </button>
+            </form>
+          )}
+
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-gray-200"></div>
+            <span className="flex-shrink mx-4 text-gray-400 text-[9px] font-black uppercase tracking-widest">Or Continue With</span>
+            <div className="flex-grow border-t border-gray-200"></div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleRiderGoogleLogin}
+            disabled={loginLoading}
+            className="w-full border border-gray-200 hover:border-orange-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#EA4335"
+                d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.513 0-6.386-2.87-6.386-6.39 0-3.52 2.873-6.39 6.386-6.39 1.637 0 3.125.617 4.266 1.624l3.053-3.05C19.262 2.378 15.932 1 12.241 1 6.033 1 1 6.033 1 12.24c0 6.208 5.033 11.24 11.24 11.24 5.86 0 10.74-4.21 10.74-10.24 0-.64-.078-1.258-.22-1.956H12.24z"
+              />
+            </svg>
+            Sign In with Google
+          </button>
         </motion.div>
       </div>
     );
   }
+
+  // Filter out locally cleared/dismissed orders
+  const visibleAvailable = availableOrders.filter(o => !clearedOrderIds.includes(o.id));
+  const visibleAssigned = assignedOrders.filter(o => !clearedOrderIds.includes(o.id));
 
   // Calculate earnings
   const completedCount = pastDeliveries.filter(o => (o as any).status === 'delivered').length;
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pt-24 pb-48 px-4 md:px-6">
-      
       <div className="max-w-4xl mx-auto space-y-10">
         
         {/* Header Dashboard Info */}
-        <div className="luxury-card rounded-[35px] p-6 sm:p-10 border-orange-200 bg-gradient-to-br from-[#0B0E14] to-black flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="luxury-card rounded-[35px] p-6 sm:p-10 border border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4 text-left">
             <div className={`w-12 h-12 rounded-full border flex items-center justify-center shadow-lg text-lg font-black shrink-0 ${
               isOnline ? 'bg-orange-50 border-orange-200 text-orange-500 shadow-[#FC8019]/20' : 'bg-red-500/10 border-red-500/30 text-red-500'
@@ -489,13 +716,22 @@ export default function DeliveryDashboard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
+            {clearedOrderIds.length > 0 && (
+              <button
+                onClick={restoreRiderOrders}
+                className="bg-orange-50 border border-orange-200 hover:border-orange-300 text-orange-600 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" /> Restore ({clearedOrderIds.length})
+              </button>
+            )}
+            
             {/* Status Switcher */}
             <button
               onClick={toggleOnlineStatus}
               className={`px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all cursor-pointer shadow-md ${
                 isOnline 
                   ? 'bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-gray-900' 
-                  : 'bg-orange-500 text-black hover:brightness-105 shadow-[#FC8019]/10'
+                  : 'bg-orange-505 bg-orange-500 text-black hover:brightness-105 shadow-[#FC8019]/10'
               }`}
             >
               <Power className="w-4 h-4" />
@@ -527,7 +763,7 @@ export default function DeliveryDashboard() {
           <div className="bg-white border border-gray-200 p-5 rounded-2xl text-left col-span-2 sm:col-span-1">
             <Clock className="w-5 h-5 text-orange-500 mb-2" />
             <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Commission Rate</p>
-            <h3 className="text-xl font-black italic text-orange-500 mt-2">₹40 / order</h3>
+            <h3 className="text-xl font-black italic text-orange-500 mt-2">₹15 / km</h3>
           </div>
         </div>
 
@@ -539,7 +775,7 @@ export default function DeliveryDashboard() {
               activeTab === 'available' ? 'bg-orange-500 text-black shadow-md' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            Available ({availableOrders.length})
+            Available ({visibleAvailable.length})
           </button>
           <button
             onClick={() => setActiveTab('assigned')}
@@ -547,7 +783,7 @@ export default function DeliveryDashboard() {
               activeTab === 'assigned' ? 'bg-orange-500 text-black shadow-md' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            Assigned ({assignedOrders.length})
+            Assigned ({visibleAssigned.length})
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -564,73 +800,89 @@ export default function DeliveryDashboard() {
           {activeTab === 'available' ? (
             <div className="space-y-6">
               {!isOnline && (
-                <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold">
+                <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold text-left">
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   Please toggle status to ONLINE to receive order assignments.
                 </div>
               )}
-              {availableOrders.length === 0 ? (
+              {visibleAvailable.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-3xl border border-gray-200">
                   <Truck className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">No available deliveries</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {availableOrders.map((order) => (
-                    <div key={order.id} className="bg-white border border-gray-200 rounded-3xl p-6 text-left space-y-4 hover:border-orange-200 transition-all shadow-sm">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">#{order.id.slice(0, 8)}</p>
-                          <h4 className="font-bold text-gray-900 text-sm mt-1">{order.deliveryLocation?.address.slice(0, 30)}...</h4>
+                  {visibleAvailable.map((order) => {
+                    const distance = order.deliveryLocation?.distance || 3;
+                    const payout = Math.round(distance * 15);
+                    return (
+                      <div key={order.id} className="bg-white border border-gray-200 rounded-3xl p-6 text-left space-y-4 hover:border-orange-200 transition-all shadow-sm relative">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">#{order.id.slice(0, 8)}</p>
+                            <h4 className="font-bold text-gray-900 text-sm mt-1">{order.deliveryLocation?.address.slice(0, 30)}...</h4>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="bg-green-50 text-green-600 px-2 py-1 rounded text-[8px] font-black uppercase border border-green-200">
+                              Ready for Delivery
+                            </span>
+                            <button
+                              onClick={() => dismissRiderOrder(order.id)}
+                              className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all cursor-pointer"
+                              title="Dismiss Order"
+                            >
+                              <EyeOff className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        <span className="bg-green-50 text-green-600 px-2 py-1 rounded text-[8px] font-black uppercase border border-green-200">
-                          Ready for Delivery
-                        </span>
+                        <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                          <div>
+                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Distance</p>
+                            <p className="text-gray-900 font-bold text-sm">{distance} km</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Earn</p>
+                            <p className="text-orange-500 font-black text-sm">₹{payout}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleAcceptOrder(order.id)}
+                          disabled={!isOnline}
+                          className="w-full bg-orange-500 text-black py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Claim Delivery
+                        </button>
                       </div>
-                      <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div>
-                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Distance</p>
-                          <p className="text-gray-900 font-bold text-sm">{order.deliveryLocation?.distance} km</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Earn</p>
-                          <p className="text-orange-500 font-black text-sm">₹40</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleAcceptOrder(order.id)}
-                        disabled={!isOnline}
-                        className="w-full bg-orange-500 text-black py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Claim Delivery
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           ) : activeTab === 'assigned' ? (
             <div className="space-y-6">
               {!isOnline && (
-                <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold">
+                <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold text-left">
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   Please toggle status to ONLINE to activate Geolocation GPS tracking and receive order assignments.
                 </div>
               )}
 
-              {assignedOrders.length === 0 ? (
+              {visibleAssigned.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-3xl border border-gray-200">
                   <Truck className="w-12 h-12 text-gray-500 mx-auto mb-4 animate-bounce" />
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">No active deliveries assigned</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {assignedOrders.map((order) => {
+                  {visibleAssigned.map((order) => {
                     const customerLoc = order.deliveryLocation;
+                    const distance = customerLoc?.distance || 3;
+                    const payout = Math.round(distance * 15);
                     const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${customerLoc?.lat || 12.9200},${customerLoc?.lng || 77.6150}`;
                     
                     return (
-                      <div key={order.id} className="bg-white border border-gray-200 rounded-3xl p-6 text-left space-y-6 hover:border-orange-200 transition-all">
+                      <div key={order.id} className="bg-white border border-gray-200 rounded-3xl p-6 text-left space-y-6 hover:border-orange-200 transition-all relative">
                         {/* Status bar */}
                         <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                           <div>
@@ -638,10 +890,17 @@ export default function DeliveryDashboard() {
                             <p className="text-gray-900 text-xs font-semibold mt-1">Items: {order.items.map((i: any) => `${i.quantity || i.finalQuantity || 1}x ${i.name}`).join(', ')}</p>
                           </div>
                           
-                          <div className="text-right">
+                          <div className="flex items-center gap-2">
                             <span className="bg-orange-50 border border-orange-200 text-orange-500 text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded">
                               {(order as any).status}
                             </span>
+                            <button
+                              onClick={() => dismissRiderOrder(order.id)}
+                              className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all cursor-pointer"
+                              title="Dismiss Order"
+                            >
+                              <EyeOff className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
 
@@ -656,9 +915,7 @@ export default function DeliveryDashboard() {
                           <div className="space-y-1.5">
                             <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Delivery Address</p>
                             <h4 className="text-xs font-bold text-gray-900 uppercase leading-relaxed">{customerLoc?.address}</h4>
-                            {customerLoc?.distance && (
-                              <p className="text-[10px] text-orange-500 font-black uppercase tracking-wider">Distance: {customerLoc.distance} km</p>
-                            )}
+                            <p className="text-[10px] text-orange-500 font-black uppercase tracking-wider">Distance: {distance} km (Earn: ₹{payout})</p>
                           </div>
                         </div>
 
@@ -736,7 +993,7 @@ export default function DeliveryDashboard() {
               )}
             </div>
           ) : (
-            // History and Completed Deliveries list
+            /* History and Completed Deliveries list */
             <div className="space-y-6">
               <h3 className="text-xl font-black italic uppercase tracking-tighter text-gray-900 text-left">Completed Deliveries</h3>
               
@@ -746,23 +1003,26 @@ export default function DeliveryDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pastDeliveries.map((order) => (
-                    <div key={order.id} className="bg-white/40 border border-gray-200 rounded-2xl p-5 flex items-center justify-between gap-4 text-left">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-gray-900 text-sm font-bold">{order.userName}</p>
-                          <span className="bg-orange-500/10 text-orange-500 border border-orange-500/20 text-[7px] font-black uppercase px-2 py-0.5 rounded">
-                            {(order as any).status}
-                          </span>
+                  {pastDeliveries.map((order) => {
+                    const payout = Math.round((order.deliveryLocation?.distance || 3) * 15);
+                    return (
+                      <div key={order.id} className="bg-white/40 border border-gray-200 rounded-2xl p-5 flex items-center justify-between gap-4 text-left">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-gray-900 text-sm font-bold">{order.userName}</p>
+                            <span className="bg-orange-500/10 text-orange-500 border border-orange-500/20 text-[7px] font-black uppercase px-2 py-0.5 rounded">
+                              {(order as any).status}
+                            </span>
+                          </div>
+                          <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest mt-1">ID: #{order.id.slice(0, 8)} • Completed: {order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString() : 'Just now'}</p>
                         </div>
-                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest mt-1">ID: #{order.id.slice(0, 8)} • Completed: {order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString() : 'Just now'}</p>
-                      </div>
 
-                      <div className="text-right">
-                        <span className="text-orange-500 font-black italic text-lg">+₹40</span>
+                        <div className="text-right">
+                          <span className="text-orange-500 font-black italic text-lg">+₹{payout}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

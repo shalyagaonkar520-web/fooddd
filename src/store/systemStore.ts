@@ -57,7 +57,15 @@ import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export const useSystemStore = create<SystemState>((set, get) => ({
-  settings: { ...DEFAULT_SETTINGS },
+  settings: (() => {
+    const cached = localStorage.getItem('moms_magic_admin_settings');
+    if (cached) {
+      try {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(cached) };
+      } catch (_) {}
+    }
+    return { ...DEFAULT_SETTINGS };
+  })(),
   isLoading: false,
   error: null,
 
@@ -72,15 +80,28 @@ export const useSystemStore = create<SystemState>((set, get) => ({
   },
 
   listenSettings: () => {
+    const loadCached = () => {
+      const cached = localStorage.getItem('moms_magic_admin_settings');
+      if (cached) {
+        try {
+          return { ...DEFAULT_SETTINGS, ...JSON.parse(cached) };
+        } catch (_) {}
+      }
+      return { ...DEFAULT_SETTINGS };
+    };
+
     const docRef = doc(db, 'system/settings');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as AdminSettings;
         set({ settings: data });
         localStorage.setItem('moms_magic_admin_settings', JSON.stringify(data));
+      } else {
+        set({ settings: loadCached() });
       }
     }, (error) => {
-      console.error("Error listening to settings:", error);
+      console.warn("Firestore settings rules blocked real-time listener, using cache:", error.message);
+      set({ settings: loadCached() });
     });
     return unsubscribe;
   },

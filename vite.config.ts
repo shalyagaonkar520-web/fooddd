@@ -14,7 +14,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'robots.txt', 'logo.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
+        includeAssets: ['robots.txt', 'logo.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
         manifest: {
           name: "Mom's Magic",
           short_name: "Mom's Magic",

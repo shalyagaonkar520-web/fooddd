@@ -22,28 +22,43 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   error: null,
 
   listenToMenu: () => {
+    const loadMergedMenu = (firestoreItems: Product[] = []) => {
+      const cachedCustom = localStorage.getItem('moms_magic_custom_menu');
+      let customItems: Product[] = [];
+      if (cachedCustom) {
+        try { customItems = JSON.parse(cachedCustom); } catch (_) {}
+      }
+      
+      let base = firestoreItems.length > 0 ? firestoreItems : [...FALLBACK_MENU];
+      
+      const merged = [...base];
+      for (const item of customItems) {
+        const idx = merged.findIndex(i => i.id === item.id);
+        if (idx !== -1) {
+          merged[idx] = item;
+        } else {
+          merged.push(item);
+        }
+      }
+      return merged;
+    };
+
+    // Set initial merged menu
+    set({ menuItems: loadMergedMenu(), isLoading: false });
+
     const colRef = collection(db, 'menu');
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
       if (!snapshot.empty) {
         const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        set({ menuItems: items, isLoading: false, error: null });
+        const merged = loadMergedMenu(items);
+        set({ menuItems: merged, isLoading: false, error: null });
         localStorage.setItem('moms_magic_menu_cache', JSON.stringify(items));
       } else {
-        // Collection is empty or doesn't exist
-        const cached = localStorage.getItem('moms_magic_menu_cache');
-        if (cached) {
-          try {
-            set({ menuItems: JSON.parse(cached), isLoading: false });
-          } catch (e) {
-            set({ menuItems: [...FALLBACK_MENU], isLoading: false });
-          }
-        } else {
-          set({ menuItems: [...FALLBACK_MENU], isLoading: false });
-        }
+        set({ menuItems: loadMergedMenu(), isLoading: false });
       }
     }, (error) => {
-      console.error("Error listening to menu:", error);
-      set({ error: error.message, isLoading: false });
+      console.warn("Firestore menu rules blocked real-time listener, using cache:", error.message);
+      set({ menuItems: loadMergedMenu(), isLoading: false });
     });
     return unsubscribe;
   },

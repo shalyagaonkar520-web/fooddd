@@ -10,6 +10,10 @@ export default function AdminCouponManager() {
   const { settings, updateSettings } = useSystemStore();
   const [coupons, setCoupons] = useState<Coupon[]>(settings.coupons || []);
   
+  React.useEffect(() => {
+    setCoupons(settings.coupons || []);
+  }, [settings.coupons]);
+  
   const [newCoupon, setNewCoupon] = useState<Partial<Coupon>>({
     code: '',
     type: 'fixed_discount',

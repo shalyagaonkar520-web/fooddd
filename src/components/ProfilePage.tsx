@@ -66,9 +66,12 @@ export default function ProfilePage() {
     }
   }, [user, loading, localPhone, isGuest, navigate]);
 
-  // Load Wallet Transactions and local order history
+  // Load Wallet Transactions
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setTransactions([]);
+      return;
+    }
 
     const loadWalletData = async () => {
       setLoadingTransactions(true);
@@ -90,10 +93,15 @@ export default function ProfilePage() {
       }
     };
 
+    loadWalletData();
+  }, [user]);
+
+  // Load local order history
+  useEffect(() => {
     const loadOrders = () => {
       try {
         const stored = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        const phone = profile?.phone || user.phoneNumber || '';
+        const phone = profile?.phone || user?.phoneNumber || localPhone || '';
         
         // Clean utility to match digits
         const clean = (p: string) => p.replace(/\D/g, '').slice(-10);
@@ -101,7 +109,7 @@ export default function ProfilePage() {
         // Filter orders by phone number or userId (for logged in placements)
         const userOrders = stored.filter((o: any) => {
           const isPhoneMatch = (phone && typeof o.userPhone === 'string') ? clean(o.userPhone) === clean(phone) : false;
-          const isUserMatch = o.userId === user.uid;
+          const isUserMatch = user ? o.userId === user.uid : false;
           return isPhoneMatch || isUserMatch;
         });
 
@@ -112,9 +120,8 @@ export default function ProfilePage() {
       }
     };
 
-    loadWalletData();
     loadOrders();
-  }, [user, profile]);
+  }, [user, profile, localPhone]);
 
   const handleLogout = async () => {
     try {

@@ -2,21 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Plus, Minus, ChevronRight, Star, Clock, Zap, Filter, Heart, ArrowRight } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
-import { MENU_ITEMS as menuItems } from '../data/menuItems';
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate } from 'react-router-dom';
 import { playSound, SOUNDS } from '../utils/audio';
-
-const CATEGORIES = [
-  { name: "Burger", id: "Burgers & Rolls", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=150&q=80" },
-  { name: "Pizza", id: "Pizzas & Momos", image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=150&q=80" },
-  { name: "Chinese", id: "Rice & Noodles", image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=150&q=80" },
-  { name: "Rice", id: "Veg / Gravy", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80" },
-  { name: "Biryani", id: "Biryani", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=150&q=80" },
-  { name: "Dessert", id: "Drinks", image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=150&q=80" },
-  { name: "All", id: "All Dishes", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=150&q=80" },
-  { name: "Starters", id: "Starters", image: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=150&q=80" },
-];
+import { useMenuStore } from '../store/menuStore';
 
 const SEARCH_PLACEHOLDERS = [
   "What are you craving today?",
@@ -27,11 +16,30 @@ const SEARCH_PLACEHOLDERS = [
 ];
 
 export default function HomePage() {
+  const { menuItems, isLoading } = useMenuStore();
   const [activeCategory, setActiveCategory] = useState("All Dishes");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Dynamic Categories Memoized from Firestore menuItems
+  const CATEGORIES = useMemo(() => {
+    const uniqueCats = Array.from(new Set(menuItems.map(item => item.category)));
+    const list = uniqueCats.map(cat => {
+      const firstItem = menuItems.find(item => item.category === cat && item.image);
+      return {
+        name: cat,
+        id: cat,
+        image: firstItem?.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80"
+      };
+    });
+    return [
+      { name: "All", id: "All Dishes", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=150&q=80" },
+      ...list
+    ];
+  }, [menuItems]);
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
@@ -39,6 +47,7 @@ export default function HomePage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   const { items: cartItems, addItem, removeItem, updateQuantity } = useCartStore();
   const { deliveryLocation, openLocationPicker, detectLocation } = useLocationStore();
   const navigate = useNavigate();
@@ -63,8 +72,6 @@ export default function HomePage() {
     }
   }, [deliveryLocation, detectLocation]);
 
-
-
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length);
@@ -79,7 +86,7 @@ export default function HomePage() {
         if (input) {
           input.focus();
         }
-      }, 100); // small delay to ensure render
+      }, 100);
     }
   }, []);
 
@@ -98,35 +105,52 @@ export default function HomePage() {
       items = items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     
-    const showVeg = activeFilters.includes('Veg Only');
-    const showNonVeg = activeFilters.includes('Non Veg');
-    if (showVeg && !showNonVeg) items = items.filter(i => i.isVeg);
-    if (showNonVeg && !showVeg) items = items.filter(i => !i.isVeg);
-    if (activeFilters.includes('Bestsellers')) items = items.filter(i => (i as any).fires && (i as any).fires > 0);
-    if (activeFilters.includes('Under ₹99')) items = items.filter(i => i.price < 99);
-    if (activeFilters.includes('Offers')) items = items.filter(i => i.price < 99); // mock offers
+    // Quick Filters
+    if (activeFilters.includes('Veg Only')) {
+      items = items.filter(item => item.isVeg === true);
+    }
+    if (activeFilters.includes('Non Veg')) {
+      items = items.filter(item => item.isVeg === false);
+    }
+    if (activeFilters.includes('Bestsellers')) {
+      items = items.filter(item => item.fires && item.fires > 0);
+    }
+    if (activeFilters.includes('Offers')) {
+      items = items.filter(item => item.price < 99);
+    }
+    if (activeFilters.includes('Under ₹99')) {
+      items = items.filter(item => item.price < 99);
+    }
 
-    // Sort low to high
-    return items.sort((a, b) => a.price - b.price);
-  }, [activeCategory, searchQuery, activeFilters]);
+    return items;
+  }, [menuItems, activeCategory, searchQuery, activeFilters]);
 
   const getQuantity = (id: string) => {
-    const item = cartItems.find((i) => i.id === id);
-    return item ? item.quantity : 0;
+    return cartItems.find(item => item.id === id)?.quantity || 0;
   };
 
   const handleAdd = (item: any) => {
-    playSound(SOUNDS.ADD_TO_CART);
-    addItem(item);
+    playSound(SOUNDS.CART_ADD);
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      category: item.category,
+      isVeg: item.isVeg
+    });
   };
 
-  const userName = localStorage.getItem('moms_magic_user_name') || 'Guest';
-
-
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <span className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-transparent pb-[180px] relative">
-      {/* Top Scrolling Marquee */}
+    <div className="min-h-screen bg-gray-50 pb-28 text-left">
       <div className="bg-gradient-to-r from-white to-[#d1f2e5] text-green-900 overflow-hidden py-1">
         <div className="whitespace-nowrap animate-[scroll_20s_linear_infinite] text-[10px] font-black uppercase tracking-widest flex gap-8 items-center">
           <span>✨ 100% FRESH INGREDIENTS</span>
@@ -138,6 +162,7 @@ export default function HomePage() {
           <span>✨ PREMIUM QUALITY</span>
         </div>
       </div>
+      
       {/* Top Section - Location & Profile */}
       <div className="bg-gradient-to-b from-[#d1f2e5] via-white/80 to-transparent px-4 pt-6 pb-12 relative z-30 -mb-16 pointer-events-none">
         <div className="flex items-center justify-between pointer-events-auto">
@@ -158,13 +183,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      
-      
-      
       {/* Plate Toggle Hero Section */}
       <div className="bg-transparent pb-6 relative z-20 -mt-2 transition-all duration-500">
         <div className="relative w-full aspect-square rounded-none overflow-hidden group shadow-md bg-neutral-900 flex flex-col items-center justify-center p-6">
-          
           {/* Dynamic Craving Food Backgrounds */}
           <AnimatePresence mode="wait">
             {(!activeFilters.includes('Veg Only') && !activeFilters.includes('Non Veg')) ? (
@@ -189,77 +210,55 @@ export default function HomePage() {
                 />
               </motion.div>
             ) : (
-              <motion.img
-                key={activeFilters.includes('Non Veg') ? 'non-veg' : 'veg'}
-                src={
-                  activeFilters.includes('Non Veg') 
-                  ? "https://images.unsplash.com/photo-1606471191009-63994c53433b?auto=format&fit=crop&w=1000&q=80"
-                  : "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=1000&q=80"
-                }
-                alt="Craving food"
+              <motion.div
+                key={activeFilters.includes('Non Veg') ? "nonveg-bg" : "veg-bg"}
                 initial={{ opacity: 0, scale: 1.15, filter: "blur(4px)" }}
                 animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                 exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                transition={{ duration: 0.7, ease: "easeInOut" }}
-                className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
-              />
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0 w-full h-full select-none pointer-events-none"
+              >
+                <img
+                  src={
+                    activeFilters.includes('Non Veg')
+                      ? "https://images.unsplash.com/photo-1606471191009-63994c53433b?auto=format&fit=crop&w=1000&q=80"
+                      : "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=1000&q=80"
+                  }
+                  alt="Status Background"
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Dark Vignette Overlay for excellent text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/70 mix-blend-multiply pointer-events-none z-10" />
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-black/40 z-10 transition-colors duration-500" />
 
-          {/* Realistic White Steam rising up */}
-          <div className="absolute inset-x-0 bottom-0 h-[60%] overflow-hidden pointer-events-none z-10 flex justify-center space-x-6">
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 50, scale: 0.8 }}
-                animate={{
-                  opacity: [0, 0.4, 0],
-                  y: -150,
-                  scale: [0.8, 1.8, 2.5],
-                  x: i % 2 === 0 ? [0, 20, -15, 0] : [0, -20, 15, 0]
-                }}
-                transition={{
-                  duration: 4.5 + (i % 3),
-                  repeat: Infinity,
-                  delay: i * 0.8,
-                  ease: "easeOut"
-                }}
-                className="w-16 h-16 bg-white rounded-full blur-[20px] mix-blend-screen"
-              />
-            ))}
+          {/* Slogan */}
+          <div className="relative z-20 text-center space-y-2 max-w-sm mb-6 pointer-events-none">
+            <h1 className="text-3xl sm:text-4xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+              MOM'S <span className="text-orange-500">MAGIC</span>
+            </h1>
+            <p className="text-[9px] font-black text-gray-200 uppercase tracking-widest drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+              {activeFilters.includes('Veg Only') 
+                ? "🌱 Fresh, Healthy and Pure Veg" 
+                : activeFilters.includes('Non Veg') 
+                ? "🍗 Rich, Spiced and Non Veg" 
+                : "🍳 The Perfect Blend of Spices"}
+            </p>
           </div>
 
-          {/* Header */}
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center z-20 mb-8 pointer-events-none"
-          >
-            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-tight max-w-[85%] mx-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-              Craving Something <span className="text-orange-500 animate-pulse">Extraordinary?</span>
-            </h2>
-            <p className="mt-2 text-sm text-orange-200 font-extrabold tracking-wide drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">
-              Slide the plate to switch your preference.
-            </p>
-          </motion.div>
-
-          {/* The Plate Toggle */}
+          {/* Slider Toggle */}
           <div 
-            className="relative w-full max-w-[320px] h-[90px] bg-white/60 backdrop-blur-md rounded-[45px] shadow-inner border border-white flex items-center p-2 cursor-pointer"
+            className="relative w-full max-w-[320px] h-[90px] bg-white/60 backdrop-blur-md rounded-[45px] shadow-inner border border-white flex items-center p-2 cursor-pointer z-20"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const x = e.clientX - rect.left;
               if (x < rect.width / 3) {
-                 // Veg
                  setActiveFilters(activeFilters.filter(f => f !== 'Non Veg' && f !== 'Veg Only').concat('Veg Only'));
               } else if (x > (rect.width * 2) / 3) {
-                 // Non Veg
                  setActiveFilters(activeFilters.filter(f => f !== 'Veg Only' && f !== 'Non Veg').concat('Non Veg'));
               } else {
-                 // Both
                  setActiveFilters(activeFilters.filter(f => f !== 'Veg Only' && f !== 'Non Veg'));
               }
             }}
@@ -278,7 +277,6 @@ export default function HomePage() {
               dragConstraints={{ left: 0, right: 230 }}
               dragElastic={0.4}
               onDragEnd={(e, { offset, velocity }) => {
-                // If it was Veg
                 if (activeFilters.includes('Veg Only')) {
                   if (offset.x > 150 || velocity.x > 300) {
                      setActiveFilters(activeFilters.filter(f => f !== 'Veg Only' && f !== 'Non Veg').concat('Non Veg'));
@@ -286,15 +284,13 @@ export default function HomePage() {
                      setActiveFilters(activeFilters.filter(f => f !== 'Veg Only' && f !== 'Non Veg'));
                   }
                 } 
-                // If it was Non Veg
                 else if (activeFilters.includes('Non Veg')) {
                   if (offset.x < -150 || velocity.x < -300) {
                      setActiveFilters(activeFilters.filter(f => f !== 'Non Veg' && f !== 'Veg Only').concat('Veg Only'));
                   } else if (offset.x < -50 || velocity.x < -100) {
-                     setActiveFilters(activeFilters.filter(f => f !== 'Non Veg' && f !== 'Veg Only'));
+                     setActiveFilters(activeFilters.filter(f => h => f !== 'Non Veg' && f !== 'Veg Only'));
                   }
                 }
-                // If it was Both
                 else {
                   if (offset.x > 50 || velocity.x > 100) {
                      setActiveFilters(activeFilters.filter(f => f !== 'Veg Only' && f !== 'Non Veg').concat('Non Veg'));
@@ -340,7 +336,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-{/* Sticky Search Bar */}
+
+      {/* Sticky Search Bar */}
       <div className="sticky top-0 z-50 bg-[#d1f2e5]/90 backdrop-blur-md px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.1)] transition-all">
         <div className="relative group">
           <div className="absolute inset-0 bg-orange-500/10 blur-xl rounded-2xl opacity-50 group-focus-within:opacity-100 transition-opacity duration-500" />
@@ -352,7 +349,7 @@ export default function HomePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-sm font-bold text-gray-900 placeholder:text-transparent z-20"
+                className="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-sm font-bold text-gray-900 placeholder:text-transparent z-20 text-left"
               />
               {!searchQuery && (
                 <AnimatePresence mode="wait">
@@ -418,7 +415,6 @@ export default function HomePage() {
                 </div>
               </button>
             </div>
-
           </div>
         </div>
       </div>
@@ -432,8 +428,6 @@ export default function HomePage() {
           borderRadius: '24px'
         }}
       >
-        
-        
         {/* Categories Horizontal */}
         <div className="-mx-4 px-4 overflow-x-auto no-scrollbar pb-4">
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 min-w-full">
@@ -498,7 +492,7 @@ export default function HomePage() {
                       handleFilterToggle(filter);
                     }
                   }}
-                  className={`px-4 py-2 border rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm cursor-pointer transition-colors ${isActive ? 'bg-orange-50 border-orange-500 text-orange-500' : 'bg-white border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500'}`}>
+                  className={`px-4 py-2 border rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm cursor-pointer transition-colors text-left ${isActive ? 'bg-orange-50 border-orange-500 text-orange-500' : 'bg-white border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500'}`}>
                   {filter}
                 </div>
               );
@@ -509,7 +503,7 @@ export default function HomePage() {
         {/* Food Items List */}
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-black text-gray-900 tracking-tight">
+            <h2 className="text-xl font-black text-gray-900 tracking-tight text-left">
               {searchQuery ? 'Search Results' : activeCategory === 'All Dishes' ? 'Recommended For You' : `Explore ${activeCategory}`}
             </h2>
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{filteredItems.length} items</span>
@@ -536,10 +530,8 @@ export default function HomePage() {
                     {/* Subtle moving light reflection */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/40 to-white/0 -translate-x-full group-hover:animate-[shimmer_1.5s_ease-in-out] pointer-events-none" />
                     
-
-                    
                     {/* Badges */}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 text-left">
                       {item.isVeg ? (
                         <div className="w-5 h-5 bg-white/80 backdrop-blur-md rounded-md flex items-center justify-center shadow-sm border border-white/50">
                           <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
@@ -563,7 +555,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Content Details */}
-                  <div className="flex-1 p-3 flex flex-col justify-between bg-white relative z-20">
+                  <div className="flex-1 p-3 flex flex-col justify-between bg-white relative z-20 text-left">
                     <div>
                       <h3 className="font-bold text-gray-900 leading-tight text-[13px] md:text-sm line-clamp-2">{item.name}</h3>
                       <div className="flex items-center gap-1.5 mt-1 text-gray-500 text-[9px] font-bold uppercase tracking-wider">
@@ -581,7 +573,7 @@ export default function HomePage() {
                         {getQuantity(item.id) === 0 ? (
                           <button
                             onClick={() => handleAdd(item)}
-                            className="bg-orange-500 text-white px-3.5 py-1.5 rounded-[10px] font-black text-[10px] uppercase tracking-widest shadow-[0_4px_10px_rgba(249,115,22,0.3)] hover:bg-orange-600 transition-all flex items-center gap-1"
+                            className="bg-orange-500 text-white px-3.5 py-1.5 rounded-[10px] font-black text-[10px] uppercase tracking-widest shadow-[0_4px_10px_rgba(249,115,22,0.3)] hover:bg-orange-600 transition-all flex items-center gap-1 cursor-pointer"
                           >
                             Add <Plus className="w-3.5 h-3.5 stroke-[3]" />
                           </button>
@@ -592,7 +584,7 @@ export default function HomePage() {
                                 playSound(SOUNDS.CLICK);
                                 updateQuantity(item.id, getQuantity(item.id) - 1);
                               }}
-                              className="px-2 h-full hover:bg-white/20 transition-colors flex items-center justify-center"
+                              className="px-2 h-full hover:bg-white/20 transition-colors flex items-center justify-center cursor-pointer"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -604,7 +596,7 @@ export default function HomePage() {
                                 playSound(SOUNDS.CLICK);
                                 updateQuantity(item.id, getQuantity(item.id) + 1);
                               }}
-                              className="px-2 h-full hover:bg-white/20 transition-colors flex items-center justify-center"
+                              className="px-2 h-full hover:bg-white/20 transition-colors flex items-center justify-center cursor-pointer"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
@@ -633,7 +625,7 @@ export default function HomePage() {
         {showScrollTop && (
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-28 right-6 z-50 w-12 h-12 bg-white rounded-full shadow-xl border border-gray-100 flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-all active:scale-95"
+          className="fixed bottom-28 right-6 z-50 w-12 h-12 bg-white rounded-full shadow-xl border border-gray-100 flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-all active:scale-95 cursor-pointer"
         >
           <ChevronRight className="w-6 h-6 -rotate-90" />
         </button>

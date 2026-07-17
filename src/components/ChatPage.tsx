@@ -36,32 +36,72 @@ export default function ChatPage() {
   // 1. Identify currently logged in User's Role (customer, rider, admin)
   useEffect(() => {
     const checkRole = async () => {
-      if (!user) {
+      // Check local storage for admin override first
+      if (localStorage.getItem('admin_auth') === 'true') {
+        setUserRole('admin');
         setLoading(false);
-        setAuthError(true);
+        return;
+      }
+
+      const localPhone = localStorage.getItem('moms_magic_user_phone');
+      const isGuest = localStorage.getItem('moms_magic_guest') === 'true';
+
+      if (!user) {
+        if (localPhone || isGuest) {
+          setUserRole('customer');
+        } else {
+          setAuthError(true);
+        }
+        setLoading(false);
         return;
       }
 
       try {
+        // 1. Check staff collection
         const staffSnap = await getDoc(doc(db, 'staff', user.uid));
         if (staffSnap.exists()) {
           const role = staffSnap.data().role;
-          if (role === 'admin') setUserRole('admin');
-          else if (role === 'rider') setUserRole('rider');
-          else setUserRole('customer');
-        } else {
-          setUserRole('customer');
+          if (role === 'admin') {
+            setUserRole('admin');
+            setLoading(false);
+            return;
+          } else if (role === 'rider') {
+            setUserRole('rider');
+            setLoading(false);
+            return;
+          }
         }
+
+        // 2. Check riders collection directly as fallback
+        const riderSnap = await getDoc(doc(db, 'riders', user.uid));
+        if (riderSnap.exists()) {
+          setUserRole('rider');
+          setLoading(false);
+          return;
+        }
+
+        // 3. Default to customer
+        setUserRole('customer');
       } catch (err) {
         setUserRole('customer');
       }
+      setLoading(false);
     };
     checkRole();
   }, [user]);
 
   // 2. Fetch Order Details & Enforce Permission Controls
   useEffect(() => {
-    if (!orderId || !userRole || !user) return;
+    if (!orderId || !userRole) return;
+
+    const localPhone = localStorage.getItem('moms_magic_user_phone');
+    const isGuest = localStorage.getItem('moms_magic_guest') === 'true';
+
+    if (userRole !== 'admin' && !user && !localPhone && !isGuest) {
+      setAuthError(true);
+      setLoading(false);
+      return;
+    }
 
     const orderDocRef = doc(db, 'orders', orderId);
     const unsubscribeOrder = onSnapshot(orderDocRef, (docSnap) => {
@@ -71,8 +111,15 @@ export default function ChatPage() {
 
         // Security check: must be admin, order customer, or order rider
         const isAdmin = userRole === 'admin';
-        const isCustomer = userRole === 'customer' && orderData.userId === user.uid;
-        const isRider = userRole === 'rider' && orderData.riderId === user.uid;
+        const clean = (p: string) => p.replace(/\D/g, '').slice(-10);
+        const localClean = localPhone ? clean(localPhone) : '';
+
+        const isCustomer = userRole === 'customer' && (
+          (user && orderData.userId === user.uid) ||
+          (localPhone && orderData.userPhone && clean(orderData.userPhone) === localClean) ||
+          isGuest
+        );
+        const isRider = userRole === 'rider' && user && orderData.riderId === user.uid;
 
         if (!isAdmin && !isCustomer && !isRider) {
           setAuthError(true);
@@ -120,17 +167,24 @@ export default function ChatPage() {
   // 5. Send Message Handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !orderId || !user || !userRole) return;
+    if (!inputText.trim() || !orderId || !userRole) return;
+
+    const localPhone = localStorage.getItem('moms_magic_user_phone');
+    const isGuest = localStorage.getItem('moms_magic_guest') === 'true';
+
+    if (userRole !== 'admin' && !user && !localPhone && !isGuest) return;
 
     const textToSend = inputText.trim();
     setInputText('');
 
+    const savedName = localStorage.getItem('moms_magic_user_name') || 'Customer';
+
     try {
       const messagesCollection = collection(db, 'chats', orderId, 'messages');
       await addDoc(messagesCollection, {
-        senderId: user.uid,
+        senderId: user?.uid || localPhone || 'guest',
         senderRole: userRole,
-        senderName: user.displayName || user.email?.split('@')[0] || 'User',
+        senderName: user?.displayName || user?.email?.split('@')[0] || (userRole === 'admin' ? 'Admin' : savedName),
         text: textToSend,
         timestamp: serverTimestamp()
       });
@@ -228,7 +282,7 @@ export default function ChatPage() {
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.senderId === user?.uid;
+            const isMe = msg.senderId === (user?.uid || (userRole === 'admin' ? 'admin' : ''));
             return (
               <div 
                 key={msg.id} 
