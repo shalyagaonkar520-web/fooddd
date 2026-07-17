@@ -39,6 +39,26 @@ export default function OrdersPage() {
     const normalizePhone = (p: string) => p ? p.replace(/\D/g, '').slice(-10) : '';
     const userPhoneToMatch = normalizePhone(profile?.phone || user?.phoneNumber || localPhone || '');
 
+    // Always load local orders first as instant fallback
+    const loadLocalOrders = () => {
+      try {
+        const stored: Order[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+        return stored.filter(o => {
+          if (user?.uid && o.userId === user.uid) return true;
+          if (userPhoneToMatch && o.userPhone && normalizePhone(o.userPhone) === userPhoneToMatch) return true;
+          if (!user?.uid && !userPhoneToMatch) return true; // show all local if no auth
+          return false;
+        });
+      } catch { return []; }
+    };
+
+    const localOrders = loadLocalOrders();
+    if (localOrders.length > 0) {
+      localOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setOrders(localOrders);
+      setLoading(false);
+    }
+
     if (!userPhoneToMatch && (!user || !user.uid)) {
       setLoading(false);
       return;
@@ -51,8 +71,9 @@ export default function OrdersPage() {
     let phoneOrdersList: Order[] = [];
 
     const combineAndSet = () => {
-      const merged = [...userOrdersList, ...phoneOrdersList];
-      const unique = merged.filter((item, index, self) =>
+      const firestoreOrders = [...userOrdersList, ...phoneOrdersList];
+      const allOrders = [...firestoreOrders, ...localOrders];
+      const unique = allOrders.filter((item, index, self) =>
         index === self.findIndex((t) => t.id === item.id)
       );
       unique.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -68,7 +89,7 @@ export default function OrdersPage() {
         userOrdersList = arr;
         combineAndSet();
       }, (error) => {
-        console.error("User orders fetch error:", error);
+        console.warn("Firestore orders blocked, using local cache:", error.message);
         combineAndSet();
       });
     }
@@ -81,7 +102,7 @@ export default function OrdersPage() {
         phoneOrdersList = arr;
         combineAndSet();
       }, (error) => {
-        console.error("Phone orders fetch error:", error);
+        console.warn("Phone orders fetch blocked, using local cache:", error.message);
         combineAndSet();
       });
     }

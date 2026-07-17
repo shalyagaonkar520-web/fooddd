@@ -415,20 +415,7 @@ export default function TrackingPage() {
           activeOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           navigate(`/track/${activeOrders[0].id}`, { replace: true });
         } else {
-          // If no order in history, load mock data for presentation
-          setOrder({
-            id: 'MOCK-987654',
-            status: 'Preparing',
-            deliveryLocation: { address: 'BTM Layout Phase II, Bangalore', lat: 12.9200, lng: 77.6150 },
-            grandTotal: 349,
-            paymentMethod: 'Google Pay',
-            createdAt: new Date().toISOString()
-          });
-          setRider({
-            name: 'Vikram Singh',
-            phone: '+919900998877',
-            currentLocation: { lat: 12.9180, lng: 77.6120 }
-          });
+          setMapError("No active orders found.");
           setLoading(false);
         }
       } catch (err) {
@@ -438,47 +425,38 @@ export default function TrackingPage() {
       return;
     }
 
+    // Helper: load order from localStorage by id
+    const loadLocalOrder = (id: string) => {
+      try {
+        const stored: any[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+        return stored.find(o => o.id === id) || null;
+      } catch { return null; }
+    };
+
+    // Try local first for instant render
+    const localOrder = loadLocalOrder(orderId);
+    if (localOrder) {
+      setOrder(localOrder);
+      setLoading(false);
+    }
+
     // Set up Firebase Firestore Listener
     const orderDocRef = doc(db, 'orders', orderId);
     const unsubscribeOrder = onSnapshot(orderDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        const orderData = docSnap.data();
+        const orderData = { id: docSnap.id, ...docSnap.data() };
         setOrder(orderData);
         setLoading(false);
-      } else {
-        // Mock fallback if Firebase doc isn't created yet or matching ID is missing
-        setOrder({
-          id: orderId,
-          status: 'Preparing',
-          deliveryLocation: { address: 'BTM Layout, Bangalore', lat: 12.9200, lng: 77.6150 },
-          grandTotal: 349,
-          paymentMethod: 'Cash on Delivery',
-          createdAt: new Date().toISOString()
-        });
-        setRider({
-          name: 'Vikram Singh',
-          phone: '+919900998877',
-          currentLocation: { lat: 12.9180, lng: 77.6120 }
-        });
+      } else if (!localOrder) {
+        setMapError("Order not found.");
         setLoading(false);
       }
     }, (error) => {
-      console.error("Firestore order subscription error:", error);
-      // Fallback to mock on permission/network error
-      setOrder({
-        id: orderId,
-        status: 'Preparing',
-        deliveryLocation: { address: 'BTM Layout, Bangalore', lat: 12.9200, lng: 77.6150 },
-        grandTotal: 349,
-        paymentMethod: 'Google Pay',
-        createdAt: new Date().toISOString()
-      });
-      setRider({
-        name: 'Vikram Singh',
-        phone: '+919900998877',
-        currentLocation: { lat: 12.9180, lng: 77.6120 }
-      });
-      setLoading(false);
+      console.warn("Firestore order blocked, using local cache:", error.message);
+      if (!localOrder) {
+        setMapError("Could not load order. Check your connection.");
+        setLoading(false);
+      }
     });
 
     return () => unsubscribeOrder();
@@ -545,6 +523,33 @@ export default function TrackingPage() {
       </div>
     );
   }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 gap-6">
+        <div className="text-5xl">📦</div>
+        <h2 className="text-2xl font-black italic uppercase text-gray-900 text-center">Order Not Found</h2>
+        <p className="text-gray-500 text-sm font-medium text-center max-w-xs">
+          {mapError || "We couldn't find this order. It may have been placed on a different device."}
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/orders')}
+            className="px-6 py-3 bg-emerald-500 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-emerald-600 transition-colors"
+          >
+            My Orders
+          </button>
+          <button
+            onClick={() => navigate('/home')}
+            className="px-6 py-3 bg-gray-100 text-gray-900 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-gray-200 transition-colors"
+          >
+            Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
