@@ -64,23 +64,31 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
   // 1. Initialize Map
   useEffect(() => {
     if (mapRef.current && !mapInstance.current) {
-      // Start centered on kitchen
-      mapInstance.current = L.map(mapRef.current, {
-        zoomControl: false,
-        attributionControl: false
-      }).setView([12.9165, 77.6101], 15);
+      try {
+        // Start centered on kitchen
+        mapInstance.current = L.map(mapRef.current, {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([12.9165, 77.6101], 15);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-      }).addTo(mapInstance.current);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(mapInstance.current);
 
-      L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
+        L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
+      } catch (err) {
+        console.error("Leaflet initialization error:", err);
+      }
     }
 
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
+      try {
+        if (mapInstance.current) {
+          mapInstance.current.remove();
+          mapInstance.current = null;
+        }
+      } catch (err) {
+        console.error("Leaflet map cleanup error:", err);
       }
     };
   }, []);
@@ -90,103 +98,107 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
     const map = mapInstance.current;
     if (!map || !order) return;
 
-    if (lastOrderId.current !== order.id) {
-      hasFitBounds.current = false;
-      lastOrderId.current = order.id;
-    }
-
-    const restCoords: [number, number] = [12.9165, 77.6101]; // Kitchen Coordinates (BTM Layout)
-    const custCoords: [number, number] = [
-      order.deliveryLocation?.lat || 12.9200,
-      order.deliveryLocation?.lng || 77.6150
-    ];
-    const riderCoords: [number, number] | null = rider?.currentLocation?.lat && rider?.currentLocation?.lng
-      ? [rider.currentLocation.lat, rider.currentLocation.lng]
-      : null;
-
-    // Custom circular Tailwind-compatible HTML Icons (Swiggy/Zomato style)
-    const restaurantIcon = L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="w-10 h-10 rounded-full bg-emerald-600 border-4 border-white shadow-xl flex items-center justify-center text-white text-base">🏪</div>
-          <div class="absolute -bottom-1 w-3 h-3 bg-emerald-600 rotate-45 border-r border-b border-white"></div>
-        </div>
-      `,
-      className: 'custom-div-icon',
-      iconSize: [40, 44],
-      iconAnchor: [20, 44]
-    });
-
-    const customerIcon = L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="w-10 h-10 rounded-full bg-gray-900 border-4 border-white shadow-xl flex items-center justify-center text-white text-base font-bold">🏠</div>
-          <div class="absolute -bottom-1 w-3 h-3 bg-gray-900 rotate-45 border-r border-b border-white"></div>
-        </div>
-      `,
-      className: 'custom-div-icon',
-      iconSize: [40, 44],
-      iconAnchor: [20, 44]
-    });
-
-    const riderIcon = L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 border-4 border-white shadow-2xl flex items-center justify-center text-white text-lg animate-[riderBounce_2s_infinite_ease-in-out]">
-            <div class="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping"></div>
-            🛵
-          </div>
-        </div>
-      `,
-      className: 'custom-div-icon rider-smooth-move',
-      iconSize: [48, 48],
-      iconAnchor: [24, 24]
-    });
-
-    // Handle Restaurant Marker
-    if (!markersRef.current['restaurant']) {
-      markersRef.current['restaurant'] = L.marker(restCoords, { icon: restaurantIcon }).addTo(map)
-        .bindPopup('<b>Mintoo Kitchen</b><br/>Your food is prepared here.');
-    } else {
-      markersRef.current['restaurant'].setLatLng(restCoords);
-    }
-
-    // Handle Customer Marker
-    if (!markersRef.current['customer']) {
-      markersRef.current['customer'] = L.marker(custCoords, { icon: customerIcon }).addTo(map)
-        .bindPopup(`<b>Your Address</b><br/>${order.deliveryLocation?.address || ''}`);
-    } else {
-      markersRef.current['customer'].setLatLng(custCoords);
-    }
-
-    // Handle Rider Marker
-    if (riderCoords) {
-      if (!markersRef.current['rider']) {
-        markersRef.current['rider'] = L.marker(riderCoords, { icon: riderIcon }).addTo(map)
-          .bindPopup(`<b>Delivery Partner: ${rider.name}</b>`);
-      } else {
-        markersRef.current['rider'].setLatLng(riderCoords);
+    try {
+      if (lastOrderId.current !== order.id) {
+        hasFitBounds.current = false;
+        lastOrderId.current = order.id;
       }
-    } else if (markersRef.current['rider']) {
-      markersRef.current['rider'].remove();
-      delete markersRef.current['rider'];
-    }
 
-    // Draw routing Polyline
-    const routePoints: Array<[number, number]> = [];
-    routePoints.push(restCoords);
-    if (riderCoords) {
-      routePoints.push(riderCoords);
-    }
-    routePoints.push(custCoords);
+      const restCoords: [number, number] = [12.9165, 77.6101]; // Kitchen Coordinates (BTM Layout)
+      const custCoords: [number, number] = [
+        order.deliveryLocation?.lat || 12.9200,
+        order.deliveryLocation?.lng || 77.6150
+      ];
+      const riderCoords: [number, number] | null = rider?.currentLocation?.lat && rider?.currentLocation?.lng
+        ? [rider.currentLocation.lat, rider.currentLocation.lng]
+        : null;
 
-    drawRoute(map, routePoints, polylineRef);
+      // Custom circular Tailwind-compatible HTML Icons (Swiggy/Zomato style)
+      const restaurantIcon = L.divIcon({
+        html: `
+          <div class="relative flex items-center justify-center">
+            <div class="w-10 h-10 rounded-full bg-emerald-600 border-4 border-white shadow-xl flex items-center justify-center text-white text-base">🏪</div>
+            <div class="absolute -bottom-1 w-3 h-3 bg-emerald-600 rotate-45 border-r border-b border-white"></div>
+          </div>
+        `,
+        className: 'custom-div-icon',
+        iconSize: [40, 44],
+        iconAnchor: [20, 44]
+      });
 
-    // Zoom/Center Map to keep all points visible (only once to prevent annoying jumps during tracking)
-    if (!hasFitBounds.current) {
-      const bounds = L.latLngBounds(routePoints);
-      map.fitBounds(bounds, { padding: [80, 80] });
-      hasFitBounds.current = true;
+      const customerIcon = L.divIcon({
+        html: `
+          <div class="relative flex items-center justify-center">
+            <div class="w-10 h-10 rounded-full bg-gray-900 border-4 border-white shadow-xl flex items-center justify-center text-white text-base font-bold">🏠</div>
+            <div class="absolute -bottom-1 w-3 h-3 bg-gray-900 rotate-45 border-r border-b border-white"></div>
+          </div>
+        `,
+        className: 'custom-div-icon',
+        iconSize: [40, 44],
+        iconAnchor: [20, 44]
+      });
+
+      const riderIcon = L.divIcon({
+        html: `
+          <div class="relative flex items-center justify-center">
+            <div class="w-12 h-12 rounded-full bg-emerald-50 border-4 border-white shadow-2xl flex items-center justify-center text-white text-lg animate-[riderBounce_2s_infinite_ease-in-out]">
+              <div class="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping"></div>
+              🛵
+            </div>
+          </div>
+        `,
+        className: 'custom-div-icon rider-smooth-move',
+        iconSize: [48, 48],
+        iconAnchor: [24, 24]
+      });
+
+      // Handle Restaurant Marker
+      if (!markersRef.current['restaurant']) {
+        markersRef.current['restaurant'] = L.marker(restCoords, { icon: restaurantIcon }).addTo(map)
+          .bindPopup('<b>Mintoo Kitchen</b><br/>Your food is prepared here.');
+      } else {
+        markersRef.current['restaurant'].setLatLng(restCoords);
+      }
+
+      // Handle Customer Marker
+      if (!markersRef.current['customer']) {
+        markersRef.current['customer'] = L.marker(custCoords, { icon: customerIcon }).addTo(map)
+          .bindPopup(`<b>Your Address</b><br/>${order.deliveryLocation?.address || ''}`);
+      } else {
+        markersRef.current['customer'].setLatLng(custCoords);
+      }
+
+      // Handle Rider Marker
+      if (riderCoords) {
+        if (!markersRef.current['rider']) {
+          markersRef.current['rider'] = L.marker(riderCoords, { icon: riderIcon }).addTo(map)
+            .bindPopup(`<b>Delivery Partner: ${rider.name}</b>`);
+        } else {
+          markersRef.current['rider'].setLatLng(riderCoords);
+        }
+      } else if (markersRef.current['rider']) {
+        markersRef.current['rider'].remove();
+        delete markersRef.current['rider'];
+      }
+
+      // Draw routing Polyline
+      const routePoints: Array<[number, number]> = [];
+      routePoints.push(restCoords);
+      if (riderCoords) {
+        routePoints.push(riderCoords);
+      }
+      routePoints.push(custCoords);
+
+      drawRoute(map, routePoints, polylineRef);
+
+      // Zoom/Center Map to keep all points visible (only once to prevent annoying jumps during tracking)
+      if (!hasFitBounds.current) {
+        const bounds = L.latLngBounds(routePoints);
+        map.fitBounds(bounds, { padding: [80, 80] });
+        hasFitBounds.current = true;
+      }
+    } catch (err) {
+      console.error("Leaflet marker updates error:", err);
     }
 
   }, [order, rider]);
