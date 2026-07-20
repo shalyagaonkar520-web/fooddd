@@ -306,9 +306,9 @@ export default function HomePage() {
           }}
           className="relative w-10 h-10 rounded-full border-2 border-[#39B54A]/30 hover:border-[#39B54A] transition-colors cursor-pointer overflow-hidden shadow-lg bg-[#121212] flex items-center justify-center shrink-0 mt-1 active:scale-95 duration-200"
         >
-          {profile?.photoURL ? (
+          {profile && (profile as any)?.photoURL ? (
             <img 
-              src={profile.photoURL} 
+              src={(profile as any).photoURL} 
               alt="Profile" 
               className="w-full h-full object-cover"
             />

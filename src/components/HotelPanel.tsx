@@ -7,6 +7,10 @@ import { auth, db } from '../firebase';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 import { motion, AnimatePresence } from 'framer-motion';
+import IncomingOrderPopup from './IncomingOrderPopup';
+import InstallBanner from './InstallBanner';
+import OfflineBanner from './OfflineBanner';
+import { requestNotificationPermission } from '../utils/notifications';
 
 export default function HotelPanel() {
   useSEO("Kitchen Portal", "Hotel/Restaurant dashboard for managing live orders.");
@@ -25,6 +29,8 @@ export default function HotelPanel() {
 
   // Dismissed/Cleared Orders State
   const [clearedOrderIds, setClearedOrderIds] = useState<string[]>([]);
+  const [acknowledgedOrderIds, setAcknowledgedOrderIds] = useState<string[]>([]);
+  const [incomingOrder, setIncomingOrder] = useState<any>(null);
 
   // Load Cleared Orders list from local storage on mount
   useEffect(() => {
@@ -32,6 +38,22 @@ export default function HotelPanel() {
       const stored = localStorage.getItem('moms_magic_cleared_kitchen_orders');
       if (stored) setClearedOrderIds(JSON.parse(stored));
     } catch (_) {}
+  }, []);
+
+  // Check for incoming orders
+  useEffect(() => {
+    if (incomingOrder) return;
+    const newPending = activeOrders.find(
+      (o) => o.status === 'pending' && !clearedOrderIds.includes(o.id) && !acknowledgedOrderIds.includes(o.id)
+    );
+    if (newPending) {
+      setIncomingOrder(newPending);
+    }
+  }, [activeOrders, clearedOrderIds, acknowledgedOrderIds, incomingOrder]);
+
+  // Request notifications on mount
+  useEffect(() => {
+    requestNotificationPermission();
   }, []);
 
   // Firebase Auth check + role verification
@@ -178,6 +200,19 @@ export default function HotelPanel() {
     try { await updateDoc(doc(db, 'orders', orderId), { status: 'Preparing' }); } catch (_) {}
   };
 
+  const handlePopupAccept = async (orderId: string) => {
+    setAcknowledgedOrderIds(prev => [...prev, orderId]);
+    setIncomingOrder(null);
+    await acceptOrder(orderId);
+  };
+
+  const handlePopupReject = (orderId: string) => {
+    setAcknowledgedOrderIds(prev => [...prev, orderId]);
+    setIncomingOrder(null);
+    // Locally hide it. If we want it fully rejected, we can update firestore, but typically another kitchen might take it.
+    dismissOrder(orderId);
+  };
+
   const markReadyForDelivery = async (orderId: string) => {
     updateLocalOrderStatus(orderId, 'Ready for Delivery');
     setActiveOrders(prev => prev.filter(o => o.id !== orderId));
@@ -271,6 +306,18 @@ export default function HotelPanel() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-32 px-4 md:px-6">
+      <OfflineBanner />
+      <InstallBanner />
+      <AnimatePresence>
+        {incomingOrder && (
+          <IncomingOrderPopup
+            order={incomingOrder}
+            mode="hotel"
+            onAccept={handlePopupAccept}
+            onReject={handlePopupReject}
+          />
+        )}
+      </AnimatePresence>
       <div className="max-w-5xl mx-auto space-y-8">
         
         <div className="bg-white rounded-[35px] p-6 sm:p-8 border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">

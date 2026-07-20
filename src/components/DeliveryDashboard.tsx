@@ -41,6 +41,10 @@ import {
 import { auth, db } from '../firebase';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
+import IncomingOrderPopup from './IncomingOrderPopup';
+import InstallBanner from './InstallBanner';
+import OfflineBanner from './OfflineBanner';
+import { requestNotificationPermission } from '../utils/notifications';
 
 export default function DeliveryDashboard() {
   useSEO("Rider Portal", "Delivery Partner dashboard for live tracking, routing, and earnings updates.");
@@ -84,7 +88,22 @@ export default function DeliveryDashboard() {
       const stored = localStorage.getItem('moms_magic_cleared_rider_orders');
       if (stored) setClearedOrderIds(JSON.parse(stored));
     } catch (_) {}
+    requestNotificationPermission();
   }, []);
+
+  const [acknowledgedAvailableOrders, setAcknowledgedAvailableOrders] = useState<string[]>([]);
+  const [incomingOrder, setIncomingOrder] = useState<any>(null);
+
+  // Check for incoming Rapido-style orders
+  useEffect(() => {
+    if (incomingOrder || !isOnline) return;
+    const newPending = availableOrders.find(
+      (o) => !clearedOrderIds.includes(o.id) && !acknowledgedAvailableOrders.includes(o.id)
+    );
+    if (newPending) {
+      setIncomingOrder(newPending);
+    }
+  }, [availableOrders, clearedOrderIds, acknowledgedAvailableOrders, incomingOrder, isOnline]);
 
   // Verify Auth State on mount
   useEffect(() => {
@@ -459,24 +478,37 @@ export default function DeliveryDashboard() {
     } catch (e) { /* ignore */ }
   };
 
-  // Accept Order
   const handleAcceptOrder = async (orderId: string) => {
+    // Optimistic UI update
     updateLocalOrder(orderId, { riderId: riderId, riderStatus: 'accepted' });
     setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
-    toast.success("Order accepted! 📦");
-    setActiveTab('assigned');
+    toast.success("Delivery accepted! 🛵");
     try {
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { 
-        riderId: riderId, 
-        riderStatus: 'accepted',
-        riderName: riderProfile?.name || 'Rider',
-        riderPhone: riderProfile?.phone || ''
+        riderId: riderId,
+        riderName: riderProfile?.name || 'Rider Partner',
+        riderPhone: riderProfile?.phone || '',
+        riderStatus: 'accepted'
       });
-    } catch (err) { /* silently ignore */ }
+    } catch (_) {
+      toast.error("Failed to assign order.");
+    }
   };
 
-  // Reject Order
+  const handlePopupAccept = async (orderId: string) => {
+    setAcknowledgedAvailableOrders(prev => [...prev, orderId]);
+    setIncomingOrder(null);
+    await handleAcceptOrder(orderId);
+  };
+
+  const handlePopupReject = async (orderId: string) => {
+    setAcknowledgedAvailableOrders(prev => [...prev, orderId]);
+    setIncomingOrder(null);
+    dismissRiderOrder(orderId);
+    toast.error("Order rejected. Next rider will be notified.");
+  };
+
   const handleRejectOrder = async (orderId: string) => {
     updateLocalOrder(orderId, { riderId: '', riderStatus: 'rejected' });
     setAssignedOrders(prev => prev.filter(o => o.id !== orderId));
@@ -699,6 +731,19 @@ export default function DeliveryDashboard() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pt-24 pb-48 px-4 md:px-6">
+      <OfflineBanner />
+      <InstallBanner />
+      <AnimatePresence>
+        {incomingOrder && (
+          <IncomingOrderPopup
+            order={incomingOrder}
+            mode="rider"
+            onAccept={handlePopupAccept}
+            onReject={handlePopupReject}
+            autoRejectTimeSeconds={20}
+          />
+        )}
+      </AnimatePresence>
       <div className="max-w-4xl mx-auto space-y-10">
         
         {/* Header Dashboard Info */}
