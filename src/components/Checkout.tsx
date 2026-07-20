@@ -387,6 +387,7 @@ export default function Checkout() {
       } else {
         tgDetails = `🛒 <b>ITEMS:</b>\n` + cartItems.map((item) => {
           let line = `• ${item.quantity}x ${escHtml(item.name)}`;
+          if (item.hotelId) line += ` <b>[Kitchen: ${escHtml(item.hotelId)}]</b>`;
           if (item.items?.length) line += `\n  (${item.items.map(escHtml).join(', ')})`;
           return line;
         }).join('\n');
