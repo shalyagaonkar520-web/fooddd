@@ -96,7 +96,21 @@ export default function DeliveryDashboard() {
 
   // Check for incoming Rapido-style orders
   useEffect(() => {
-    if (incomingOrder || !isOnline) return;
+    if (!isOnline) {
+      setIncomingOrder(null);
+      return;
+    }
+    
+    if (incomingOrder) {
+      // If the currently shown incoming order is no longer in availableOrders (e.g. someone else accepted it), dismiss the popup!
+      const stillAvailable = availableOrders.some(o => o.id === incomingOrder.id);
+      if (!stillAvailable) {
+        setIncomingOrder(null);
+        toast.error("Order was accepted by another rider.");
+      }
+      return;
+    }
+
     const newPending = availableOrders.find(
       (o) => !clearedOrderIds.includes(o.id) && !acknowledgedAvailableOrders.includes(o.id)
     );
@@ -479,18 +493,26 @@ export default function DeliveryDashboard() {
   };
 
   const handleAcceptOrder = async (orderId: string) => {
-    // Optimistic UI update
-    updateLocalOrder(orderId, { riderId: riderId, riderStatus: 'accepted' });
-    setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
-    toast.success("Delivery accepted! 🛵");
     try {
       const orderRef = doc(db, 'orders', orderId);
+      const snap = await getDoc(orderRef);
+      if (snap.exists() && snap.data().riderId) {
+        toast.error("Order was already accepted by another rider.");
+        setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
+        return;
+      }
+
+      // Optimistic UI update
+      updateLocalOrder(orderId, { riderId: riderId, riderStatus: 'accepted' });
+      setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
+      
       await updateDoc(orderRef, { 
         riderId: riderId,
         riderName: riderProfile?.name || 'Rider Partner',
         riderPhone: riderProfile?.phone || '',
         riderStatus: 'accepted'
       });
+      toast.success("Delivery accepted! 🛵");
     } catch (_) {
       toast.error("Failed to assign order.");
     }
