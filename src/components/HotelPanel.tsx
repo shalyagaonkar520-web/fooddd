@@ -223,6 +223,20 @@ export default function HotelPanel() {
     try { await updateDoc(doc(db, 'orders', orderId), { status: 'Ready for Delivery' }); } catch (_) {}
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    updateLocalOrderStatus(orderId, 'Cancelled');
+    setActiveOrders(prev => prev.filter(o => o.id !== orderId));
+    toast.success("Order cancelled.");
+    try { 
+      await updateDoc(doc(db, 'orders', orderId), { 
+        status: 'Cancelled',
+        cancelReason: 'Cancelled by Kitchen',
+        cancelledAt: new Date().toISOString()
+      }); 
+    } catch (_) {}
+  };
+
   // Clear/Dismiss Order locally
   const dismissOrder = (orderId: string) => {
     const updated = [...clearedOrderIds, orderId];
@@ -416,7 +430,7 @@ export default function HotelPanel() {
                     )}
                   </div>
 
-                  <div className="pt-2 flex gap-3">
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3">
                     {order.status === 'pending' && (
                       <button
                         onClick={() => acceptOrder(order.id)}
@@ -433,6 +447,12 @@ export default function HotelPanel() {
                         <Package className="w-4 h-4" /> Mark as Ready
                       </button>
                     )}
+                    <button
+                      onClick={() => handleCancelOrder(order.id)}
+                      className="flex-1 bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-red-100 active:scale-95 cursor-pointer"
+                    >
+                      Cancel Order
+                    </button>
                   </div>
                 </div>
               ))}

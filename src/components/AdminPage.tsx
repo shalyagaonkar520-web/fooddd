@@ -530,6 +530,35 @@ export default function AdminPage() {
     navigate('/staff', { replace: true });
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, {
+        status: 'Cancelled',
+        cancelReason: 'Cancelled by Admin',
+        cancelledAt: new Date().toISOString()
+      });
+      toast.success('Order cancelled successfully.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to cancel order.');
+    }
+  };
+
+  const handleUpdateReturnStatus = async (orderId: string, status: string) => {
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, {
+        returnStatus: status
+      });
+      toast.success(`Return request marked as ${status}.`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update return status.');
+    }
+  };
+
   const uniqueCategories = Array.from(new Set(menuItems.map(item => item.category)));
 
   if (checking) {
@@ -540,7 +569,10 @@ export default function AdminPage() {
     );
   }
 
-  const liveOrders = orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled' && o.status !== 'completed' && !clearedOrderIds.includes(o.id));
+  const liveOrders = orders.filter(o => 
+    (o.status !== 'delivered' && o.status !== 'cancelled' && o.status !== 'completed' && !clearedOrderIds.includes(o.id)) || 
+    (o.returnRequested && o.returnStatus === 'Pending')
+  );
   const revenue = orders.filter(o => o.status === 'delivered').reduce((acc, curr) => acc + (curr.grandTotal || 0), 0);
 
   return (
@@ -650,15 +682,47 @@ export default function AdminPage() {
                             </span>
                             <p className="text-gray-900 font-black mt-1.5 text-sm">₹{order.grandTotal}</p>
                           </div>
-                          <button
-                            onClick={() => dismissAdminOrder(order.id)}
-                            className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-all cursor-pointer"
-                            title="Dismiss Order"
-                          >
-                            <EyeOff className="w-4 h-4" />
-                          </button>
+                          
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => handleCancelOrder(order.id)}
+                              className="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-all cursor-pointer text-[8px] font-black uppercase tracking-wider"
+                              title="Cancel Order"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => dismissAdminOrder(order.id)}
+                              className="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 transition-all cursor-pointer text-[8px] font-black uppercase tracking-wider flex items-center justify-center"
+                              title="Dismiss Order"
+                            >
+                              <EyeOff className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Return Request Banner */}
+                      {order.returnRequested && order.returnStatus === 'Pending' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-2">
+                          <p className="text-amber-800 text-xs font-bold mb-1">Return Requested!</p>
+                          <p className="text-amber-700 text-[10px] mb-2">Reason: {order.returnReason} {order.returnNote ? `(${order.returnNote})` : ''}</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUpdateReturnStatus(order.id, 'Approved')}
+                              className="flex-1 bg-green-500 text-white py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider hover:bg-green-600"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleUpdateReturnStatus(order.id, 'Declined')}
+                              className="flex-1 bg-red-500 text-white py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider hover:bg-red-600"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Details */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
