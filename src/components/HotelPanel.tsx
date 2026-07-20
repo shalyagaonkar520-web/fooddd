@@ -112,7 +112,10 @@ export default function HotelPanel() {
             return order.items?.some((item: any) =>
               item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim()
             );
-          });
+          }).map((order: any) => ({
+            ...order,
+            items: order.items?.filter((item: any) => item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim())
+          }));
           setActiveOrders(filtered);
         } else {
           setActiveOrders(orders);
@@ -393,15 +396,14 @@ export default function HotelPanel() {
                     <ul className="space-y-2.5">
                       {order.items?.map((item: any, idx: number) => {
                         const isKitchenItem = assignedFood ? item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim() : true;
+                        if (!isKitchenItem) return null;
                         return (
-                          <li key={idx} className={`text-xs font-semibold flex items-center justify-between gap-4 ${isKitchenItem ? 'text-gray-900 font-bold' : 'text-gray-400'}`}>
-                            <span className={isKitchenItem ? "" : "line-through"}>
+                          <li key={idx} className="text-xs font-semibold flex items-center justify-between gap-4 text-gray-900 font-bold">
+                            <span>
                               {item.quantity || item.finalQuantity || 1}x {item.name}
                             </span>
-                            {isKitchenItem ? (
+                            {assignedFood && (
                               <span className="bg-orange-100 text-orange-700 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0">Your Item</span>
-                            ) : (
-                              <span className="bg-gray-100 text-gray-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0">Other Kitchen</span>
                             )}
                           </li>
                         );
