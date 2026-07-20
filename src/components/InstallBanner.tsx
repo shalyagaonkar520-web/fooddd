@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Volume2, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -7,8 +8,12 @@ export default function InstallBanner() {
   const [showSound, setShowSound] = useState(false);
 
   useEffect(() => {
-    // Check if user already dismissed install
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     const dismissedInstall = localStorage.getItem('pwa_install_dismissed');
+    
+    if (!isStandalone && dismissedInstall !== 'true') {
+      setShowInstall(true);
+    }
     
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
@@ -36,7 +41,10 @@ export default function InstallBanner() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      toast('To install, use your browser menu -> "Add to Home Screen" or "Install App"', { icon: '📲' });
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
