@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "0.0.0",
+  "version": "4.0.0",
   "type": "module",
   "homepage": "https://shalyagaonkar520-web.github.io/fooddd",
   "scripts": {
@@ -23,10 +23,11 @@
     "@tailwindcss/vite": "^4.1.14",
     "@types/three": "^0.184.1",
     "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.21",
     "clsx": "^2.1.1",
     "com.razorpay.cordova": "^1.4.15",
     "dotenv": "^17.2.3",
-    "firebase": "^12.14.0",
+    "firebase": "^12.16.0",
     "firebase-admin": "^14.1.0",
     "framer-motion": "^12.38.0",
     "leaflet": "^1.9.4",
@@ -37,12 +38,11 @@
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.14.2",
     "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.1.14",
     "three": "^0.184.0",
+    "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.3.0",
-    "typescript": "~5.8.2",
-    "tailwindcss": "^4.1.14",
-    "autoprefixer": "^10.4.21",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

@@ -5,82 +5,82 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", "Inter", sans-serif;
   
-  /* Overriding Tailwind colors to achieve the premium restaurant feel */
-  --color-orange-50: #FAF5EB;
-  --color-orange-100: #F2E8D3;
-  --color-orange-200: #E6D2AD;
-  --color-orange-300: #D8B781;
-  --color-orange-400: #CDA45E;
-  --color-orange-500: #C89B3C; /* Accent Gold */
-  --color-orange-600: #A67C2D; /* Dark Gold */
-  --color-orange-700: #8C6826;
-  --color-orange-900: #594318;
+  /* Overriding Tailwind colors to achieve the premium green-black dark theme feel */
+  --color-orange-50: #0d2312;
+  --color-orange-100: #11331a;
+  --color-orange-200: #164823;
+  --color-orange-300: #1c602c;
+  --color-orange-400: #257c37;
+  --color-orange-500: #39B54A; /* Primary Accent Green */
+  --color-orange-600: #2e9d3d; /* Hover Green */
+  --color-orange-700: #248131;
+  --color-orange-900: #14501e;
   
-  --color-gray-50: #FAF8F5;    /* Background */
-  --color-gray-100: #F3F1EC;   /* Slightly darker background for borders/hover */
-  --color-gray-200: #E5E2DC;
-  --color-gray-300: #D4D0C8;
-  --color-gray-400: #9CA3AF;
-  --color-gray-500: #6B7280;   /* Secondary Text */
-  --color-gray-600: #4B5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #292929;
-  --color-gray-900: #111111;   /* Primary Text */
+  --color-gray-50: #080808;    /* Pure Black Background */
+  --color-gray-100: #121212;   /* Dark Grey Surface/Card */
+  --color-gray-200: #1a1a1a;   /* Subtle Border/Divider */
+  --color-gray-300: #262626;
+  --color-gray-400: #404040;
+  --color-gray-500: #9ca3af;   /* Secondary Text */
+  --color-gray-600: #a3a3a3;
+  --color-gray-700: #d4d4d4;
+  --color-gray-800: #e5e5e5;
+  --color-gray-900: #ffffff;   /* Primary White Text */
 
-  --color-slate-900: #111111;  /* Dark headers */
+  --color-slate-900: #ffffff;  /* Dark headers turn white */
 
-  --color-green-500: #2E7D32;  /* Success */
-  --color-green-600: #1B5E20;
+  --color-green-500: #39B54A;  /* Success matches our theme green */
+  --color-green-600: #2e9d3d;
 
-  /* Premium Light Theme Palette */
-  --color-brand: #C89B3C; 
-  --color-brand-hover: #A67C2D;
-  --color-brand-glow: rgba(200, 155, 60, 0.1);
+  /* Premium Green-Black Theme Palette */
+  --color-brand: #39B54A; 
+  --color-brand-hover: #2e9d3d;
+  --color-brand-glow: rgba(57, 181, 74, 0.1);
   
-  --color-gold: #C89B3C; 
-  --color-gold-soft: #E6D2AD; 
+  --color-gold: #39B54A; 
+  --color-gold-soft: #81C784; 
   
-  --color-matte-black: #FAF8F5; 
-  --color-dark-surface: #FFFFFF; 
+  --color-matte-black: #080808; 
+  --color-dark-surface: #121212; 
   
-  --color-text-main: #111111; 
-  --color-text-muted: #6B7280; 
+  --color-text-main: #ffffff; 
+  --color-text-muted: #9ca3af; 
 }
 
 @layer base {
   body {
-    @apply bg-[#fae6d8] text-gray-900 antialiased selection:bg-orange-500/20 overflow-x-hidden;
+    @apply bg-gray-50 text-gray-900 antialiased selection:bg-orange-500/20 overflow-x-hidden;
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    @apply tracking-tight;
+    @apply tracking-tight text-white;
   }
 }
 
 @layer components {
   .luxury-card {
-    @apply bg-white border border-gray-100 relative overflow-hidden transition-all duration-300 rounded-3xl;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+    @apply bg-[#121212] border border-white/5 relative overflow-hidden transition-all duration-300 rounded-3xl;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
   
   .luxury-card:hover {
-    @apply border-gray-200 -translate-y-1;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.03);
+    @apply border-white/10 -translate-y-1;
+    box-shadow: 0 8px 30px rgba(57, 181, 74, 0.1);
   }
   
   .btn-luxury-gold {
     @apply font-black uppercase tracking-[2px] px-8 py-4 rounded-xl transition-all duration-300
-           shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40
+           shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30
            hover:scale-[1.02] active:scale-95;
-    background: #C89B3C;
+    background: #39B54A;
     color: #FFFFFF;
   }
 
   .glass-nav {
-    @apply bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)];
+    @apply bg-[#080808]/90 backdrop-blur-xl border-t border-white/5 shadow-[0_-4px_20px_rgba(0,0,0,0.5)];
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -90,6 +90,36 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* Global utility overrides for absolute pixel-perfect green-black compliance and readability */
+.bg-white {
+  background-color: #121212 !important;
+}
+
+.text-luxury-gold {
+  color: #39B54A !important;
+}
+
+.border-gray-100, .border-gray-200, .border-gray-300, .border-gray-400, .border {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Ensure all text classes map to highly visible colors on dark backgrounds */
+.text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600, .text-slate-900, .text-black, .text-neutral-900, .text-slate-800 {
+  color: #ffffff !important;
+}
+
+.text-gray-500, .text-gray-400, .text-gray-300, .text-slate-600, .text-slate-500, .text-neutral-500 {
+  color: #b5b5b5 !important; /* highly readable light gray */
+}
+
+.bg-gray-50, .bg-slate-50, .bg-neutral-50 {
+  background-color: #080808 !important;
+}
+
+.bg-gray-100, .bg-slate-100, .bg-neutral-100 {
+  background-color: #121212 !important;
 }
 
 /* Animations */

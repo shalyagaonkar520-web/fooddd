@@ -518,6 +518,33 @@ export default function Checkout() {
         },
         prefill: { name: formData.name, contact: formData.phone },
         theme: { color: '#FC8019' },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'Pay using Google Pay, PhonePe or UPI',
+                instruments: [
+                  { method: 'upi' },
+                  { method: 'upi', application: 'google_pay' },
+                  { method: 'upi', application: 'phonepe' },
+                  { method: 'upi', application: 'paytm' }
+                ]
+              },
+              other: {
+                name: 'Other Payment Modes',
+                instruments: [
+                  { method: 'card' },
+                  { method: 'netbanking' },
+                  { method: 'wallet' }
+                ]
+              }
+            },
+            sequence: ['block.upi', 'block.other'],
+            preferences: {
+              show_default_blocks: false
+            }
+          }
+        },
         modal: { ondismiss: () => setIsSubmitting(false) },
       };
 
@@ -565,14 +592,15 @@ export default function Checkout() {
         <motion.button
           whileHover={{ x: -4 }}
           onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-gray-500 font-black uppercase tracking-[3px] text-[10px] hover:text-orange-500 transition-colors"
+          className="flex items-center gap-2 font-black uppercase tracking-[3px] text-[10px] hover:text-orange-500 transition-colors"
+          style={{ color: '#000000' }}
         >
           <ChevronLeft className="w-4 h-4" /> Back to Menu
         </motion.button>
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase leading-none">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none" style={{ color: '#000000' }}>
           {isBulkOrder ? 'Bulk ' : ''}Checkout
         </h1>
-        <p className="text-gray-500 font-bold uppercase tracking-[2px] text-[10px]">
+        <p className="font-bold uppercase tracking-[2px] text-[10px]" style={{ color: '#000000' }}>
           Confirm your order details
         </p>
       </div>
@@ -595,7 +623,7 @@ export default function Checkout() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-orange-500/50 uppercase tracking-[3px]">WhatsApp No.</label>
+              <label className="text-[10px] font-black text-orange-500/50 uppercase tracking-[3px]">Contact Number</label>
               <input
                 required
                 type="tel"
@@ -660,15 +688,15 @@ export default function Checkout() {
                         setIsManualInputOpen(true);
                       }
                     }}
-                    className="relative overflow-hidden p-4 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 hover:border-orange-300 rounded-xl transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer text-center"
+                    className="relative overflow-hidden p-4 bg-[#39B54A] hover:bg-[#2e9d3d] border border-white/5 rounded-xl transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer text-center text-white"
                   >
                     {isLoading ? (
-                      <Loader2 className="w-6 h-6 text-orange-600 animate-spin" />
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
                     ) : (
-                      <Compass className="w-6 h-6 text-orange-600 group-hover:rotate-45 transition-transform duration-300" />
+                      <Compass className="w-6 h-6 text-white group-hover:rotate-45 transition-transform duration-300" />
                     )}
-                    <span className="text-xs font-black text-orange-700 uppercase tracking-wider">Auto-Detect</span>
-                    <span className="text-[9px] text-orange-600/70 font-bold uppercase tracking-wide">Using GPS</span>
+                    <span className="text-xs font-black text-white uppercase tracking-wider">Auto-Detect</span>
+                    <span className="text-[9px] text-white/80 font-bold uppercase tracking-wide">Using GPS</span>
                   </button>
 
                   {/* Manual Button */}
@@ -679,13 +707,13 @@ export default function Checkout() {
                     }}
                     className={`p-4 border rounded-xl transition-all flex flex-col items-center justify-center gap-2 text-center ${
                       isManualInputOpen 
-                        ? 'bg-orange-500/10 border-orange-500 text-orange-600' 
-                        : 'bg-white hover:bg-gray-100/60 border-gray-200 hover:border-gray-300 text-gray-600'
+                        ? 'bg-[#39B54A]/20 border-[#39B54A] text-[#39B54A] font-extrabold' 
+                        : 'bg-[#121212] hover:bg-[#1c1c1c] border-white/10 text-gray-400'
                     }`}
                   >
-                    <Search className="w-6 h-6 text-gray-500" />
+                    <Search className="w-6 h-6" />
                     <span className="text-xs font-black uppercase tracking-wider">Add Manual</span>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Type address or area</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wide">Type address or area</span>
                   </button>
                 </div>
 
@@ -977,12 +1005,15 @@ export default function Checkout() {
                     type="radio"
                     name="payment_method"
                     checked={paymentMethod === 'online'}
-                    onChange={() => toast.error('Pay Online is coming soon!')}
+                    onChange={() => setPaymentMethod('online')}
                     className="w-4 h-4 accent-orange-500"
                   />
-                  <div className="flex-1">
-                    <p className="font-bold text-gray-900 text-sm">Pay Online</p>
-                    <p className="text-xs text-gray-500">UPI, Cards, NetBanking</p>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <p className="font-extrabold text-gray-900 text-sm">Pay Online / UPI</p>
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 font-black text-[9px] rounded-full uppercase">Instant</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">Google Pay, PhonePe, Paytm, UPI, Cards, NetBanking</p>
                   </div>
                 </label>
                 <label

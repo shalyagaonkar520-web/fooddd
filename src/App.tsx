@@ -17,6 +17,8 @@ const BulkOrderPage = lazy(() => import('./components/BulkOrderPage'));
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 const TermsPage = lazy(() => import('./components/TermsPage'));
 const SupportPage = lazy(() => import('./components/SupportPage'));
+const FoodInfoPage = lazy(() => import('./components/FoodInfoPage'));
+const CategoryPage = lazy(() => import('./components/CategoryPage'));
 import BottomNav from './components/BottomNav';
 import BottomCartBar from './components/BottomCartBar';
 import OperatingHoursGate from './components/OperatingHoursGate';
@@ -182,9 +184,9 @@ export default function App() {
         position="top-center"
         toastOptions={{
           style: {
-            background: '#FFFFFF',
-            color: '#111827',
-            border: '1px solid #E5E7EB',
+            background: '#121212',
+            color: '#FFFFFF',
+            border: '1px solid rgba(57, 181, 74, 0.2)',
             borderRadius: '20px',
             padding: '16px 24px',
             fontWeight: '600',
@@ -222,6 +224,8 @@ export default function App() {
                   <Routes>
                     <Route path="/" element={<AuthPage />} />
                     <Route path="/home" element={<HomePage />} />
+                    <Route path="/food/:foodId" element={<FoodInfoPage />} />
+                    <Route path="/category/:categoryId" element={<CategoryPage />} />
                     <Route path="/cart" element={<Navigate to="/checkout" replace />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/profile" element={<ProfilePage />} />

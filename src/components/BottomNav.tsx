@@ -1,54 +1,97 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, ShoppingBag, User, MapPin } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Clipboard, ShoppingCart, User, MapPin } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 
 export default function BottomNav() {
   const location = useLocation();
   const { items } = useCartStore();
-  const navigate = useNavigate();
+
+  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   // Hide bottom nav on specific screens like login or admin
-  const hiddenRoutes = ['/', '/admin', '/delivery', '/checkout', '/cart'];
+  const hiddenRoutes = ['/', '/admin', '/delivery', '/checkout'];
   if (hiddenRoutes.includes(location.pathname)) return null;
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full z-[100] bg-white border-t border-gray-200 pb-safe md:hidden">
-      <div className="flex items-center justify-around py-3 px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <Link to="/home" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/home') ? 'text-orange-500' : 'text-gray-400 hover:text-gray-900'}`}>
-          <Home className={`w-6 h-6 ${isActive('/home') ? 'fill-orange-500/20' : ''}`} />
-          <span className="text-[9px] font-bold">Home</span>
+    <nav className="fixed bottom-0 left-0 w-full z-[100] bg-[#080808] border-t border-white/5 pb-safe md:hidden">
+      <div className="flex items-center justify-around py-2.5 px-2">
+        {/* Home */}
+        <Link 
+          to="/home" 
+          className={`flex flex-col items-center gap-1 transition-all relative py-1 px-3 ${
+            isActive('/home') ? 'text-[#39B54A]' : 'text-gray-500 hover:text-white'
+          }`}
+        >
+          <Home className={`w-6 h-6 ${isActive('/home') ? 'fill-[#39B54A]/10 text-[#39B54A]' : ''}`} />
+          <span className="text-[10px] font-semibold tracking-wide">Home</span>
+          {isActive('/home') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#39B54A] rounded-full animate-pulse" />
+          )}
         </Link>
         
-        <div onClick={() => { 
-          if(location.pathname !== '/home') {
-             navigate('/home?search=true');
-          } else {
-             window.scrollTo({ top: 0, behavior: 'smooth' });
-             const input = document.getElementById('home-search-input');
-             if (input) input.focus();
-          }
-        }} className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${(location.pathname === '/home' && new URLSearchParams(location.search).get('search') === 'true') ? 'text-orange-500' : 'text-gray-400 hover:text-gray-900'}`}>
-          <Search className="w-6 h-6" />
-          <span className="text-[9px] font-bold">Search</span>
-        </div>
+        {/* Orders */}
+        <Link 
+          to="/orders" 
+          className={`flex flex-col items-center gap-1 transition-all relative py-1 px-3 ${
+            isActive('/orders') ? 'text-[#39B54A]' : 'text-gray-500 hover:text-white'
+          }`}
+        >
+          <Clipboard className={`w-6 h-6 ${isActive('/orders') ? 'fill-[#39B54A]/10 text-[#39B54A]' : ''}`} />
+          <span className="text-[10px] font-semibold tracking-wide">Orders</span>
+          {isActive('/orders') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#39B54A] rounded-full animate-pulse" />
+          )}
+        </Link>
 
-        <Link to="/orders" className={`flex flex-col items-center gap-1 transition-colors relative ${isActive('/orders') ? 'text-orange-500' : 'text-gray-400 hover:text-gray-900'}`}>
+        {/* Cart */}
+        <Link 
+          to="/cart" 
+          className={`flex flex-col items-center gap-1 transition-all relative py-1 px-3 ${
+            isActive('/cart') ? 'text-[#39B54A]' : 'text-gray-500 hover:text-white'
+          }`}
+        >
           <div className="relative">
-            <ShoppingBag className={`w-6 h-6 ${isActive('/orders') ? 'fill-orange-500/20' : ''}`} />
+            <ShoppingCart className={`w-6 h-6 ${isActive('/cart') ? 'fill-[#39B54A]/10 text-[#39B54A]' : ''}`} />
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-[#39B54A] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#080808]">
+                {cartCount}
+              </span>
+            )}
           </div>
-          <span className="text-[9px] font-bold">Orders</span>
+          <span className="text-[10px] font-semibold tracking-wide">Cart</span>
+          {isActive('/cart') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#39B54A] rounded-full animate-pulse" />
+          )}
         </Link>
 
-        <Link to="/track" className={`flex flex-col items-center gap-1 transition-colors ${location.pathname.startsWith('/track') ? 'text-orange-500' : 'text-gray-400 hover:text-gray-900'}`}>
-          <MapPin className={`w-6 h-6 ${location.pathname.startsWith('/track') ? 'fill-orange-500/20' : ''}`} />
-          <span className="text-[9px] font-bold">Track</span>
+        {/* Track */}
+        <Link 
+          to="/track" 
+          className={`flex flex-col items-center gap-1 transition-all relative py-1 px-3 ${
+            location.pathname.startsWith('/track') ? 'text-[#39B54A]' : 'text-gray-500 hover:text-white'
+          }`}
+        >
+          <MapPin className={`w-6 h-6 ${location.pathname.startsWith('/track') ? 'fill-[#39B54A]/10 text-[#39B54A]' : ''}`} />
+          <span className="text-[10px] font-semibold tracking-wide">Track</span>
+          {location.pathname.startsWith('/track') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#39B54A] rounded-full animate-pulse" />
+          )}
         </Link>
 
-        <Link to="/profile" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/profile') ? 'text-orange-500' : 'text-gray-400 hover:text-gray-900'}`}>
-          <User className={`w-6 h-6 ${isActive('/profile') ? 'fill-orange-500/20' : ''}`} />
-          <span className="text-[9px] font-bold">Profile</span>
+        {/* Profile */}
+        <Link 
+          to="/profile" 
+          className={`flex flex-col items-center gap-1 transition-all relative py-1 px-3 ${
+            isActive('/profile') ? 'text-[#39B54A]' : 'text-gray-500 hover:text-white'
+          }`}
+        >
+          <User className={`w-6 h-6 ${isActive('/profile') ? 'fill-[#39B54A]/10 text-[#39B54A]' : ''}`} />
+          <span className="text-[10px] font-semibold tracking-wide">Profile</span>
+          {isActive('/profile') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#39B54A] rounded-full animate-pulse" />
+          )}
         </Link>
       </div>
     </nav>

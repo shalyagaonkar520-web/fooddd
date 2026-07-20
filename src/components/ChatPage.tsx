@@ -282,7 +282,8 @@ export default function ChatPage() {
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.senderId === (user?.uid || (userRole === 'admin' ? 'admin' : ''));
+            const localPhone = localStorage.getItem('moms_magic_user_phone');
+            const isMe = msg.senderId === (user?.uid || (userRole === 'admin' ? 'admin' : (localPhone || 'guest')));
             return (
               <div 
                 key={msg.id} 

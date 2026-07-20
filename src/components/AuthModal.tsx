@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, LogIn, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -11,12 +11,20 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  const { loginWithGoogle, loginWithEmail, signUpWithEmail } = useAuthStore();
+  const { loginWithGoogle, loginWithEmail, signUpWithEmail, resetPassword } = useAuthStore();
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsForgotPassword(false);
+      setIsSignUp(false);
+    }
+  }, [isOpen]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +53,24 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       onClose();
     } catch (err: any) {
       toast.error(err.message || 'Authentication failed. Please check credentials.');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error('Please enter your email.');
+      return;
+    }
+    setSubmitLoading(true);
+    try {
+      await resetPassword(email.trim());
+      toast.success('Password reset email sent! Please check your Gmail/inbox and Spam folder. ✉️');
+      setIsForgotPassword(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send password reset email.');
     } finally {
       setSubmitLoading(false);
     }
@@ -88,39 +114,43 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {/* Header info */}
             <div className="space-y-2 mt-4">
               <h2 className="text-3xl font-black italic tracking-tighter uppercase text-gray-900">
-                {isSignUp ? "Create" : "Welcome"}{' '}
+                {isForgotPassword ? "Reset" : (isSignUp ? "Create" : "Welcome")}{' '}
                 <span className="text-orange-500">Account</span>
               </h2>
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none">
-                {isSignUp ? "Sign up to claim welcome bonuses" : "Access your account"}
+                {isForgotPassword 
+                  ? "Enter your email to receive a reset link" 
+                  : (isSignUp ? "Sign up to claim welcome bonuses" : "Access your account")}
               </p>
             </div>
 
             {/* Toggle tabs */}
-            <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-200">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(false)}
-                className={`flex-1 py-3 text-center text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
-                  !isSignUp ? 'bg-white text-black shadow-md font-bold' : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                Login
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSignUp(true)}
-                className={`flex-1 py-3 text-center text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
-                  isSignUp ? 'bg-white text-black shadow-md font-bold' : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
+            {!isForgotPassword && (
+              <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(false)}
+                  className={`flex-1 py-3 text-center text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
+                    !isSignUp ? 'bg-white text-black shadow-md font-bold' : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(true)}
+                  className={`flex-1 py-3 text-center text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
+                    isSignUp ? 'bg-white text-black shadow-md font-bold' : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
 
             {/* Main Form */}
-            <form onSubmit={handleEmailAuth} className="space-y-4">
-              {isSignUp && (
+            <form onSubmit={isForgotPassword ? handlePasswordReset : handleEmailAuth} className="space-y-4">
+              {isSignUp && !isForgotPassword && (
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-orange-500 transition-colors" />
                   <input
@@ -146,17 +176,31 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 />
               </div>
 
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-orange-500 transition-colors" />
-                <input
-                  type="password"
-                  placeholder="PASSWORD"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-500 tracking-[1px]"
-                />
-              </div>
+              {!isForgotPassword && (
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type="password"
+                    placeholder="PASSWORD"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-orange-200 transition-all font-bold text-xs text-gray-900 placeholder:text-gray-500 tracking-[1px]"
+                  />
+                </div>
+              )}
+
+              {!isSignUp && !isForgotPassword && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-xs text-[#FC8019] hover:underline font-bold focus:outline-none transition-all cursor-pointer"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -167,26 +211,38 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    {isSignUp ? "Create Account" : "Access Account"}
+                    {isForgotPassword ? "Send Reset Link" : (isSignUp ? "Create Account" : "Access Account")}
                     <ChevronRight className="w-4 h-4" />
                   </>
                 )}
               </button>
+
+              {isForgotPassword && (
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(false)}
+                  className="w-full bg-gray-50 border border-gray-200 hover:border-gray-200 active:scale-95 text-gray-900 font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all flex items-center justify-center gap-3 cursor-pointer"
+                >
+                  Back to Login
+                </button>
+              )}
             </form>
 
-            {/* Separator */}
-            <div className="flex items-center justify-center gap-4 text-gray-500">
-              <div className="h-px bg-gray-100 flex-1" />
-              <span className="text-[9px] font-black uppercase tracking-[3px] text-gray-500 whitespace-nowrap">OR CONTINUE WITH</span>
-              <div className="h-px bg-gray-100 flex-1" />
-            </div>
+            {!isForgotPassword && (
+              <>
+                {/* Separator */}
+                <div className="flex items-center justify-center gap-4 text-gray-500">
+                  <div className="h-px bg-gray-100 flex-1" />
+                  <span className="text-[9px] font-black uppercase tracking-[3px] text-gray-500 whitespace-nowrap">OR CONTINUE WITH</span>
+                  <div className="h-px bg-gray-100 flex-1" />
+                </div>
 
-            {/* Google Sign-in */}
-            <button
-              type="button"
-              onClick={handleGoogleAuth}
-              className="w-full bg-gray-50 border border-gray-200 hover:border-gray-200 active:scale-95 text-gray-900 font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all flex items-center justify-center gap-3 cursor-pointer"
-            >
+                {/* Google Sign-in */}
+                <button
+                  type="button"
+                  onClick={handleGoogleAuth}
+                  className="w-full bg-gray-50 border border-gray-200 hover:border-gray-200 active:scale-95 text-gray-900 font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all flex items-center justify-center gap-3 cursor-pointer"
+                >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -207,6 +263,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </svg>
               Google Account
             </button>
+          </>
+        )}
           </div>
         </motion.div>
       </div>

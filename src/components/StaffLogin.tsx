@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { formatAuthError } from '../utils/firebaseErrors';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
@@ -145,11 +146,7 @@ export default function StaffLogin() {
         toast.error('Account not found in staff/rider records. Contact admin.');
       }
     } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        toast.error('Invalid email or password.');
-      } else {
-        toast.error(err.message || 'Login failed.');
-      }
+      toast.error(formatAuthError(err));
     } finally {
       setIsLoading(false);
     }

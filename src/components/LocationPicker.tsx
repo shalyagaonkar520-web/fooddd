@@ -185,7 +185,7 @@ export default function LocationPicker() {
             <button
               onClick={() => setShowDisclosure(true)}
               disabled={isGeolocating}
-              className="w-full flex items-center justify-center gap-2 bg-orange-50 text-orange-600 font-bold py-4 rounded-xl border border-orange-200 hover:bg-orange-100 transition-colors mb-6 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-[#39B54A] text-white font-bold py-4 rounded-xl hover:bg-[#2e9d3d] transition-colors mb-6 disabled:opacity-50 border-none shadow-md"
             >
               {isGeolocating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Crosshair className="w-5 h-5" />}
               {isGeolocating ? 'Detecting Location...' : 'Auto-Detect My Location'}

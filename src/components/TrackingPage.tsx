@@ -293,10 +293,9 @@ interface OrderStatusCardProps {
   rider: any;
   metrics: { distance: number; eta: number };
   onRefresh: () => void;
-  onShare: () => void;
 }
 
-const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics, onRefresh, onShare }) => {
+const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics, onRefresh }) => {
   const navigate = useNavigate();
   return (
     <div className="bg-white border border-gray-100 rounded-t-[35px] shadow-[0_-15px_40px_rgba(0,0,0,0.06)] p-6 space-y-5 relative z-20 backdrop-blur-lg">
@@ -377,26 +376,8 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics
 
       <div className="h-px bg-gray-100" />
 
-      {/* Steerable Action Buttons */}
-      <div className="flex gap-3">
-        <button 
-          onClick={onRefresh}
-          className="flex-1 bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-700 py-3 rounded-2xl font-black text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
-        </button>
-        <button 
-          onClick={onShare}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md shadow-emerald-500/10 cursor-pointer"
-        >
-          <Share2 className="w-3.5 h-3.5" />
-          Share Live
-        </button>
-      </div>
-
       {/* Secured by System */}
-      <div className="flex items-center justify-center gap-1 text-gray-400 font-black uppercase tracking-[3px] text-[8px] mt-1">
+      <div className="flex items-center justify-center gap-1 text-gray-400 font-black uppercase tracking-[3px] text-[8px] pt-1">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> SECURE LIVE SATELLITE TRACKING
       </div>
     </div>
@@ -576,16 +557,28 @@ export default function TrackingPage() {
       `}</style>
 
       {/* Full-width Map Container */}
-      <div className="flex-1 w-full relative min-h-[50vh] md:min-h-[60vh] bg-gray-100">
+      <div className="flex-1 w-full relative min-h-[45vh] md:min-h-[55vh] bg-gray-100">
         <TrackMap order={order} rider={rider} mapError={mapError} />
         
-        {/* Floating Back Action Button */}
-        <button 
-          onClick={() => navigate('/profile')}
-          className="absolute top-6 left-6 z-20 w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-900 shadow-md hover:border-emerald-500 transition-all active:scale-95 shrink-0"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+        {/* Floating Top Header Overlay */}
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+          <button 
+            onClick={() => navigate('/profile')}
+            className="pointer-events-auto w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-900 shadow-md hover:border-emerald-500 transition-all active:scale-95 shrink-0 cursor-pointer"
+            title="Back"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <button 
+            onClick={handleManualRefresh}
+            className="pointer-events-auto px-4 py-2.5 rounded-full bg-white border border-gray-100 flex items-center gap-1.5 text-gray-900 shadow-md hover:border-emerald-500 transition-all active:scale-95 text-xs font-black uppercase tracking-wider cursor-pointer"
+            title="Refresh Location"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Floating sliding Bottom Sheet with Details */}
@@ -594,7 +587,6 @@ export default function TrackingPage() {
         rider={rider} 
         metrics={metrics} 
         onRefresh={handleManualRefresh} 
-        onShare={handleShareTracking} 
       />
     </div>
   );

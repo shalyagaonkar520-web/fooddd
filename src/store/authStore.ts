@@ -8,7 +8,9 @@ import {
   signOut, 
   onAuthStateChanged,
   updateProfile,
-  signInWithCredential
+  signInWithCredential,
+  sendPasswordResetEmail,
+  signInWithRedirect
 } from 'firebase/auth';
 import { 
   doc, 
@@ -26,6 +28,7 @@ import { auth, db } from '../firebase';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { useCartStore } from './cartStore';
+import { formatAuthError } from '../utils/firebaseErrors';
 
 export interface UserProfile {
   uid: string;
@@ -54,6 +57,7 @@ interface AuthStore {
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   addAddress: (label: string, address: string, lat: number, lng: number) => Promise<void>;
   deleteAddress: (addressId: string) => Promise<void>;
@@ -139,24 +143,47 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       set({ loading: true });
       try {
         if (Capacitor.isNativePlatform()) {
-          // Native Google Sign-In flow
-          const user = await GoogleAuth.signIn();
-          const idToken = user.authentication.idToken;
-          
-          if (!idToken) {
-            throw new Error('Google Sign-In failed: No ID Token returned');
+          // Try Native Google Sign-In flow first
+          try {
+            const user = await GoogleAuth.signIn();
+            const idToken = user.authentication?.idToken;
+            if (idToken) {
+              const credential = GoogleAuthProvider.credential(idToken);
+              await signInWithCredential(auth, credential);
+              return;
+            }
+          } catch (nativeErr) {
+            console.warn('Native Google Auth failed, trying web popup fallback', nativeErr);
           }
-          
-          const credential = GoogleAuthProvider.credential(idToken);
-          await signInWithCredential(auth, credential);
-        } else {
-          // Web Google Sign-In flow
-          const provider = new GoogleAuthProvider();
-          await signInWithPopup(auth, provider);
         }
-      } catch (error) {
+        
+        // Web Google Sign-In flow fallback
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        
+        try {
+          await signInWithPopup(auth, provider);
+        } catch (popupError: any) {
+          console.warn('Popup sign in error:', popupError);
+          const errorCode = popupError.code || '';
+          const errorMsg = popupError.message || '';
+          
+          if (
+            errorCode === 'auth/popup-blocked' || 
+            errorCode === 'auth/missing-initial-state' ||
+            errorMsg.toLowerCase().includes('missing initial state') ||
+            errorMsg.toLowerCase().includes('cross-origin')
+          ) {
+            console.log('Falling back to signInWithRedirect...');
+            await signInWithRedirect(auth, provider);
+            // Return a non-resolving promise because the page will redirect
+            return new Promise(() => {});
+          }
+          throw popupError;
+        }
+      } catch (error: any) {
         console.error('Google sign-in error:', error);
-        throw error;
+        throw new Error(formatAuthError(error));
       } finally {
         set({ loading: false });
       }
@@ -166,9 +193,9 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       set({ loading: true });
       try {
         await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Email login error:', error);
-        throw error;
+        throw new Error(formatAuthError(error));
       } finally {
         set({ loading: false });
       }
@@ -181,9 +208,21 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         await updateProfile(credential.user, { displayName: name });
         // Manually trigger sync since displayName changes
         await syncProfile(credential.user);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Email sign up error:', error);
-        throw error;
+        throw new Error(formatAuthError(error));
+      } finally {
+        set({ loading: false });
+      }
+    },
+
+    resetPassword: async (email) => {
+      set({ loading: true });
+      try {
+        await sendPasswordResetEmail(auth, email);
+      } catch (error: any) {
+        console.error('Password reset error:', error);
+        throw new Error(formatAuthError(error));
       } finally {
         set({ loading: false });
       }

@@ -10,3 +10,5 @@ coverage/
 .vercel
 .env*.local
 dev-dist/
+*.aab
+*.apk

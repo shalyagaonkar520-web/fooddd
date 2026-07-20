@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronLeft, PackageSearch, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, PackageSearch, Loader2, XCircle, RotateCcw, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../utils/seo';
 import { useAuthStore } from '../store/authStore';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import toast from 'react-hot-toast';
 
 interface OrderItem {
   name: string;
@@ -24,6 +25,10 @@ interface Order {
   trackingLink?: string;
   userId?: string;
   userPhone?: string;
+  cancelReason?: string;
+  returnRequested?: boolean;
+  returnReason?: string;
+  returnStatus?: string;
 }
 
 export default function OrdersPage() {
@@ -35,6 +40,77 @@ export default function OrdersPage() {
   const { user, profile } = useAuthStore();
   const localPhone = localStorage.getItem('moms_magic_user_phone');
   
+  const [cancellingOrder, setCancellingOrder] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState<string>('Changed my mind / Placed by mistake');
+  
+  const [returningOrder, setReturningOrder] = useState<Order | null>(null);
+  const [returnReason, setReturnReason] = useState<string>('Quality / Taste Issue');
+  const [returnNote, setReturnNote] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const handleConfirmCancel = async () => {
+    if (!cancellingOrder) return;
+    setIsSubmitting(true);
+    try {
+      try {
+        const orderRef = doc(db, 'orders', cancellingOrder.id);
+        await updateDoc(orderRef, {
+          status: 'Cancelled',
+          cancelReason: cancelReason,
+          cancelledAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Firestore cancel sync warning:', err);
+      }
+
+      const stored: Order[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+      const updatedStored = stored.map(o => o.id === cancellingOrder.id ? { ...o, status: 'Cancelled', cancelReason } : o);
+      localStorage.setItem('moms_magic_orders', JSON.stringify(updatedStored));
+
+      setOrders(prev => prev.map(o => o.id === cancellingOrder.id ? { ...o, status: 'Cancelled', cancelReason } : o));
+
+      toast.success('Order cancelled successfully.');
+      setCancellingOrder(null);
+    } catch (error) {
+      toast.error('Failed to cancel order.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmReturn = async () => {
+    if (!returningOrder) return;
+    setIsSubmitting(true);
+    try {
+      try {
+        const orderRef = doc(db, 'orders', returningOrder.id);
+        await updateDoc(orderRef, {
+          returnRequested: true,
+          returnReason: returnReason,
+          returnNote: returnNote,
+          returnStatus: 'Pending',
+          returnedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Firestore return sync warning:', err);
+      }
+
+      const stored: Order[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+      const updatedStored = stored.map(o => o.id === returningOrder.id ? { ...o, returnRequested: true, returnReason, returnStatus: 'Pending' } : o);
+      localStorage.setItem('moms_magic_orders', JSON.stringify(updatedStored));
+
+      setOrders(prev => prev.map(o => o.id === returningOrder.id ? { ...o, returnRequested: true, returnReason, returnStatus: 'Pending' } : o));
+
+      toast.success('Return / Refund request submitted! Our team will contact you.');
+      setReturningOrder(null);
+      setReturnNote('');
+    } catch (error) {
+      toast.error('Failed to submit return request.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     const normalizePhone = (p: string) => p ? p.replace(/\D/g, '').slice(-10) : '';
     const userPhoneToMatch = normalizePhone(profile?.phone || user?.phoneNumber || localPhone || '');
@@ -161,55 +237,221 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order.id} className="bg-white border border-gray-200 rounded-[30px] p-6 hover:border-orange-200 transition-colors">
-                <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
-                  <div>
-                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Order ID: {order.id.slice(0, 8)}</p>
-                    <p className="text-gray-900 text-sm font-bold mt-1">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Just now'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-orange-500 font-black italic text-xl">₹{order.grandTotal}</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest mt-2 border ${
-                      order.status === 'Confirmed' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                      order.status === 'Preparing' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
-                      order.status === 'Out For Delivery' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
-                      order.status === 'Delivered' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
-                      'bg-gray-100 text-gray-900 border-gray-200'
-                    }`}>
-                      {order.status || 'Pending'}
-                    </span>
-                  </div>
-                </div>
+            {orders.map((order) => {
+              const isCancelled = order.status?.toLowerCase() === 'cancelled';
+              const isDelivered = order.status?.toLowerCase() === 'delivered';
+              const isCanCancel = !isCancelled && !isDelivered && order.status?.toLowerCase() !== 'out for delivery';
 
-                <div className="space-y-2">
-                  {order.items.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs">
-                      <span className="text-gray-500 font-medium">{item.quantity || item.finalQuantity || 1}x {item.name}</span>
+              return (
+                <div key={order.id} className="bg-white border border-gray-200 rounded-[30px] p-6 hover:border-orange-200 transition-colors">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
+                    <div>
+                      <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Order ID: {order.id.slice(0, 8)}</p>
+                      <p className="text-gray-900 text-sm font-bold mt-1">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Just now'}
+                      </p>
                     </div>
-                  ))}
-                  {order.items.length > 3 && (
-                    <p className="text-orange-500/70 text-[10px] font-bold italic mt-2">+ {order.items.length - 3} more items</p>
-                  )}
-                </div>
-
-                {order.status !== 'delivered' && order.status !== 'cancelled' && (
-                  <div className="mt-6 pt-4 border-t border-gray-200">
-                    <button
-                      onClick={() => navigate(`/track/${order.id}`)}
-                      className="w-full text-center py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      📍 Track Order Live
-                    </button>
+                    <div className="text-right">
+                      <p className="text-orange-500 font-black italic text-xl">₹{order.grandTotal}</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest mt-2 border ${
+                        isCancelled ? 'bg-red-50 text-red-600 border-red-200' :
+                        order.returnRequested ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                        order.status === 'Confirmed' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                        order.status === 'Preparing' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                        order.status === 'Out For Delivery' ? 'bg-purple-50 text-purple-600 border-purple-200' :
+                        isDelivered ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                        'bg-gray-100 text-gray-900 border-gray-200'
+                      }`}>
+                        {isCancelled ? 'Cancelled' : order.returnRequested ? 'Return Requested' : (order.status || 'Pending')}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <div className="space-y-2">
+                    {order.items.slice(0, 3).map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 font-medium">{item.quantity || item.finalQuantity || 1}x {item.name}</span>
+                      </div>
+                    ))}
+                    {order.items.length > 3 && (
+                      <p className="text-orange-500/70 text-[10px] font-bold italic mt-2">+ {order.items.length - 3} more items</p>
+                    )}
+                  </div>
+
+                  {/* Actions Section */}
+                  <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                    {/* Live Track Button */}
+                    {!isCancelled && !isDelivered && (
+                      <button
+                        onClick={() => navigate(`/track/${order.id}`)}
+                        className="w-full text-center py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        📍 Track Order Live
+                      </button>
+                    )}
+
+                    {/* Action buttons row */}
+                    <div className="flex gap-2">
+                      {/* Cancel Order Button */}
+                      {isCanCancel && (
+                        <button
+                          onClick={() => setCancellingOrder(order)}
+                          className="flex-1 py-2.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          Cancel Order
+                        </button>
+                      )}
+
+                      {/* Return / Refund Order Button */}
+                      {(isDelivered || order.status?.toLowerCase() === 'out for delivery') && !order.returnRequested && !isCancelled && (
+                        <button
+                          onClick={() => setReturningOrder(order)}
+                          className="flex-1 py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-500 hover:text-white border border-amber-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          Return / Refund Order
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Return Requested status info */}
+                    {order.returnRequested && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-amber-800 text-[10px] font-bold">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Return request under review. Status: {order.returnStatus || 'Pending'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* CANCEL ORDER MODAL */}
+      <AnimatePresence>
+        {cancellingOrder && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4"
+            >
+              <div className="flex items-center gap-3 text-red-600 border-b border-gray-100 pb-3">
+                <XCircle className="w-6 h-6 shrink-0" />
+                <h3 className="text-lg font-black uppercase tracking-wider">Cancel Order</h3>
+              </div>
+
+              <p className="text-gray-600 text-xs font-semibold">
+                Are you sure you want to cancel order <span className="font-bold text-gray-900">#{cancellingOrder.id.slice(0, 8)}</span>?
+              </p>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1.5">
+                  Select Reason for Cancellation:
+                </label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-red-500"
+                >
+                  <option value="Changed my mind / Placed by mistake">Changed my mind / Placed by mistake</option>
+                  <option value="Order is taking too long">Order is taking too long</option>
+                  <option value="Need to change delivery address">Need to change delivery address</option>
+                  <option value="Need to modify item selection">Need to modify item selection</option>
+                  <option value="Other reason">Other reason</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setCancellingOrder(null)}
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all"
+                >
+                  Keep Order
+                </button>
+                <button
+                  disabled={isSubmitting}
+                  onClick={handleConfirmCancel}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Cancel'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* RETURN / REFUND ORDER MODAL */}
+      <AnimatePresence>
+        {returningOrder && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4"
+            >
+              <div className="flex items-center gap-3 text-amber-600 border-b border-gray-100 pb-3">
+                <RotateCcw className="w-6 h-6 shrink-0" />
+                <h3 className="text-lg font-black uppercase tracking-wider">Return / Refund Order</h3>
+              </div>
+
+              <p className="text-gray-600 text-xs font-semibold">
+                Submit a return/refund request for order <span className="font-bold text-gray-900">#{returningOrder.id.slice(0, 8)}</span>.
+              </p>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1.5">
+                  Reason for Return / Refund:
+                </label>
+                <select
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-amber-500 mb-3"
+                >
+                  <option value="Quality / Taste Issue">Quality / Taste Issue</option>
+                  <option value="Damaged or Spilled Packaging">Damaged or Spilled Packaging</option>
+                  <option value="Incorrect or Missing Items">Incorrect or Missing Items</option>
+                  <option value="Food Delivered Cold">Food Delivered Cold</option>
+                  <option value="Other Issue">Other Issue</option>
+                </select>
+
+                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1.5">
+                  Additional Details (Optional):
+                </label>
+                <textarea
+                  rows={3}
+                  value={returnNote}
+                  onChange={(e) => setReturnNote(e.target.value)}
+                  placeholder="Describe what went wrong..."
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setReturningOrder(null)}
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all"
+                >
+                  Close
+                </button>
+                <button
+                  disabled={isSubmitting}
+                  onClick={handleConfirmReturn}
+                  className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit Request'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
