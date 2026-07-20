@@ -9,7 +9,7 @@ export default function InstallBanner() {
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-    const dismissedInstall = localStorage.getItem('pwa_install_dismissed');
+    const dismissedInstall = localStorage.getItem('pwa_install_dismissed_v2');
     
     if (!isStandalone && dismissedInstall !== 'true') {
       setShowInstall(true);
@@ -55,7 +55,7 @@ export default function InstallBanner() {
 
   const handleDismissInstall = () => {
     setShowInstall(false);
-    localStorage.setItem('pwa_install_dismissed', 'true');
+    localStorage.setItem('pwa_install_dismissed_v2', 'true');
   };
 
   const handleEnableSound = () => {

@@ -39,9 +39,6 @@ import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 import { useMenuStore } from '../store/menuStore';
 import { AnimatePresence, motion } from 'framer-motion';
-import IncomingOrderPopup from './IncomingOrderPopup';
-import { requestNotificationPermission } from '../utils/notifications';
-
 const PREASSIGNED_EMAILS = Array.from({ length: 10 }, (_, i) => `hotel${i + 1}@minto.com`);
 
 export default function AdminPage() {
@@ -85,8 +82,6 @@ export default function AdminPage() {
 
   // Cleared orders locally
   const [clearedOrderIds, setClearedOrderIds] = useState<string[]>([]);
-  const [acknowledgedOrderIds, setAcknowledgedOrderIds] = useState<string[]>([]);
-  const [incomingOrder, setIncomingOrder] = useState<any>(null);
 
   // Load Cleared Orders list from local storage on mount
   useEffect(() => {
@@ -94,19 +89,7 @@ export default function AdminPage() {
       const stored = localStorage.getItem('moms_magic_cleared_admin_orders');
       if (stored) setClearedOrderIds(JSON.parse(stored));
     } catch (_) {}
-    requestNotificationPermission();
   }, []);
-
-  // Check for incoming orders
-  useEffect(() => {
-    if (incomingOrder) return;
-    const newPending = orders.find(
-      (o) => o.status === 'pending' && !clearedOrderIds.includes(o.id) && !acknowledgedOrderIds.includes(o.id)
-    );
-    if (newPending) {
-      setIncomingOrder(newPending);
-    }
-  }, [orders, clearedOrderIds, acknowledgedOrderIds, incomingOrder]);
 
   // Clear/Dismiss Order locally
   const dismissAdminOrder = (orderId: string) => {
@@ -121,17 +104,6 @@ export default function AdminPage() {
     setClearedOrderIds([]);
     localStorage.removeItem('moms_magic_cleared_admin_orders');
     toast.success("Cleared orders restored!");
-  };
-
-  const handlePopupAccept = (orderId: string) => {
-    setAcknowledgedOrderIds(prev => [...prev, orderId]);
-    setIncomingOrder(null);
-  };
-
-  const handlePopupReject = (orderId: string) => {
-    setAcknowledgedOrderIds(prev => [...prev, orderId]);
-    setIncomingOrder(null);
-    dismissAdminOrder(orderId);
   };
 
   // Check Firebase Auth + role
@@ -573,16 +545,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-32 px-4 md:px-6 relative overflow-x-hidden">
-      <AnimatePresence>
-        {incomingOrder && (
-          <IncomingOrderPopup
-            order={incomingOrder}
-            mode="hotel"
-            onAccept={handlePopupAccept}
-            onReject={handlePopupReject}
-          />
-        )}
-      </AnimatePresence>
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header */}
