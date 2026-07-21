@@ -5,6 +5,7 @@ import { User, ChevronRight } from 'lucide-react';
 import { useSEO } from '../utils/seo';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 
 const FloatingFood = ({ src, delay, className, size = "w-24 h-24" }: { src: string, delay: number, className: string, size?: string }) => (
   <motion.div
@@ -92,11 +93,27 @@ export default function AuthPage() {
   }, [showLogin]);
 
   useEffect(() => {
-    const isGuest = localStorage.getItem('moms_magic_guest');
-    const userPhone = localStorage.getItem('moms_magic_user_phone');
-    if (isGuest || userPhone) {
-      navigate('/home');
-    }
+    const checkAuthAndApp = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { App: CapApp } = await import('@capacitor/app');
+          const info = await CapApp.getInfo();
+          if (info.id === 'com.minto.admin' || info.id === 'com.minto.hotel' || info.id === 'com.minto.rider') {
+            navigate('/staff', { replace: true });
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to get Capacitor app info:', e);
+        }
+      }
+
+      const isGuest = localStorage.getItem('moms_magic_guest');
+      const userPhone = localStorage.getItem('moms_magic_user_phone');
+      if (isGuest || userPhone) {
+        navigate('/home', { replace: true });
+      }
+    };
+    checkAuthAndApp();
   }, [navigate]);
 
   const handleEmailAuth = async (e?: React.FormEvent) => {

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useMenuStore } from '../store/menuStore';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 
 const SEARCH_PLACEHOLDERS = [
   "Search for 'Burger'",
@@ -114,13 +115,27 @@ export default function HomePage() {
   const { profile, addWalletBalance } = useAuthStore();
   const navigate = useNavigate();
 
-  // Redirect to Auth if no guest or phone
+  // Redirect to Auth if no guest or phone, and intercept staff apps
   useEffect(() => {
-    const isGuest = localStorage.getItem('moms_magic_guest');
-    const userPhone = localStorage.getItem('moms_magic_user_phone');
-    if (!isGuest && !userPhone) {
-      navigate('/');
-    }
+    const checkAuthAndApp = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { App: CapApp } = await import('@capacitor/app');
+          const info = await CapApp.getInfo();
+          if (info.id === 'com.minto.admin' || info.id === 'com.minto.hotel' || info.id === 'com.minto.rider') {
+            navigate('/staff', { replace: true });
+            return;
+          }
+        } catch (e) {}
+      }
+
+      const isGuest = localStorage.getItem('moms_magic_guest');
+      const userPhone = localStorage.getItem('moms_magic_user_phone');
+      if (!isGuest && !userPhone) {
+        navigate('/', { replace: true });
+      }
+    };
+    checkAuthAndApp();
   }, [navigate]);
 
   // Auto-detect location on mount

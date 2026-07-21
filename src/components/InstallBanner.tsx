@@ -42,7 +42,10 @@ export default function InstallBanner() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      toast('To install, use your browser menu -> "Add to Home Screen" or "Install App"', { icon: '📲' });
+      window.alert(
+        "Automatic installation is blocked by your browser (often due to missing HTTPS on local networks).\n\n" +
+        "To install, please tap your browser's menu (⋮) and select 'Add to Home screen' or 'Install App'."
+      );
       return;
     }
     deferredPrompt.prompt();
