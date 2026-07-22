@@ -501,7 +501,7 @@ export default function Checkout() {
         return;
       }
 
-      const options = {
+      const baseOptions: any = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T1Y1yu09Jbjo6b',
         amount: Math.round(payableAmount * 100),
         currency: 'INR',
@@ -512,8 +512,25 @@ export default function Checkout() {
           setIsSubmitting(false);
         },
         prefill: { name: formData.name, contact: formData.phone },
-        theme: { color: '#FC8019' },
-        config: {
+        theme: { color: '#10B981' },
+        modal: { ondismiss: () => setIsSubmitting(false) },
+      };
+
+      if (paymentMethod === 'gpay') {
+        baseOptions.method = 'upi';
+        baseOptions.upi = {
+          flow: 'intent',
+          app: 'google_pay'
+        };
+      } else if (paymentMethod === 'phonepe') {
+        baseOptions.method = 'upi';
+        baseOptions.upi = {
+          flow: 'intent',
+          app: 'phonepe'
+        };
+      } else {
+        // Standard Checkout / Cards & Other UPI
+        baseOptions.config = {
           display: {
             blocks: {
               upi: {
@@ -539,35 +556,53 @@ export default function Checkout() {
               show_default_blocks: false
             }
           }
-        },
-        modal: { ondismiss: () => setIsSubmitting(false) },
+        };
+      }
+
+      const triggerRazorpay = (opts: any) => {
+        if (Capacitor.isNativePlatform() && (window as any).RazorpayCheckout) {
+          // Native Razorpay Flow for Capacitor
+          (window as any).RazorpayCheckout.on('payment.success', async (successCallback: any) => {
+            await completeOrder(successCallback.razorpay_payment_id);
+            setIsSubmitting(false);
+          });
+          (window as any).RazorpayCheckout.on('payment.cancel', () => {
+            toast.error('Payment Cancelled');
+            setIsSubmitting(false);
+          });
+          (window as any).RazorpayCheckout.on('payment.failed', (errorCallback: any) => {
+            if (opts.method) {
+              const fallbackOpts = { ...opts };
+              delete fallbackOpts.method;
+              delete fallbackOpts.upi;
+              triggerRazorpay(fallbackOpts);
+            } else {
+              toast.error('Payment Failed: ' + (errorCallback?.description || 'Unknown error'));
+              setIsSubmitting(false);
+            }
+          });
+          
+          (window as any).RazorpayCheckout.open(opts);
+        } else {
+          // Standard Web Razorpay Flow
+          const rzp = new (window as any).Razorpay(opts);
+          rzp.on('payment.failed', (r: any) => {
+            if (opts.method) {
+              toast.error('Direct app launch unavailable. Opening all payment options...');
+              const fallbackOpts = { ...opts };
+              delete fallbackOpts.method;
+              delete fallbackOpts.upi;
+              triggerRazorpay(fallbackOpts);
+            } else {
+              toast.error('Payment Failed: ' + (r?.error?.description || 'Payment error'));
+              setIsSubmitting(false);
+            }
+          });
+          rzp.open();
+        }
       };
 
-      if (Capacitor.isNativePlatform() && (window as any).RazorpayCheckout) {
-        // Native Razorpay Flow for Capacitor
-        (window as any).RazorpayCheckout.on('payment.success', async (successCallback: any) => {
-          await completeOrder(successCallback.razorpay_payment_id);
-          setIsSubmitting(false);
-        });
-        (window as any).RazorpayCheckout.on('payment.cancel', (errorCallback: any) => {
-          toast.error('Payment Cancelled');
-          setIsSubmitting(false);
-        });
-        (window as any).RazorpayCheckout.on('payment.failed', (errorCallback: any) => {
-          toast.error('Payment Failed: ' + errorCallback.description);
-          setIsSubmitting(false);
-        });
-        
-        (window as any).RazorpayCheckout.open(options);
-      } else {
-        // Standard Web Razorpay Flow
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', (r: any) => {
-          toast.error('Payment Failed: ' + r.error.description);
-          setIsSubmitting(false);
-        });
-        rzp.open();
-      }
+      triggerRazorpay(baseOptions);
     } else {
       setIsSubmitting(true);
       try {
@@ -984,180 +1019,238 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* Payment Method Selection */}
+          {/* Swiggy / Zomato Inspired Dark Payment Experience */}
           {payableAmount > 0 ? (
-            <div className="space-y-4 text-left">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-orange-500" /> Payment Method
-                </h3>
-                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider border border-emerald-100 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> 100% Secure
+            <div className="bg-[#121212] text-white p-5 sm:p-7 rounded-[28px] border border-gray-800/80 shadow-2xl space-y-6 text-left relative overflow-hidden">
+              {/* Subtle Ambient Background Glow */}
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 blur-[90px] rounded-full pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-500/10 blur-[90px] rounded-full pointer-events-none" />
+
+              {/* 100% Secure Badge & Header */}
+              <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-white flex items-center gap-2">
+                    <CreditCard className="w-4.5 h-4.5 text-emerald-400" /> Select Payment Method
+                  </h3>
+                  <p className="text-[10px] text-gray-400 font-bold tracking-wide mt-0.5">
+                    Fast & Verified Instant Checkout
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-[10px] font-black uppercase tracking-widest shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5" /> 100% Secure
+                </div>
+              </div>
+
+              {/* Grand Total Bar */}
+              <div className="bg-gray-900/90 border border-gray-800 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Payable Amount</p>
+                  <p className="text-2xl sm:text-3xl font-black italic text-emerald-400 tracking-tight mt-0.5">
+                    ₹{payableAmount}
+                  </p>
+                </div>
+                <span className="text-[10px] font-black text-gray-400 bg-gray-800 px-3 py-1.5 rounded-xl uppercase tracking-wider border border-gray-700">
+                  {walletDeduction > 0 ? `Wallet: -₹${walletDeduction}` : 'Inclusive of Taxes'}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Google Pay */}
+              {/* Modern Payment Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* 1. Google Pay */}
                 <div
                   onClick={() => setPaymentMethod('gpay')}
-                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                  className={`relative p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                     paymentMethod === 'gpay'
-                      ? 'border-orange-500 bg-orange-50/40 shadow-md scale-[1.01]'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500 scale-[1.01]'
+                      : 'border-gray-800 bg-gray-900/60 hover:border-gray-700 hover:bg-gray-900/90'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center p-1.5 shrink-0">
-                        <span className="font-black text-xs text-blue-600">G</span>
-                        <span className="font-black text-xs text-red-500">P</span>
-                        <span className="font-black text-xs text-yellow-500">a</span>
-                        <span className="font-black text-xs text-green-500">y</span>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-md flex items-center justify-center p-1 shrink-0">
+                        <span className="font-black text-sm text-blue-600">G</span>
+                        <span className="font-black text-sm text-red-500">P</span>
+                        <span className="font-black text-sm text-yellow-500">a</span>
+                        <span className="font-black text-sm text-green-500">y</span>
                       </div>
                       <div>
-                        <p className="font-black text-gray-900 text-sm tracking-tight">Google Pay</p>
-                        <p className="text-[10px] text-gray-500 font-semibold">Fast UPI Payment</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-white text-sm tracking-tight">Google Pay</p>
+                          <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-500/40 animate-pulse">
+                            ⚡ FASTEST
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 font-semibold mt-0.5">Fast UPI Payment</p>
                       </div>
                     </div>
                     {paymentMethod === 'gpay' ? (
-                      <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-600 group-hover:border-gray-500 shrink-0" />
                     )}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400 border-t border-gray-100/80 pt-2.5 mt-1">
-                    <span>Instant UPI</span>
-                    <span className="text-orange-500 font-bold">Fastest</span>
+                  <div className="flex items-center justify-between text-[9px] font-black uppercase text-gray-400 border-t border-gray-800/80 pt-2.5 mt-1">
+                    <span>Direct App Launch</span>
+                    <span className="text-emerald-400 font-extrabold">Instant UPI</span>
                   </div>
                 </div>
 
-                {/* PhonePe */}
+                {/* 2. PhonePe */}
                 <div
                   onClick={() => setPaymentMethod('phonepe')}
-                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                  className={`relative p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                     paymentMethod === 'phonepe'
-                      ? 'border-purple-500 bg-purple-50/40 shadow-md scale-[1.01]'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500 scale-[1.01]'
+                      : 'border-gray-800 bg-gray-900/60 hover:border-gray-700 hover:bg-gray-900/90'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-purple-600 text-white shadow-sm flex items-center justify-center font-black text-xs shrink-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white shadow-md flex items-center justify-center font-black text-sm shrink-0">
                         पे
                       </div>
                       <div>
-                        <p className="font-black text-gray-900 text-sm tracking-tight">PhonePe</p>
-                        <p className="text-[10px] text-gray-500 font-semibold">Pay via PhonePe App</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-white text-sm tracking-tight">PhonePe</p>
+                          <span className="bg-purple-500/20 text-purple-300 text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-purple-500/40">
+                            ✨ ZERO FEE
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 font-semibold mt-0.5">Pay via PhonePe</p>
                       </div>
                     </div>
                     {paymentMethod === 'phonepe' ? (
-                      <CheckCircle2 className="w-5 h-5 text-purple-600 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-600 group-hover:border-gray-500 shrink-0" />
                     )}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400 border-t border-gray-100/80 pt-2.5 mt-1">
-                    <span>UPI Direct</span>
-                    <span className="text-purple-600 font-bold">Zero Fee</span>
+                  <div className="flex items-center justify-between text-[9px] font-black uppercase text-gray-400 border-t border-gray-800/80 pt-2.5 mt-1">
+                    <span>Direct App Launch</span>
+                    <span className="text-purple-400 font-extrabold">UPI Intent</span>
                   </div>
                 </div>
 
-                {/* Pay Online (All Cards, UPI, NetBanking) */}
+                {/* 3. Cards & Other UPI */}
                 <div
                   onClick={() => setPaymentMethod('online')}
-                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                  className={`relative p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                     paymentMethod === 'online'
-                      ? 'border-emerald-500 bg-emerald-50/40 shadow-md scale-[1.01]'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500 scale-[1.01]'
+                      : 'border-gray-800 bg-gray-900/60 hover:border-gray-700 hover:bg-gray-900/90'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-sm flex items-center justify-center shrink-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md flex items-center justify-center shrink-0">
                         <CreditCard className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-black text-gray-900 text-sm tracking-tight">Cards & Other UPI</p>
-                          <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">All Apps</span>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-white text-sm tracking-tight">Cards & Other UPI</p>
+                          <span className="bg-blue-500/20 text-blue-300 text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-blue-500/40">
+                            ALL OPTIONS
+                          </span>
                         </div>
-                        <p className="text-[10px] text-gray-500 font-semibold">Paytm, Cards, NetBanking</p>
+                        <p className="text-[11px] text-gray-400 font-semibold mt-0.5">Paytm, BHIM, CRED, Cards & NetBanking</p>
                       </div>
                     </div>
                     {paymentMethod === 'online' ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-600 group-hover:border-gray-500 shrink-0" />
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 border-t border-gray-100/80 pt-2.5 mt-1 text-[9px] font-black uppercase text-gray-400">
-                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold">Paytm</span>
-                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold">Visa/Master</span>
-                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold">NetBank</span>
+                  <div className="flex items-center gap-1.5 border-t border-gray-800/80 pt-2.5 mt-1 text-[8px] font-black uppercase text-gray-400">
+                    <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300 font-extrabold">Paytm</span>
+                    <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300 font-extrabold">BHIM</span>
+                    <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300 font-extrabold">Cards</span>
+                    <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300 font-extrabold">NetBank</span>
                   </div>
                 </div>
 
-                {/* Cash on Delivery */}
+                {/* 4. Cash on Delivery */}
                 <div
                   onClick={() => setPaymentMethod('cod')}
-                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                  className={`relative p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                     paymentMethod === 'cod'
-                      ? 'border-amber-500 bg-amber-50/40 shadow-md scale-[1.01]'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500 scale-[1.01]'
+                      : 'border-gray-800 bg-gray-900/60 hover:border-gray-700 hover:bg-gray-900/90'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-white shadow-sm flex items-center justify-center shrink-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md flex items-center justify-center shrink-0">
                         <Banknote className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-black text-gray-900 text-sm tracking-tight">Cash on Delivery</p>
-                        <p className="text-[10px] text-gray-500 font-semibold">Pay cash at doorstep</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-white text-sm tracking-tight">Cash on Delivery</p>
+                          <span className="bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-500/40">
+                            PAY AT DOORSTEP
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 font-semibold mt-0.5">Pay with cash when order arrives</p>
                       </div>
                     </div>
                     {paymentMethod === 'cod' ? (
-                      <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-600 group-hover:border-gray-500 shrink-0" />
                     )}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400 border-t border-gray-100/80 pt-2.5 mt-1">
-                    <span>Pay on Arrival</span>
-                    <span className="text-amber-600 font-bold">Exact Cash</span>
+                  <div className="flex items-center justify-between text-[9px] font-black uppercase text-gray-400 border-t border-gray-800/80 pt-2.5 mt-1">
+                    <span>No Online Payment Needed</span>
+                    <span className="text-amber-400 font-extrabold">Cash</span>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-orange-500/10 border border-orange-500/20 px-4 py-3.5 rounded-2xl text-orange-500 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+            <div className="bg-emerald-500/10 border border-emerald-500/30 p-5 rounded-2xl text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
               🎉 100% Covered By Wallet cash
             </div>
           )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white h-14 sm:h-16 rounded-2xl text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                Place Order
-                <ChevronRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
+          {/* Sticky Bottom Place Order Bar for Mobile & Desktop CTA */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#121212]/95 backdrop-blur-md border-t border-gray-800/80 z-50 shadow-[0_-10px_25px_rgba(0,0,0,0.5)] md:relative md:bg-transparent md:border-none md:p-0 md:shadow-none">
+            <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+              <div className="md:hidden text-left">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                  {paymentMethod === 'gpay' ? 'Google Pay' : paymentMethod === 'phonepe' ? 'PhonePe' : paymentMethod === 'cod' ? 'Cash on Delivery' : 'Razorpay Checkout'}
+                </p>
+                <p className="text-xl font-black italic text-emerald-400">₹{payableAmount}</p>
+              </div>
 
-          <div className="flex items-center justify-center gap-2 mt-4 text-gray-500 font-bold text-[10px]">
-            <ShieldCheck className="w-4 h-4 text-green-500" />
-            Secure Encrypted Checkout
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white h-14 sm:h-16 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing Payment...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      {paymentMethod === 'gpay'
+                        ? 'Pay with Google Pay'
+                        : paymentMethod === 'phonepe'
+                        ? 'Pay with PhonePe'
+                        : paymentMethod === 'cod'
+                        ? 'Place Order (COD)'
+                        : 'Place Order & Pay'}
+                    </span>
+                    <ChevronRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
+
+
         </div>
       </form>
     </div>
