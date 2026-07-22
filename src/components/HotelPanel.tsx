@@ -11,6 +11,7 @@ import IncomingOrderPopup from './IncomingOrderPopup';
 import InstallBanner from './InstallBanner';
 import OfflineBanner from './OfflineBanner';
 import { requestNotificationPermission } from '../utils/notifications';
+import { sendHotelStatusNotification } from '../utils/telegram';
 
 export default function HotelPanel() {
   useSEO("Kitchen Portal", "Hotel/Restaurant dashboard for managing live orders.");
@@ -197,10 +198,14 @@ export default function HotelPanel() {
   };
 
   const acceptOrder = async (orderId: string) => {
+    const targetOrder = activeOrders.find(o => o.id === orderId);
     updateLocalOrderStatus(orderId, 'Preparing');
     setActiveOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'Preparing' } : o));
     toast.success("Order accepted. Kitchen is preparing!");
-    try { await updateDoc(doc(db, 'orders', orderId), { status: 'Preparing' }); } catch (_) {}
+    try { 
+      await updateDoc(doc(db, 'orders', orderId), { status: 'Preparing' }); 
+      if (targetOrder) sendHotelStatusNotification(targetOrder, 'Preparing');
+    } catch (_) {}
   };
 
   const handlePopupAccept = async (orderId: string) => {
@@ -217,14 +222,19 @@ export default function HotelPanel() {
   };
 
   const markReadyForDelivery = async (orderId: string) => {
+    const targetOrder = activeOrders.find(o => o.id === orderId);
     updateLocalOrderStatus(orderId, 'Ready for Delivery');
     setActiveOrders(prev => prev.filter(o => o.id !== orderId));
     toast.success("Order marked as Ready! Awaiting Rider.");
-    try { await updateDoc(doc(db, 'orders', orderId), { status: 'Ready for Delivery' }); } catch (_) {}
+    try { 
+      await updateDoc(doc(db, 'orders', orderId), { status: 'Ready for Delivery' }); 
+      if (targetOrder) sendHotelStatusNotification(targetOrder, 'Ready for Delivery');
+    } catch (_) {}
   };
 
   const handleCancelOrder = async (orderId: string) => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    const targetOrder = activeOrders.find(o => o.id === orderId);
     updateLocalOrderStatus(orderId, 'Cancelled');
     setActiveOrders(prev => prev.filter(o => o.id !== orderId));
     toast.success("Order cancelled.");
@@ -234,6 +244,7 @@ export default function HotelPanel() {
         cancelReason: 'Cancelled by Kitchen',
         cancelledAt: new Date().toISOString()
       }); 
+      if (targetOrder) sendHotelStatusNotification(targetOrder, 'Cancelled', 'Cancelled by Kitchen');
     } catch (_) {}
   };
 

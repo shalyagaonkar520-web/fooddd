@@ -4,7 +4,7 @@ import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
 import { useLocationStore } from '../store/locationStore';
 import { motion } from 'framer-motion';
-import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, ChevronRight, Loader2, Compass, Search, X } from 'lucide-react';
+import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, ChevronRight, Loader2, Compass, Search, X, CreditCard, QrCode, Wallet, Banknote, Smartphone, CheckCircle2, Sparkles, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge } from '../types';
@@ -20,7 +20,7 @@ import { Capacitor } from '@capacitor/core';
 import DeliveryAnimation from './DeliveryAnimation';
 
 const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
-const TELEGRAM_CHAT_ID   = '-1003803637741';
+const TELEGRAM_CHAT_IDS = ['1750770370', '-1003803637741'];
 const WHATSAPP_BULK_NUMBER = '917483187572';
 const WHATSAPP_FOOD_NUMBER = '919606001790';
 
@@ -29,24 +29,9 @@ const escHtml = (s: string) =>
 
 // Sends a Telegram message. Tries server proxy first, falls back to direct API call.
 async function sendTelegramMessage(text: string): Promise<void> {
-  const payload = JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'HTML' });
-
-  const direct = () =>
-    fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload,
-    }).then(async (r) => {
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}));
-        throw new Error((d as any).description || 'Telegram direct error');
-      }
-    });
-
-  // Wrap proxy in a manual timeout (avoids AbortSignal.timeout which crashes on Safari iOS)
   const proxyWithTimeout = (): Promise<boolean> =>
     new Promise((resolve) => {
-      const timer = setTimeout(() => resolve(false), 8000);
+      const timer = setTimeout(() => resolve(false), 5000);
       fetch('/api/send-telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,21 +42,30 @@ async function sendTelegramMessage(text: string): Promise<void> {
         .catch(() => { clearTimeout(timer); resolve(false); });
     });
 
+  const sendDirect = async () => {
+    for (const chatId of TELEGRAM_CHAT_IDS) {
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+        });
+      } catch (e) {
+        console.error(`Telegram direct error for ${chatId}:`, e);
+      }
+    }
+  };
+
   try {
     const proxyOk = await proxyWithTimeout();
     if (!proxyOk) {
       console.warn('⚠️ Proxy failed, using direct Telegram call');
-      await direct();
+      await sendDirect();
     } else {
       console.log('✅ Telegram sent via proxy');
     }
   } catch {
-    try {
-      await direct();
-      console.log('✅ Telegram sent via direct call');
-    } catch (e) {
-      console.error('❌ Both Telegram paths failed:', e);
-    }
+    await sendDirect();
   }
 }
 
@@ -163,7 +157,7 @@ export default function Checkout() {
   const [useWallet, setUseWallet] = useState(false);
   const [customWalletAmount, setCustomWalletAmount] = useState('');
 
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('online');
+  const [paymentMethod, setPaymentMethod] = useState<'gpay' | 'phonepe' | 'online' | 'cod'>('online');
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
 
@@ -488,7 +482,7 @@ export default function Checkout() {
       setTimeout(() => navigate('/track/' + orderId), 500);
     };
 
-    if (payableAmount > 0 && paymentMethod === 'online') {
+    if (payableAmount > 0 && paymentMethod !== 'cod') {
       // Load Razorpay
       const loadRazorpay = () =>
         new Promise<boolean>((resolve) => {
@@ -990,52 +984,149 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* Payment Method */}
+          {/* Payment Method Selection */}
           {payableAmount > 0 ? (
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-wider">Payment Method</h3>
-              <div className="space-y-2">
-                <label
-                  className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'online'
-                      ? 'bg-orange-50/50 border-orange-500 shadow-sm'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
+            <div className="space-y-4 text-left">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-orange-500" /> Payment Method
+                </h3>
+                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider border border-emerald-100 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> 100% Secure
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Google Pay */}
+                <div
+                  onClick={() => setPaymentMethod('gpay')}
+                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                    paymentMethod === 'gpay'
+                      ? 'border-orange-500 bg-orange-50/40 shadow-md scale-[1.01]'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    checked={paymentMethod === 'online'}
-                    onChange={() => setPaymentMethod('online')}
-                    className="w-4 h-4 accent-orange-500"
-                  />
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <p className="font-extrabold text-gray-900 text-sm">Pay Online / UPI</p>
-                      <span className="px-2 py-0.5 bg-green-100 text-green-700 font-black text-[9px] rounded-full uppercase">Instant</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center p-1.5 shrink-0">
+                        <span className="font-black text-xs text-blue-600">G</span>
+                        <span className="font-black text-xs text-red-500">P</span>
+                        <span className="font-black text-xs text-yellow-500">a</span>
+                        <span className="font-black text-xs text-green-500">y</span>
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-900 text-sm tracking-tight">Google Pay</p>
+                        <p className="text-[10px] text-gray-500 font-semibold">Fast UPI Payment</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Google Pay, PhonePe, Paytm, UPI, Cards, NetBanking</p>
+                    {paymentMethod === 'gpay' ? (
+                      <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                    )}
                   </div>
-                </label>
-                <label
-                  className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'cod'
-                      ? 'bg-orange-50/50 border-orange-500 shadow-sm'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400 border-t border-gray-100/80 pt-2.5 mt-1">
+                    <span>Instant UPI</span>
+                    <span className="text-orange-500 font-bold">Fastest</span>
+                  </div>
+                </div>
+
+                {/* PhonePe */}
+                <div
+                  onClick={() => setPaymentMethod('phonepe')}
+                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                    paymentMethod === 'phonepe'
+                      ? 'border-purple-500 bg-purple-50/40 shadow-md scale-[1.01]'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    checked={paymentMethod === 'cod'}
-                    onChange={() => setPaymentMethod('cod')}
-                    className="w-4 h-4 accent-orange-500"
-                  />
-                  <div className="flex-1">
-                    <p className="font-bold text-gray-900 text-sm">Cash on Delivery</p>
-                    <p className="text-xs text-gray-500">Pay with cash when your order arrives</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-purple-600 text-white shadow-sm flex items-center justify-center font-black text-xs shrink-0">
+                        पे
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-900 text-sm tracking-tight">PhonePe</p>
+                        <p className="text-[10px] text-gray-500 font-semibold">Pay via PhonePe App</p>
+                      </div>
+                    </div>
+                    {paymentMethod === 'phonepe' ? (
+                      <CheckCircle2 className="w-5 h-5 text-purple-600 shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                    )}
                   </div>
-                </label>
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400 border-t border-gray-100/80 pt-2.5 mt-1">
+                    <span>UPI Direct</span>
+                    <span className="text-purple-600 font-bold">Zero Fee</span>
+                  </div>
+                </div>
+
+                {/* Pay Online (All Cards, UPI, NetBanking) */}
+                <div
+                  onClick={() => setPaymentMethod('online')}
+                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                    paymentMethod === 'online'
+                      ? 'border-emerald-500 bg-emerald-50/40 shadow-md scale-[1.01]'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-sm flex items-center justify-center shrink-0">
+                        <CreditCard className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-black text-gray-900 text-sm tracking-tight">Cards & Other UPI</p>
+                          <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">All Apps</span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 font-semibold">Paytm, Cards, NetBanking</p>
+                      </div>
+                    </div>
+                    {paymentMethod === 'online' ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 border-t border-gray-100/80 pt-2.5 mt-1 text-[9px] font-black uppercase text-gray-400">
+                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold">Paytm</span>
+                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold">Visa/Master</span>
+                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold">NetBank</span>
+                  </div>
+                </div>
+
+                {/* Cash on Delivery */}
+                <div
+                  onClick={() => setPaymentMethod('cod')}
+                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                    paymentMethod === 'cod'
+                      ? 'border-amber-500 bg-amber-50/40 shadow-md scale-[1.01]'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-white shadow-sm flex items-center justify-center shrink-0">
+                        <Banknote className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-900 text-sm tracking-tight">Cash on Delivery</p>
+                        <p className="text-[10px] text-gray-500 font-semibold">Pay cash at doorstep</p>
+                      </div>
+                    </div>
+                    {paymentMethod === 'cod' ? (
+                      <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400 border-t border-gray-100/80 pt-2.5 mt-1">
+                    <span>Pay on Arrival</span>
+                    <span className="text-amber-600 font-bold">Exact Cash</span>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

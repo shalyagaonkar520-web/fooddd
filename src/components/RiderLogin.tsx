@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, Eye, EyeOff, ShieldCheck, Settings } from 'lucide-react';
+import { LogIn, Eye, EyeOff, ShieldCheck, Bike } from 'lucide-react';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { formatAuthError } from '../utils/firebaseErrors';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
-export default function StaffLogin() {
-  useSEO('Admin Login', 'Login portal for admin.');
+export default function RiderLogin() {
+  useSEO('Rider Login', 'Login portal for delivery partners.');
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -15,9 +19,23 @@ export default function StaffLogin() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('admin_auth') === 'true') {
-      navigate('/admin');
-    }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const riderSnap = await getDoc(doc(db, 'riders', user.uid));
+          if (riderSnap.exists()) {
+            navigate('/delivery');
+          } else {
+            // Might be another type of user logged in
+            const staffSnap = await getDoc(doc(db, 'staff', user.uid));
+            if (staffSnap.exists() && staffSnap.data().role === 'rider') {
+               navigate('/delivery');
+            }
+          }
+        } catch (_) {}
+      }
+    });
+    return () => unsub();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,15 +46,28 @@ export default function StaffLogin() {
     }
     setIsLoading(true);
     try {
-      if (email.trim() === 'shalyagaonkar@gmail.com' && password.trim() === '-Shalya@2004') {
-        localStorage.setItem('admin_auth', 'true');
-        toast.success(`Welcome back, Admin! Redirecting... 👑`);
-        setTimeout(() => navigate('/admin'), 800);
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
+      
+      let isRider = false;
+      const riderSnap = await getDoc(doc(db, 'riders', cred.user.uid));
+      if (riderSnap.exists()) {
+        isRider = true;
       } else {
-        toast.error('Invalid admin credentials.');
+        const staffSnap = await getDoc(doc(db, 'staff', cred.user.uid));
+        if (staffSnap.exists() && staffSnap.data().role === 'rider') {
+          isRider = true;
+        }
+      }
+
+      if (isRider) {
+        toast.success(`Welcome back! Redirecting to Rider panel... 🎯`);
+        setTimeout(() => navigate('/delivery'), 800);
+      } else {
+        await signOut(auth);
+        toast.error('Account not found in rider records. Contact admin.');
       }
     } catch (err: any) {
-      toast.error('An error occurred during login.');
+      toast.error(formatAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -50,11 +81,11 @@ export default function StaffLogin() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-800 to-black flex items-center justify-center mx-auto mb-4 shadow-lg transition-all duration-300">
-            <Settings className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg transition-all duration-300">
+            <Bike className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-black italic uppercase tracking-tighter text-gray-900">
-            ADMIN <span className="text-gray-500">PORTAL</span>
+            RIDER <span className="text-blue-500">PORTAL</span>
           </h1>
           <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
             Mintoo Restaurant System
@@ -62,7 +93,7 @@ export default function StaffLogin() {
         </div>
 
         <div className="bg-white rounded-[35px] border border-gray-200 shadow-sm overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-gray-800 to-black transition-all duration-300" />
+          <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300" />
 
           <div className="p-8 space-y-6">
             <form onSubmit={handleLogin} className="space-y-4">
@@ -70,11 +101,11 @@ export default function StaffLogin() {
                 <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1.5">Email</label>
                 <input
                   type="email"
-                  placeholder="admin@mintoo.com"
+                  placeholder="rider@mintoo.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 outline-none focus:border-gray-500 transition-all font-bold text-sm text-gray-900 placeholder:text-gray-400"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 outline-none focus:border-blue-300 transition-all font-bold text-sm text-gray-900 placeholder:text-gray-400"
                 />
               </div>
 
@@ -87,7 +118,7 @@ export default function StaffLogin() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 pr-12 outline-none focus:border-gray-500 transition-all font-bold text-sm text-gray-900 placeholder:text-gray-400"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 px-5 pr-12 outline-none focus:border-blue-300 transition-all font-bold text-sm text-gray-900 placeholder:text-gray-400"
                   />
                   <button
                     type="button"
@@ -102,7 +133,7 @@ export default function StaffLogin() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-gray-800 to-black text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:brightness-110 active:scale-95"
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:brightness-110 active:scale-95"
               >
                 {isLoading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -116,14 +147,14 @@ export default function StaffLogin() {
             </form>
 
             <div className="flex items-center justify-center gap-2 text-gray-400 text-[9px] font-black uppercase tracking-widest">
-              <ShieldCheck className="w-3.5 h-3.5 text-gray-500" />
-              Secured Login
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+              Secured with Firebase Auth
             </div>
           </div>
         </div>
 
         <p className="text-center text-[10px] text-gray-400 font-semibold mt-6">
-          Authorized staff only. Contact system administrator.
+          Authorized staff only. Contact admin for credentials.
         </p>
       </motion.div>
     </div>

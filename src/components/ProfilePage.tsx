@@ -59,6 +59,21 @@ export default function ProfilePage() {
   const localPhone = localStorage.getItem('moms_magic_user_phone');
   const isGuest = localStorage.getItem('moms_magic_guest');
 
+  const referralCode = React.useMemo(() => {
+    if (user?.uid) {
+      return `MINT${user.uid.slice(0, 5).toUpperCase()}`;
+    }
+    if (localPhone) {
+      return `MINT${localPhone.replace(/\\D/g, '').slice(-5)}`;
+    }
+    let cached = localStorage.getItem('mintoo_guest_ref');
+    if (!cached) {
+      cached = `MINT${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      localStorage.setItem('mintoo_guest_ref', cached);
+    }
+    return cached;
+  }, [user, localPhone]);
+
   // Re-route if user is not authenticated
   useEffect(() => {
     if (!loading && !user && !localPhone && !isGuest) {
@@ -320,7 +335,7 @@ export default function ProfilePage() {
                   <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6">
                     <p className="text-sm font-bold text-gray-900">Your Referral Code</p>
                     <div className="flex items-center justify-center gap-4 mt-4 bg-white border border-gray-200 p-4 rounded-xl">
-                      <span className="text-2xl font-black text-gray-900 tracking-widest uppercase">MINT{displayProfile.phone?.slice(-4) || '1234'}</span>
+                      <span className="text-2xl font-black text-gray-900 tracking-widest uppercase">{referralCode}</span>
                     </div>
                     <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider mt-4">
                       Get ₹50 for every friend who signs up and orders!
@@ -329,11 +344,11 @@ export default function ProfilePage() {
                         if (navigator.share) {
                           navigator.share({
                             title: 'Join Mintoo!',
-                            text: `Use my code MINT${displayProfile.phone?.slice(-4) || '1234'} to get ₹50 off your first order!`,
+                            text: `Use my code ${referralCode} to get ₹50 off your first order!`,
                             url: window.location.origin
                           });
                         } else {
-                          navigator.clipboard.writeText(`MINT${displayProfile.phone?.slice(-4) || '1234'}`);
+                          navigator.clipboard.writeText(referralCode);
                           toast.success('Referral code copied to clipboard!');
                         }
                       }} 

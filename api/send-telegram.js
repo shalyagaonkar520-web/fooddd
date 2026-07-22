@@ -1,5 +1,5 @@
 const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
-const TELEGRAM_CHAT_ID = '-1003803637741';
+const CHAT_IDS = ['1750770370', '-1003803637741'];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,37 +16,56 @@ export default async function handler(req, res) {
 
   try {
     let text;
+    let customChatId;
+
     if (typeof req.body === 'string') {
       try {
         const parsed = JSON.parse(req.body);
         text = parsed.text;
+        customChatId = parsed.chat_id;
       } catch (e) {}
     } else if (req.body && typeof req.body === 'object') {
       text = req.body.text;
+      customChatId = req.body.chat_id;
     }
 
     if (!text) {
       return res.status(400).json({ error: 'Missing message text' });
     }
 
-    const tgResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text,
-        parse_mode: 'HTML'
-      })
-    });
+    const targets = customChatId ? [customChatId] : CHAT_IDS;
+    let sentCount = 0;
+    let lastError = null;
 
-    const tgData = await tgResponse.json();
+    for (const chatId of targets) {
+      try {
+        const tgResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'HTML'
+          })
+        });
 
-    if (!tgResponse.ok) {
-      console.error('Telegram API error:', tgData);
-      return res.status(502).json({ success: false, error: tgData.description || 'Telegram API error' });
+        const tgData = await tgResponse.json();
+        if (tgResponse.ok && tgData.ok) {
+          sentCount++;
+        } else {
+          lastError = tgData.description || 'Failed to send to chat';
+          console.warn(`Telegram API error for chat ${chatId}:`, tgData);
+        }
+      } catch (e) {
+        lastError = e.message;
+      }
     }
 
-    return res.status(200).json({ success: true });
+    if (sentCount > 0) {
+      return res.status(200).json({ success: true, sentCount });
+    } else {
+      return res.status(502).json({ success: false, error: lastError || 'All Telegram sends failed' });
+    }
   } catch (err) {
     console.error('Telegram send failed:', err);
     return res.status(500).json({ success: false, error: 'Internal server error' });

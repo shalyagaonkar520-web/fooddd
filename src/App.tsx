@@ -35,6 +35,8 @@ import CapacitorBackButtonHandler from './components/CapacitorBackButtonHandler'
 const HotelPanel = lazy(() => import('./components/HotelPanel'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 const StaffLogin = lazy(() => import('./components/StaffLogin'));
+const HotelLogin = lazy(() => import('./components/HotelLogin'));
+const RiderLogin = lazy(() => import('./components/RiderLogin'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
 const ChatPage = lazy(() => import('./components/ChatPage'));
 const DeleteAccountPage = lazy(() => import('./components/DeleteAccountPage'));
@@ -237,6 +239,8 @@ export default function App() {
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="/hotel" element={<HotelPanel />} />
                     <Route path="/staff" element={<StaffLogin />} />
+                    <Route path="/hotel-login" element={<HotelLogin />} />
+                    <Route path="/rider-login" element={<RiderLogin />} />
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/chat/:orderId" element={<ChatPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />

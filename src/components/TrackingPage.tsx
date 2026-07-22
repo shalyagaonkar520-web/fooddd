@@ -357,12 +357,6 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics
               >
                 <Phone className="w-4 h-4 fill-current" />
               </a>
-              <button
-                onClick={() => navigate(`/chat/${order.id}`)}
-                className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-500 hover:text-white flex items-center justify-center text-emerald-600 transition-all shadow-sm active:scale-95"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </button>
             </div>
           </div>
         ) : (
