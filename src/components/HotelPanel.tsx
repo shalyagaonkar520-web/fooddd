@@ -151,18 +151,29 @@ export default function HotelPanel() {
       }
 
       if (!hotelData) {
-        const cachedHotelsStr = localStorage.getItem('moms_magic_hotels');
-        if (cachedHotelsStr) {
-          try {
-            const cachedHotels = JSON.parse(cachedHotelsStr);
-            const found = cachedHotels.find((h: any) => 
-              h.email.toLowerCase() === email.trim().toLowerCase() && 
-              h.password === password.trim()
-            );
-            if (found) {
-              hotelData = found;
-            }
-          } catch (_) {}
+        // Default fallback for instant Kitchen Partner login
+        const em = email.trim().toLowerCase();
+        const pw = password.trim();
+        if ((em === 'kitchen@mintoo.com' || em === 'hotel@mintoo.com' || em === 'kitchen@minto.com') && (pw === 'kitchen123' || pw === 'hotel123' || pw === '123456')) {
+          hotelData = {
+            id: 'hotel-partner-1',
+            name: 'Mintoo Kitchen Partner',
+            email: em
+          };
+        } else {
+          const cachedHotelsStr = localStorage.getItem('moms_magic_hotels');
+          if (cachedHotelsStr) {
+            try {
+              const cachedHotels = JSON.parse(cachedHotelsStr);
+              const found = cachedHotels.find((h: any) => 
+                h.email.toLowerCase() === email.trim().toLowerCase() && 
+                h.password === password.trim()
+              );
+              if (found) {
+                hotelData = found;
+              }
+            } catch (_) {}
+          }
         }
       }
 
