@@ -20,6 +20,7 @@ import {
   FolderOpen,
   Edit,
   Sparkles,
+  Eye,
   EyeOff,
   RotateCcw
 } from 'lucide-react';
@@ -65,6 +66,8 @@ export default function AdminPage() {
   const [newHotelLocation, setNewHotelLocation] = useState('');
   const [newHotelPrice, setNewHotelPrice] = useState('');
   const [newHotelEmail, setNewHotelEmail] = useState('');
+  const [newHotelPassword, setNewHotelPassword] = useState('kitchen123');
+  const [showHotelPasswords, setShowHotelPasswords] = useState<Record<string, boolean>>({});
   const [isAddingHotel, setIsAddingHotel] = useState(false);
   
   // Drawer states
@@ -260,7 +263,7 @@ export default function AdminPage() {
       location: newHotelLocation.trim(),
       price: Number(newHotelPrice),
       email: newHotelEmail.trim(),
-      password: 'minto@2026',
+      password: newHotelPassword.trim() || 'kitchen123',
       createdAt: new Date().toISOString()
     };
 
@@ -965,6 +968,21 @@ export default function AdminPage() {
                   </button>
                 </div>
 
+                <div>
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Kitchen Password</label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                    <input
+                      type="text"
+                      placeholder="e.g. kitchen123"
+                      value={newHotelPassword}
+                      onChange={e => setNewHotelPassword(e.target.value)}
+                      required
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-9 pr-3 outline-none focus:border-orange-300 font-bold text-sm text-gray-900 placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={isAddingHotel}
@@ -1026,8 +1044,19 @@ export default function AdminPage() {
                             <p className="truncate">
                               <strong className="font-bold text-gray-800">Email:</strong> {hotel.email}
                             </p>
-                            <p className="truncate sm:col-span-2">
-                              <strong className="font-bold text-gray-800">Password:</strong> <span className="font-mono bg-gray-200 px-1.5 py-0.5 rounded text-[10px]">minto@2026</span>
+                            <p className="truncate sm:col-span-2 flex items-center gap-2">
+                              <strong className="font-bold text-gray-800">Password:</strong>
+                              <span className="font-mono bg-gray-200 px-2 py-0.5 rounded text-xs font-bold text-gray-900">
+                                {showHotelPasswords[hotel.id] ? (hotel.password || 'kitchen123') : '••••••••'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setShowHotelPasswords(prev => ({ ...prev, [hotel.id]: !prev[hotel.id] }))}
+                                className="text-gray-500 hover:text-orange-500 transition-colors p-1 cursor-pointer"
+                                title="Toggle Password Visibility"
+                              >
+                                {showHotelPasswords[hotel.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
                             </p>
                           </div>
                         </div>
