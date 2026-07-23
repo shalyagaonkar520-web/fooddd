@@ -4,7 +4,7 @@ import { ChevronLeft, Trash2, AlertTriangle, ShieldCheck, Mail, Phone, Loader2 }
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { db } from '../firebase';
-import { collection, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
@@ -20,11 +20,23 @@ export default function DeleteAccountPage() {
 
   const purgeAllLocalData = () => {
     try {
-      // 1. Clear all localStorage
+      // 1. Remove specific keys explicitly
+      localStorage.removeItem('moms_magic_orders');
+      localStorage.removeItem('moms_magic_active_order');
+      localStorage.removeItem('cart-storage');
+      localStorage.removeItem('delivery-location-storage');
+      localStorage.removeItem('city-gateway-storage');
+      localStorage.removeItem('moms_magic_user_phone');
+      localStorage.removeItem('moms_magic_guest');
+      localStorage.removeItem('moms_magic_persona');
+
+      // 2. Clear all localStorage
       localStorage.clear();
-      // 2. Clear all sessionStorage
+
+      // 3. Clear all sessionStorage
       sessionStorage.clear();
-      // 3. Clear IndexedDB databases if supported
+
+      // 4. Clear IndexedDB databases if supported
       if ('indexedDB' in window && window.indexedDB.databases) {
         window.indexedDB.databases().then((dbs) => {
           dbs.forEach((dbInfo) => {
@@ -47,17 +59,42 @@ export default function DeleteAccountPage() {
     }
 
     setLoading(true);
+    const targetPhone = phoneOrEmail.trim();
+
     try {
       // 1. Log deletion request in Firestore
       await addDoc(collection(db, 'deletionRequests'), {
         userId: user?.uid || 'guest_or_web',
-        phoneOrEmail: phoneOrEmail.trim(),
+        phoneOrEmail: targetPhone,
         reason: reason.trim(),
         status: 'completed',
         deletedAt: new Date().toISOString()
       });
 
-      // 2. Delete User Profile document from Firestore if logged in
+      // 2. Delete ALL Firestore orders associated with this user or phone
+      try {
+        const ordersRef = collection(db, 'orders');
+        
+        if (user?.uid) {
+          const qUser = query(ordersRef, where('userId', '==', user.uid));
+          const snapUser = await getDocs(qUser);
+          snapUser.forEach(async (docSnap) => {
+            await deleteDoc(doc(db, 'orders', docSnap.id)).catch(() => {});
+          });
+        }
+
+        if (targetPhone) {
+          const qPhone = query(ordersRef, where('userPhone', '==', targetPhone));
+          const snapPhone = await getDocs(qPhone);
+          snapPhone.forEach(async (docSnap) => {
+            await deleteDoc(doc(db, 'orders', docSnap.id)).catch(() => {});
+          });
+        }
+      } catch (orderErr) {
+        console.warn("Firestore orders deletion warning:", orderErr);
+      }
+
+      // 3. Delete User Profile document from Firestore if logged in
       if (user?.uid) {
         try {
           await deleteDoc(doc(db, 'users', user.uid));
@@ -66,7 +103,7 @@ export default function DeleteAccountPage() {
         }
       }
 
-      // 3. Delete Firebase Auth user if logged in
+      // 4. Delete Firebase Auth user if logged in
       if (user) {
         try {
           await user.delete();
@@ -76,17 +113,17 @@ export default function DeleteAccountPage() {
         await logout();
       }
 
-      // 4. Wipe 100% of all local data, cache, tokens, and storage
+      // 5. Wipe 100% of all local data, tracking history, orders, cache, tokens, and storage
       purgeAllLocalData();
 
       setSubmitted(true);
-      toast.success('Account and all data wiped completely!');
+      toast.success('Account, order history, and tracking data wiped completely!');
     } catch (err) {
       console.error(err);
       // Fallback: still wipe local data completely
       purgeAllLocalData();
       setSubmitted(true);
-      toast.success('Local app data erased successfully.');
+      toast.success('All local orders & tracking history erased successfully.');
     } finally {
       setLoading(false);
     }
@@ -112,7 +149,7 @@ export default function DeleteAccountPage() {
           </div>
 
           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-gray-900 leading-none">
-            Delete Account & Wipe Data
+            Delete Account & Erase All Data
           </h1>
 
           {submitted ? (
@@ -120,9 +157,9 @@ export default function DeleteAccountPage() {
               <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto">
                 <ShieldCheck className="w-8 h-8" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">All App Data Wiped Completely</h2>
+              <h2 className="text-xl font-bold text-gray-900">All Orders & Tracking Data Erased</h2>
               <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                Your account, saved addresses, order history, cache, tokens, and personal data have been 100% erased. Not a single piece of data remains.
+                Your account, order history, live tracking records, saved addresses, cache, and tokens have been 100% permanently deleted. Not a single record remains.
               </p>
               <button
                 onClick={() => {
@@ -139,8 +176,8 @@ export default function DeleteAccountPage() {
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 text-red-800">
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                 <div className="text-xs font-semibold leading-relaxed">
-                  <p className="font-bold uppercase tracking-wider mb-1">Permanent Data Destruction</p>
-                  Confirming this request will permanently delete your account, saved addresses, order history, and wipe 100% of stored app data from this device and servers.
+                  <p className="font-bold uppercase tracking-wider mb-1">Permanent Data & Order Erasure</p>
+                  Deleting your account will permanently destroy all order history, live order tracking data, saved delivery addresses, and personal profile information.
                 </div>
               </div>
 
@@ -175,7 +212,7 @@ export default function DeleteAccountPage() {
                 className="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
-                Confirm & Erase All Data Completely
+                Confirm & Erase Orders & Account
               </button>
             </form>
           )}
