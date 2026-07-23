@@ -4,18 +4,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, MapPin, Phone, Truck, Clock, Store, Navigation, 
-  ShieldCheck, Share2, RefreshCw, CheckCircle2, AlertTriangle, MessageSquare
+  ShieldCheck, Share2, RefreshCw, CheckCircle2, AlertTriangle, MessageSquare, Sparkles
 } from 'lucide-react';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
-// Haversine distance calculator
+// Haversine distance calculator in KM
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371; // Radius of the earth in km
+  const R = 6371; 
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = 
@@ -23,30 +23,25 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * 
     Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // Distance in km
+  return R * c; 
 };
 
-// ----------------------------------------------------
-// Sub-component: RoutePolyline
-// Renders the route line between points
-// ----------------------------------------------------
+// Draw glowing Swiggy/Zomato style polyline
 const drawRoute = (map: L.Map, points: Array<[number, number]>, polylineRef: React.MutableRefObject<L.Polyline | null>) => {
   if (polylineRef.current) {
     polylineRef.current.setLatLngs(points);
   } else {
     polylineRef.current = L.polyline(points, {
-      color: '#10B981', // Emerald-500 (Swiggy Green Accent)
+      color: '#059669', // Vibrant Emerald Green
       weight: 5,
-      opacity: 0.8,
-      dashArray: '10, 10'
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round',
+      dashArray: '8, 12'
     }).addTo(map);
   }
 };
 
-// ----------------------------------------------------
-// Sub-component: TrackMap
-// Manages the Leaflet Map instance & updating markers
-// ----------------------------------------------------
 interface TrackMapProps {
   order: any;
   rider: any;
@@ -61,18 +56,19 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
   const hasFitBounds = useRef(false);
   const lastOrderId = useRef<string | null>(null);
 
-  // 1. Initialize Map
+  // 1. Initialize Leaflet Map with Swiggy/Zomato Vector Tiles (CartoDB Voyager)
   useEffect(() => {
     if (mapRef.current && !mapInstance.current) {
       try {
-        // Start centered on kitchen
         mapInstance.current = L.map(mapRef.current, {
           zoomControl: false,
           attributionControl: false
         }).setView([12.9165, 77.6101], 15);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19
+        // CartoDB Voyager map tiles (Clean, modern Swiggy/Zomato look)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: 'abcd'
         }).addTo(mapInstance.current);
 
         L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
@@ -113,36 +109,39 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
         ? [rider.currentLocation.lat, rider.currentLocation.lng]
         : null;
 
-      // Custom circular Tailwind-compatible HTML Icons (Swiggy/Zomato style)
+      // Swiggy/Zomato Custom HTML Map Pins
       const restaurantIcon = L.divIcon({
         html: `
           <div class="relative flex items-center justify-center">
-            <div class="w-10 h-10 rounded-full bg-emerald-600 border-4 border-white shadow-xl flex items-center justify-center text-white text-base">🏪</div>
-            <div class="absolute -bottom-1 w-3 h-3 bg-emerald-600 rotate-45 border-r border-b border-white"></div>
+            <div class="w-11 h-11 rounded-2xl bg-gray-900 border-2 border-amber-400 shadow-2xl flex items-center justify-center text-white text-lg">👨‍🍳</div>
+            <div class="absolute -bottom-1 w-3 h-3 bg-gray-900 rotate-45 border-r border-b border-amber-400"></div>
           </div>
         `,
         className: 'custom-div-icon',
-        iconSize: [40, 44],
-        iconAnchor: [20, 44]
+        iconSize: [44, 48],
+        iconAnchor: [22, 48]
       });
 
       const customerIcon = L.divIcon({
         html: `
           <div class="relative flex items-center justify-center">
-            <div class="w-10 h-10 rounded-full bg-gray-900 border-4 border-white shadow-xl flex items-center justify-center text-white text-base font-bold">🏠</div>
-            <div class="absolute -bottom-1 w-3 h-3 bg-gray-900 rotate-45 border-r border-b border-white"></div>
+            <div class="w-11 h-11 rounded-2xl bg-emerald-600 border-2 border-white shadow-2xl flex items-center justify-center text-white text-lg font-bold">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-2xl bg-emerald-400 opacity-30"></span>
+              🏠
+            </div>
+            <div class="absolute -bottom-1 w-3 h-3 bg-emerald-600 rotate-45 border-r border-b border-white"></div>
           </div>
         `,
         className: 'custom-div-icon',
-        iconSize: [40, 44],
-        iconAnchor: [20, 44]
+        iconSize: [44, 48],
+        iconAnchor: [22, 48]
       });
 
       const riderIcon = L.divIcon({
         html: `
           <div class="relative flex items-center justify-center">
-            <div class="w-12 h-12 rounded-full bg-emerald-50 border-4 border-white shadow-2xl flex items-center justify-center text-white text-lg animate-[riderBounce_2s_infinite_ease-in-out]">
-              <div class="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping"></div>
+            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-400 border-3 border-white shadow-2xl flex items-center justify-center text-white text-xl animate-pulse">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-40"></span>
               🛵
             </div>
           </div>
@@ -152,7 +151,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
         iconAnchor: [24, 24]
       });
 
-      // Handle Restaurant Marker
+      // Restaurant Marker
       if (!markersRef.current['restaurant']) {
         markersRef.current['restaurant'] = L.marker(restCoords, { icon: restaurantIcon }).addTo(map)
           .bindPopup('<b>Mintoo Kitchen</b><br/>Your food is prepared here.');
@@ -160,7 +159,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
         markersRef.current['restaurant'].setLatLng(restCoords);
       }
 
-      // Handle Customer Marker
+      // Customer Marker
       if (!markersRef.current['customer']) {
         markersRef.current['customer'] = L.marker(custCoords, { icon: customerIcon }).addTo(map)
           .bindPopup(`<b>Your Address</b><br/>${order.deliveryLocation?.address || ''}`);
@@ -168,7 +167,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
         markersRef.current['customer'].setLatLng(custCoords);
       }
 
-      // Handle Rider Marker
+      // Rider Marker
       if (riderCoords) {
         if (!markersRef.current['rider']) {
           markersRef.current['rider'] = L.marker(riderCoords, { icon: riderIcon }).addTo(map)
@@ -181,7 +180,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
         delete markersRef.current['rider'];
       }
 
-      // Draw routing Polyline
+      // Route points
       const routePoints: Array<[number, number]> = [];
       routePoints.push(restCoords);
       if (riderCoords) {
@@ -191,7 +190,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
 
       drawRoute(map, routePoints, polylineRef);
 
-      // Zoom/Center Map to keep all points visible (only once to prevent annoying jumps during tracking)
+      // Fit bounds
       if (!hasFitBounds.current) {
         const bounds = L.latLngBounds(routePoints);
         map.fitBounds(bounds, { padding: [80, 80] });
@@ -207,7 +206,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
     return (
       <div className="w-full h-full bg-gray-100 flex flex-col items-center justify-center p-6 text-center space-y-3">
         <AlertTriangle className="w-12 h-12 text-red-500" />
-        <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">Map Loading Failed</h3>
+        <h3 className="font-bold text-gray-900 text-lg">Map Loading Failed</h3>
         <p className="text-gray-500 text-sm max-w-xs">{mapError}</p>
       </div>
     );
@@ -216,10 +215,7 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
   return <div ref={mapRef} className="w-full h-full absolute inset-0 z-0" />;
 };
 
-// ----------------------------------------------------
-// Sub-component: TrackingProgress
-// Displays horizontal stepper progress bar
-// ----------------------------------------------------
+// Horizontal Stepper Bar
 interface TrackingProgressProps {
   status: string;
 }
@@ -247,10 +243,9 @@ const TrackingProgress: React.FC<TrackingProgressProps> = ({ status }) => {
   const currentIndex = getStepIndex(status);
 
   return (
-    <div className="w-full py-4 px-2">
+    <div className="w-full py-3 px-1">
       <div className="flex items-center justify-between relative">
-        {/* Progress Line Background */}
-        <div className="absolute top-[14px] left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0 rounded-full" />
+        <div className="absolute top-[14px] left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0 rounded-full" />
         <div 
           className="absolute top-[14px] left-0 h-1 bg-emerald-500 -translate-y-1/2 z-0 rounded-full transition-all duration-700" 
           style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
@@ -263,16 +258,16 @@ const TrackingProgress: React.FC<TrackingProgressProps> = ({ status }) => {
           return (
             <div key={step.key} className="flex flex-col items-center relative z-10">
               <div 
-                className={`w-7 h-7 rounded-full border-4 flex items-center justify-center text-[10px] font-black transition-all duration-500 ${
+                className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-extrabold transition-all duration-500 ${
                   isCompleted 
-                    ? 'bg-emerald-500 border-white text-white shadow-lg' 
-                    : 'bg-white border-gray-100 text-gray-400'
+                    ? 'bg-emerald-600 border-white text-white shadow-md' 
+                    : 'bg-white border-gray-300 text-gray-400'
                 } ${isActive ? 'scale-110 ring-4 ring-emerald-500/20' : ''}`}
               >
                 {isCompleted ? '✓' : idx + 1}
               </div>
-              <span className={`text-[8px] font-black uppercase tracking-wider mt-2 transition-colors duration-300 ${
-                isActive ? 'text-emerald-600 font-bold' : isCompleted ? 'text-gray-900' : 'text-gray-400'
+              <span className={`text-[9px] font-bold uppercase tracking-wider mt-1.5 transition-colors duration-300 ${
+                isActive ? 'text-emerald-600 font-extrabold' : isCompleted ? 'text-gray-900' : 'text-gray-400'
               }`}>
                 {step.label}
               </span>
@@ -284,103 +279,116 @@ const TrackingProgress: React.FC<TrackingProgressProps> = ({ status }) => {
   );
 };
 
-// ----------------------------------------------------
-// Sub-component: OrderStatusCard
-// Swiggy-style sliding details bottom sheet
-// ----------------------------------------------------
+// Swiggy/Zomato Style Order Status Card with Dynamic Decreasing ETA
 interface OrderStatusCardProps {
   order: any;
   rider: any;
-  metrics: { distance: number; eta: number };
+  remainingSeconds: number;
+  distanceKm: number;
   onRefresh: () => void;
 }
 
-const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, metrics, onRefresh }) => {
-  const navigate = useNavigate();
-  return (
-    <div className="bg-white border border-gray-100 rounded-t-[35px] shadow-[0_-15px_40px_rgba(0,0,0,0.06)] p-6 space-y-5 relative z-20 backdrop-blur-lg">
-      {/* Top Slide Handle */}
-      <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto -mt-3 mb-2" />
+const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remainingSeconds, distanceKm, onRefresh }) => {
+  const isDelivered = order.status === 'delivered';
+  
+  // Format remaining time (Minutes & Seconds countdown)
+  const formatETA = (seconds: number) => {
+    if (isDelivered || seconds <= 0) return 'Arrived!';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) {
+      return `${secs} sec${secs > 1 ? 's' : ''}`;
+    }
+    return `${mins} min${mins > 1 ? 's' : ''}`;
+  };
 
-      {/* Top Header Row */}
+  return (
+    <div className="bg-white border border-gray-200/80 rounded-t-[32px] shadow-[0_-15px_40px_rgba(0,0,0,0.08)] p-5 sm:p-6 space-y-4 relative z-20 backdrop-blur-lg">
+      {/* Top Handle Pill */}
+      <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto -mt-2 mb-1" />
+
+      {/* Dynamic Decreasing ETA Header */}
       <div className="flex justify-between items-start text-left">
-        <div>
-          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">ORDER ID: #{order.id}</p>
-          <h2 className="text-xl font-black text-gray-900 leading-none mt-1">
-            {order.status === 'delivered' ? 'Feast Delivered!' : 
-             order.status === 'Out For Delivery' ? 'On the way to you' : 
-             order.status === 'Preparing' ? 'Chef is cooking' : 'Confirming order'}
+        <div className="space-y-1">
+          <p className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest leading-none flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            ORDER #{order.id}
+          </p>
+          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-tight">
+            {isDelivered ? 'Order Delivered! 🎉' : 
+             order.status === 'Out For Delivery' ? 'Rider is on the way to you! 🛵' : 
+             order.status === 'Preparing' ? 'Chef is cooking your hot meal 👨‍🍳' : 'Order Confirmed'}
           </h2>
-          <p className="text-xs text-gray-500 font-semibold mt-1">Mintoo Kitchen • BTM Layout</p>
+          <p className="text-xs text-gray-500 font-medium">Mintoo Kitchen • BTM Layout</p>
         </div>
-        
-        {/* Estimated Arrival Details */}
+
+        {/* Dynamic Countdown Pill */}
         <div className="flex flex-col items-end text-right shrink-0">
-          <div className="bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-2xl flex items-center gap-1.5 shadow-sm">
-            <Clock className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-            <span className="text-xs font-black text-emerald-800">
-              {order.status === 'delivered' ? 'Arrived' : `${metrics.eta} mins`}
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md">
+            <Clock className="w-4 h-4 text-emerald-200 animate-spin" style={{ animationDuration: '3s' }} />
+            <span className="text-sm font-extrabold tracking-tight">
+              {formatETA(remainingSeconds)}
             </span>
           </div>
-          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1.5">
-            {order.status === 'delivered' ? '0.0 km left' : `${metrics.distance} km away`}
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">
+            {isDelivered ? '0.0 km' : `${distanceKm.toFixed(1)} km away`}
           </span>
         </div>
       </div>
 
       <div className="h-px bg-gray-100" />
 
-      {/* Interactive horizontal steps */}
+      {/* Stepper Progress */}
       <TrackingProgress status={order.status} />
 
       <div className="h-px bg-gray-100" />
 
-      {/* Rider contact block */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Rider Information */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {rider ? (
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3.5 text-left">
-              <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-lg text-emerald-600 font-black">
-                {rider.name ? rider.name.charAt(0).toUpperCase() : 'R'}
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center text-lg font-extrabold shadow-md shrink-0">
+                {rider.name ? rider.name.charAt(0).toUpperCase() : '🛵'}
               </div>
               <div>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Delivery Partner</p>
-                <h4 className="text-sm font-black text-gray-900 mt-0.5">{rider.name || 'Delivery Partner'}</h4>
+                <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Delivery Partner</p>
+                <h4 className="text-sm font-bold text-gray-900 mt-0.5">{rider.name || 'Delivery Partner'}</h4>
                 <p className="text-[10px] text-emerald-600 font-extrabold">★ 4.9 Super Rider</p>
               </div>
             </div>
-            
-            <div className="flex gap-2 shrink-0">
+
+            {rider.phone && (
               <a 
-                href={rider.phone ? `tel:${rider.phone}` : '#'}
-                className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-500 hover:text-white flex items-center justify-center text-emerald-600 transition-all shadow-sm active:scale-95"
+                href={`tel:${rider.phone}`}
+                className="w-11 h-11 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-all shadow-md active:scale-95 shrink-0"
+                title="Call Rider"
               >
                 <Phone className="w-4 h-4 fill-current" />
               </a>
-            </div>
+            )}
           </div>
         ) : (
           <div className="text-left py-1">
-            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Delivery Partner</p>
-            <h4 className="text-sm font-black text-gray-800 mt-1">Assigning delivery agent... 🛵</h4>
-            <p className="text-[10px] text-gray-400 leading-normal mt-0.5">Your food is baking. We are matching a delivery executive to hand off your hot meal.</p>
+            <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Delivery Partner</p>
+            <h4 className="text-sm font-bold text-gray-900 mt-0.5">Assigning delivery agent... 🛵</h4>
+            <p className="text-xs text-gray-500 font-medium">Your food is baking. We are matching a delivery executive to hand off your meal.</p>
           </div>
         )}
       </div>
 
       <div className="h-px bg-gray-100" />
 
-      {/* Secured by System */}
-      <div className="flex items-center justify-center gap-1 text-gray-400 font-black uppercase tracking-[3px] text-[8px] pt-1">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> SECURE LIVE SATELLITE TRACKING
+      {/* Security Footer */}
+      <div className="flex items-center justify-center gap-1.5 text-gray-400 font-bold uppercase tracking-widest text-[9px]">
+        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+        <span>LIVE SATELLITE GPS TRACKING</span>
       </div>
     </div>
   );
 };
 
-// ----------------------------------------------------
-// Main Page: TrackingPage
-// ----------------------------------------------------
+// Main Tracking Component
 export default function TrackingPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
@@ -391,10 +399,12 @@ export default function TrackingPage() {
   const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  // 1. Real-time Firebase listeners
+  // Dynamic Decreasing ETA Countdown State (in seconds)
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(1200); // Default 20 mins
+
+  // 1. Listen to Order changes
   useEffect(() => {
     if (!orderId) {
-      // Fallback: Check if there's any active local order
       try {
         const stored = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
         const activeOrders = stored.filter((o: any) => o.status !== 'delivered' && o.status !== 'cancelled');
@@ -412,7 +422,6 @@ export default function TrackingPage() {
       return;
     }
 
-    // Helper: load order from localStorage by id
     const loadLocalOrder = (id: string) => {
       try {
         const stored: any[] = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
@@ -420,14 +429,12 @@ export default function TrackingPage() {
       } catch { return null; }
     };
 
-    // Try local first for instant render
     const localOrder = loadLocalOrder(orderId);
     if (localOrder) {
       setOrder(localOrder);
       setLoading(false);
     }
 
-    // Set up Firebase Firestore Listener
     const orderDocRef = doc(db, 'orders', orderId);
     const unsubscribeOrder = onSnapshot(orderDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -449,7 +456,7 @@ export default function TrackingPage() {
     return () => unsubscribeOrder();
   }, [orderId, navigate]);
 
-  // 2. Rider Listener (dependent on order.riderId)
+  // 2. Listen to Rider changes
   useEffect(() => {
     if (!order || !order.riderId || order.riderId === '') {
       return;
@@ -467,45 +474,69 @@ export default function TrackingPage() {
     return () => unsubscribeRider();
   }, [order]);
 
-  // 3. Estimate metrics (Distance & ETA)
-  const getTrackingMetrics = () => {
-    if (!order) return { distance: 0, eta: 0 };
-    
+  // 3. Initialize & Decrement Live ETA Countdown
+  useEffect(() => {
+    if (!order) return;
+
+    if (order.status === 'delivered') {
+      setRemainingSeconds(0);
+      return;
+    }
+
+    // Determine base initial duration based on order status
+    let initialSecs = 1500; // 25 mins base
+    if (order.status === 'Preparing') initialSecs = 1200; // 20 mins
+    if (order.status === 'Ready for Delivery') initialSecs = 720; // 12 mins
+    if (order.status === 'Out For Delivery') initialSecs = 480; // 8 mins
+
+    // Calculate distance factor if rider coordinates exist
+    if (rider?.currentLocation?.lat && order.deliveryLocation?.lat) {
+      const dist = calculateDistance(
+        rider.currentLocation.lat,
+        rider.currentLocation.lng,
+        order.deliveryLocation.lat,
+        order.deliveryLocation.lng
+      );
+      // Average 25 km/h delivery speed
+      const distSecs = Math.ceil((dist / 25) * 3600);
+      if (distSecs > 0) initialSecs = Math.min(initialSecs, distSecs);
+    }
+
+    setRemainingSeconds(initialSecs);
+
+    // Live tick down every 1 second
+    const timer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [order?.status, rider?.currentLocation]);
+
+  const handleManualRefresh = () => {
+    toast.success("GPS location updated! 🛰️");
+  };
+
+  const distanceKm = (() => {
+    if (!order) return 0;
     const lat1 = rider?.currentLocation?.lat || 12.9165; 
     const lon1 = rider?.currentLocation?.lng || 77.6101;
     const lat2 = order.deliveryLocation?.lat || 12.9200;
     const lon2 = order.deliveryLocation?.lng || 77.6150;
-
-    const distance = calculateDistance(lat1, lon1, lat2, lon2);
-    const speedKmh = 22; // Typical city delivery speed
-    const eta = Math.ceil((distance / speedKmh) * 60) + 3; // Add 3-min buffer
-
-    return {
-      distance: parseFloat(distance.toFixed(1)),
-      eta: order.status === 'delivered' ? 0 : eta
-    };
-  };
-
-  const handleManualRefresh = () => {
-    toast.success("Location synchronized! 🛰️");
-    // This will trigger re-fetch on Firestore snapshot if active
-  };
-
-  const handleShareTracking = () => {
-    const link = `${window.location.origin}/track/${order?.id || 'MOCK'}`;
-    navigator.clipboard.writeText(link)
-      .then(() => toast.success("Tracking link copied to clipboard! 🔗"))
-      .catch(() => toast.error("Failed to copy link."));
-  };
-
-  const metrics = getTrackingMetrics();
+    return calculateDistance(lat1, lon1, lat2, lon2);
+  })();
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-emerald-500"></div>
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest animate-pulse">Locating satellites...</span>
+          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-emerald-600"></div>
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest animate-pulse">Syncing satellite live location...</span>
         </div>
       </div>
     );
@@ -515,20 +546,20 @@ export default function TrackingPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 gap-6">
         <div className="text-5xl">📦</div>
-        <h2 className="text-2xl font-black italic uppercase text-gray-900 text-center">Order Not Found</h2>
+        <h2 className="text-2xl font-bold text-gray-900 text-center">Order Not Found</h2>
         <p className="text-gray-500 text-sm font-medium text-center max-w-xs">
-          {mapError || "We couldn't find this order. It may have been placed on a different device."}
+          {mapError || "We couldn't find this order."}
         </p>
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/orders')}
-            className="px-6 py-3 bg-emerald-500 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-emerald-600 transition-colors"
+            className="px-6 py-3 bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md hover:bg-emerald-700 transition-colors"
           >
             My Orders
           </button>
           <button
             onClick={() => navigate('/home')}
-            className="px-6 py-3 bg-gray-100 text-gray-900 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-gray-200 transition-colors"
+            className="px-6 py-3 bg-gray-100 text-gray-900 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-200 transition-colors"
           >
             Home
           </button>
@@ -537,49 +568,45 @@ export default function TrackingPage() {
     );
   }
 
-
   return (
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <style>{`
         .rider-smooth-move {
           transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-        @keyframes riderBounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
       `}</style>
 
-      {/* Full-width Map Container */}
-      <div className="flex-1 w-full relative min-h-[45vh] md:min-h-[55vh] bg-gray-100">
+      {/* Full Map Viewport */}
+      <div className="flex-1 w-full relative min-h-[48vh] md:min-h-[58vh] bg-gray-100">
         <TrackMap order={order} rider={rider} mapError={mapError} />
         
-        {/* Floating Top Header Overlay */}
+        {/* Floating Top Controls */}
         <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
           <button 
             onClick={() => navigate('/profile')}
-            className="pointer-events-auto w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-900 shadow-md hover:border-emerald-500 transition-all active:scale-95 shrink-0 cursor-pointer"
-            title="Back"
+            className="pointer-events-auto w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-900 shadow-md hover:border-emerald-600 transition-all active:scale-95 shrink-0 cursor-pointer"
+            title="Back to profile"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
           <button 
             onClick={handleManualRefresh}
-            className="pointer-events-auto px-4 py-2.5 rounded-full bg-white border border-gray-100 flex items-center gap-1.5 text-gray-900 shadow-md hover:border-emerald-500 transition-all active:scale-95 text-xs font-black uppercase tracking-wider cursor-pointer"
-            title="Refresh Location"
+            className="pointer-events-auto px-4 py-2.5 rounded-full bg-white border border-gray-200 flex items-center gap-1.5 text-gray-900 shadow-md hover:border-emerald-600 transition-all active:scale-95 text-xs font-bold uppercase tracking-wider cursor-pointer"
+            title="Refresh GPS Location"
           >
             <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Refresh</span>
+            <span>Sync GPS</span>
           </button>
         </div>
       </div>
 
-      {/* Floating sliding Bottom Sheet with Details */}
+      {/* Floating Bottom Card */}
       <OrderStatusCard 
         order={order} 
         rider={rider} 
-        metrics={metrics} 
+        remainingSeconds={remainingSeconds} 
+        distanceKm={distanceKm}
         onRefresh={handleManualRefresh} 
       />
     </div>

@@ -5,23 +5,18 @@ import {
   User, 
   Wallet, 
   MapPin, 
-  Gift, 
-  Bell, 
   LogOut, 
   ChevronRight, 
   Trash2, 
   Plus, 
-  History, 
   PackageSearch,
-  Share2,
   FileText,
   Headphones,
   ShieldCheck,
   Crown,
   Smartphone,
   Mail,
-  Sparkles,
-  ArrowRight
+  Sparkles
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -43,7 +38,7 @@ export default function ProfilePage() {
   useSEO("My Profile", "Manage your profile, saved addresses, reward points, and check your wallet balance at Mintoo.");
   const navigate = useNavigate();
   const { user, profile, loading, logout, addAddress, deleteAddress } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'menu' | 'wallet' | 'addresses' | 'refer' | 'terms'>('menu');
+  const [activeTab, setActiveTab] = useState<'menu' | 'wallet' | 'addresses' | 'terms'>('menu');
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
@@ -57,21 +52,6 @@ export default function ProfilePage() {
 
   const localPhone = localStorage.getItem('moms_magic_user_phone');
   const isGuest = localStorage.getItem('moms_magic_guest');
-
-  const referralCode = React.useMemo(() => {
-    if (user?.uid) {
-      return `MINT${user.uid.slice(0, 5).toUpperCase()}`;
-    }
-    if (localPhone) {
-      return `MINT${localPhone.replace(/\D/g, '').slice(-5)}`;
-    }
-    let cached = localStorage.getItem('mintoo_guest_ref');
-    if (!cached) {
-      cached = `MINT${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-      localStorage.setItem('mintoo_guest_ref', cached);
-    }
-    return cached;
-  }, [user, localPhone]);
 
   // Re-route if user is not authenticated
   useEffect(() => {
@@ -279,7 +259,6 @@ export default function ProfilePage() {
             { id: 'menu', label: 'Overview', icon: User },
             { id: 'wallet', label: 'Wallet', icon: Wallet },
             { id: 'addresses', label: 'Addresses', icon: MapPin },
-            { id: 'refer', label: 'Refer & Earn', icon: Share2 },
             { id: 'terms', label: 'Terms & Privacy', icon: FileText }
           ].map((t) => {
             const Icon = t.icon;
@@ -362,23 +341,6 @@ export default function ProfilePage() {
                       <div>
                         <h3 className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Saved Addresses</h3>
                         <p className="text-xs text-gray-500 font-medium">{displayProfile.addresses?.length || 0} Saved Locations (Home, Work, Other)</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all" />
-                  </button>
-
-                  {/* Refer & Earn */}
-                  <button 
-                    onClick={() => setActiveTab('refer')}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-xl transition-colors text-left cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold shrink-0">
-                        <Gift className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Refer & Earn</h3>
-                        <p className="text-xs text-gray-500 font-medium">Earn ₹50 for every friend who joins Mintoo</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all" />
@@ -551,54 +513,6 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
-              </motion.div>
-            )}
-
-            {/* REFER & EARN TAB */}
-            {activeTab === 'refer' && (
-              <motion.div 
-                key="refer"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs text-center space-y-5"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center mx-auto border border-purple-200">
-                  <Gift className="w-8 h-8" />
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold text-gray-900">Invite Friends & Earn ₹50</h3>
-                  <p className="text-xs text-gray-500 max-w-sm mx-auto font-medium">
-                    Share your unique referral code. When your friend places their first order on Mintoo, you both get ₹50 credited to your Mintoo Cash wallet!
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl max-w-xs mx-auto space-y-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Your Referral Code</span>
-                  <div className="text-xl font-extrabold text-gray-900 tracking-widest uppercase bg-white py-2 px-4 rounded-lg border border-gray-300">
-                    {referralCode}
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: 'Order Food on Mintoo!',
-                        text: `Use my code ${referralCode} to get ₹50 off your first food order!`,
-                        url: window.location.origin
-                      });
-                    } else {
-                      navigator.clipboard.writeText(referralCode);
-                      toast.success('Referral code copied to clipboard!');
-                    }
-                  }}
-                  className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:brightness-105 transition-all cursor-pointer flex items-center justify-center gap-2 mx-auto"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>Share Referral Code</span>
-                </button>
               </motion.div>
             )}
 
