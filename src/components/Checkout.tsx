@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
 import { useLocationStore } from '../store/locationStore';
-import { motion } from 'framer-motion';
-import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, ChevronRight, Loader2, Compass, Search, X, CreditCard, QrCode, Wallet, Banknote, Smartphone, CheckCircle2, Sparkles, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, ChevronRight, Loader2, Compass, Search, X, CreditCard, QrCode, Wallet, Banknote, Smartphone, CheckCircle2, Sparkles, Zap, WifiOff, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge } from '../types';
@@ -16,6 +16,7 @@ import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { haversineDistance } from '../lib/location';
 import { Capacitor } from '@capacitor/core';
+import { checkIsOnline, useNetworkStatus } from '../utils/network';
 
 import DeliveryAnimation from './DeliveryAnimation';
 
@@ -75,6 +76,9 @@ export default function Checkout() {
   useSEO('Checkout', 'Finalize delivery details and confirm your order at Mintoo.');
   const navigate = useNavigate();
   const isBulkOrder = localStorage.getItem('moms_magic_order_type') === 'bulk';
+
+  const { isOffline, setIsOffline } = useNetworkStatus();
+  const [showOfflineDialog, setShowOfflineDialog] = useState(false);
 
   const { items: cartItems, total: cartTotal, clearCart, removeItem } = useCartStore();
   const bulkStore = useBulkOrderStore();
@@ -284,6 +288,18 @@ export default function Checkout() {
     e.preventDefault();
     if (isSubmitting) return;
 
+    // STRICT OFFLINE CHECK BEFORE ANY ACTION
+    const online = await checkIsOnline();
+    if (!online || !navigator.onLine) {
+      setIsOffline(true);
+      setShowOfflineDialog(true);
+      toast.error('BOSS No internet connection. Please connect to the internet to place your order.', {
+        id: 'no-internet-toast',
+        duration: 6000,
+      });
+      return;
+    }
+
     // Validate store open
     const isStoreOpen = () => { return true; };
     const adminToken = localStorage.getItem('moms_magic_admin_token');
@@ -298,14 +314,9 @@ export default function Checkout() {
     if (!deliveryLocation)                          { toast.error('Please select a delivery location'); openLocationPicker(); return; }
     if (deliveryLocation.distance > 12)             { toast.error('Sorry, not deliverable (location is >12km)'); return; }
     
-    
-
     localStorage.setItem('moms_magic_user_name',  formData.name.trim());
     localStorage.setItem('moms_magic_user_phone', formData.phone.trim());
 
-    // ── CRITICAL FIX: Open the WhatsApp window BEFORE any async work ──
-    // Mobile browsers block window.open() called after an await. Opening it here
-    // (synchronously inside the click/submit handler) ensures it is never blocked.
     const mapsViewLink = `https://www.google.com/maps?q=${deliveryLocation.lat},${deliveryLocation.lng}`;
     const mapsNavLink  = `https://www.google.com/maps/dir/?api=1&destination=${deliveryLocation.lat},${deliveryLocation.lng}`;
 
@@ -418,7 +429,19 @@ export default function Checkout() {
 
     const completeOrder = async (paymentId?: string) => {
       const orderId = Date.now().toString();
-      
+
+      // Double-check connectivity right before upload
+      const onlineNow = await checkIsOnline();
+      if (!onlineNow || !navigator.onLine) {
+        setIsOffline(true);
+        setShowOfflineDialog(true);
+        toast.error('BOSS No internet connection. Please connect to the internet to place your order.', {
+          id: 'no-internet-toast',
+          duration: 6000,
+        });
+        throw new Error('OFFLINE_ORDER_BLOCKED');
+      }
+
       // Deduct from wallet if logged in and using wallet
       if (user && walletDeduction > 0) {
         await deductWalletBalance(walletDeduction, orderId);
@@ -426,47 +449,49 @@ export default function Checkout() {
 
       const waMsg    = buildWaMessage(paymentId);
       const tgMsg    = buildTgMessage(paymentId);
-      const waNumber = isBulkOrder ? WHATSAPP_BULK_NUMBER : WHATSAPP_FOOD_NUMBER;
-      const waUrl    = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
 
-      // Save order locally and in Firestore
+      const order = {
+        id: orderId,
+        userId: user?.uid || null,
+        userName: formData.name.trim(),
+        userPhone: formData.phone.trim().replace(/\D/g, '').slice(-10),
+        orderType: isBulkOrder ? 'bulk' : 'regular',
+        items: activeItems,
+        subtotal,
+        rainySeasonFee,
+        deliveryCharge,
+        grandTotal,
+        walletAmountUsed: walletDeduction,
+        payableAmount,
+        paymentMethod: payableAmount === 0 ? 'wallet' : paymentMethod,
+        paymentId: paymentId || null,
+        deliveryLocation,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        instructions: formData.additionalMessage.trim(),
+      };
+
+      // Mandatory online upload to Firestore (NO fallback timeout race that creates offline orders!)
       try {
-        const order = {
-          id: orderId,
-          userId: user?.uid || null,
-          userName: formData.name.trim(),
-          userPhone: formData.phone.trim().replace(/\D/g, '').slice(-10),
-          orderType: isBulkOrder ? 'bulk' : 'regular',
-          items: activeItems,
-          subtotal,
-          rainySeasonFee,
-          deliveryCharge,
-          grandTotal,
-          walletAmountUsed: walletDeduction,
-          payableAmount,
-          paymentMethod: payableAmount === 0 ? 'wallet' : paymentMethod,
-          paymentId: paymentId || null,
-          deliveryLocation,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          instructions: formData.additionalMessage.trim(),
-        };
-
-        // Save to Firestore (max wait 1.5s so it doesn't block redirection on slow internet)
-        await Promise.race([
-          setDoc(doc(db, 'orders', orderId), order),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-
-        // Save locally
-        const existing = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        existing.push(order);
-        localStorage.setItem('moms_magic_orders', JSON.stringify(existing));
-      } catch (err) {
-        console.error('Failed to save order:', err);
+        await setDoc(doc(db, 'orders', orderId), order);
+      } catch (err: any) {
+        console.error('Failed to upload order to server:', err);
+        setIsOffline(true);
+        setShowOfflineDialog(true);
+        toast.error('BOSS No internet connection. Please connect to the internet to place your order.', {
+          id: 'no-internet-toast',
+          duration: 6000,
+        });
+        // DO NOT save to local storage, DO NOT clear cart, DO NOT show success toast!
+        throw err;
       }
 
-      // Send Telegram (fire and don't block redirect)
+      // ONLY after successful server upload:
+      const existing = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+      existing.push(order);
+      localStorage.setItem('moms_magic_orders', JSON.stringify(existing));
+
+      // Send Telegram notification
       sendTelegramMessage(tgMsg).catch(console.error);
 
       // Clear cart / bulk order
@@ -1224,10 +1249,19 @@ export default function Checkout() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white h-14 sm:h-16 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
+                disabled={isSubmitting || isOffline}
+                className={`flex-1 text-white h-14 sm:h-16 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] cursor-pointer ${
+                  isOffline
+                    ? 'bg-gray-800 text-gray-400 border border-red-500/40 cursor-not-allowed opacity-75 shadow-none'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 shadow-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed'
+                }`}
               >
-                {isSubmitting ? (
+                {isOffline ? (
+                  <>
+                    <WifiOff className="w-5 h-5 text-red-400 animate-pulse" />
+                    <span>Offline - Internet Required</span>
+                  </>
+                ) : isSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Processing Payment...</span>
@@ -1250,9 +1284,71 @@ export default function Checkout() {
             </div>
           </div>
 
-
         </div>
       </form>
+
+      {/* Full-Screen Offline Alert Dialog */}
+      <AnimatePresence>
+        {showOfflineDialog && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md bg-[#161616] border border-red-500/40 rounded-[28px] p-6 text-center shadow-2xl space-y-5 relative overflow-hidden text-left"
+            >
+              {/* Glow Shimmer */}
+              <div className="absolute -top-12 -left-12 w-36 h-36 bg-red-500/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="w-16 h-16 mx-auto rounded-full bg-red-500/20 border border-red-500/40 text-red-400 flex items-center justify-center animate-pulse">
+                <WifiOff className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-3 text-center">
+                <h3 className="text-lg font-black uppercase tracking-wider text-red-400 flex items-center justify-center gap-2">
+                  <span>🚨 Internet Connection Required</span>
+                </h3>
+                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-white font-black text-sm leading-relaxed shadow-inner">
+                  "BOSS No internet connection. Please connect to the internet to place your order."
+                </div>
+              </div>
+
+              <p className="text-xs font-semibold text-gray-400 text-center">
+                Orders cannot be placed offline. Re-connect to Wi-Fi or mobile data to complete your order.
+              </p>
+
+              <div className="pt-2 flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const online = await checkIsOnline();
+                    if (online) {
+                      setIsOffline(false);
+                      setShowOfflineDialog(false);
+                      toast.success('✅ Internet connection restored! You can now place your order.');
+                    } else {
+                      toast.error('BOSS No internet connection. Please connect to the internet to place your order.', { id: 'no-internet-toast' });
+                    }
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 text-white font-black text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Check Connection & Retry</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOfflineDialog(false)}
+                  className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 text-xs font-bold transition-all cursor-pointer text-center"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
