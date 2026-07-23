@@ -359,28 +359,25 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {rider.phone && (
-                <>
-                  {/* Text / SMS Button */}
-                  <a 
-                    href={`sms:${rider.phone}?body=${encodeURIComponent(`Hi ${rider.name || 'Rider'}, regarding my Mintoo order #${order?.id || ''}`)}`}
-                    className="h-10 px-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                    title="Text Rider"
-                  >
-                    <MessageSquare className="w-4 h-4 fill-current" />
-                    <span>Text</span>
-                  </a>
+              {/* Direct Live In-App Chat with Rider */}
+              <button 
+                onClick={() => navigate(`/chat/${order?.id}`)}
+                className="h-10 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                title="Chat Live with Rider"
+              >
+                <MessageSquare className="w-4 h-4 fill-current" />
+                <span>Chat</span>
+              </button>
 
-                  {/* Call Button */}
-                  <a 
-                    href={`tel:${rider.phone}`}
-                    className="h-10 px-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                    title="Call Rider"
-                  >
-                    <Phone className="w-4 h-4 fill-current" />
-                    <span>Call</span>
-                  </a>
-                </>
+              {rider.phone && (
+                <a 
+                  href={`tel:${rider.phone}`}
+                  className="h-10 px-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                  title="Call Rider"
+                >
+                  <Phone className="w-4 h-4 fill-current" />
+                  <span>Call</span>
+                </a>
               )}
             </div>
           </div>
