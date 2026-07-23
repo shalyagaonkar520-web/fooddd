@@ -519,54 +519,54 @@ export default function FunGreetingBanner() {
         </div>
       </motion.div>
 
-      {/* Onboarding Bottom Sheet / Modal */}
+      {/* Onboarding Centered Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/75 backdrop-blur-md"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
 
             {/* Modal Body */}
             <motion.div
-              initial={{ y: "100%", opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-md bg-[#161616] border border-amber-500/30 rounded-t-[32px] sm:rounded-[28px] p-5 sm:p-6 text-left shadow-2xl z-10 flex flex-col max-h-[85vh] sm:max-h-[80vh] overflow-hidden"
+              initial={{ scale: 0.92, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 260 }}
+              className="relative w-full max-w-md bg-[#161616] border border-amber-500/30 rounded-[28px] p-4 sm:p-5 text-left shadow-2xl z-10 flex flex-col max-h-[82vh] my-auto overflow-hidden"
             >
               {/* Top ambient glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 blur-3xl pointer-events-none" />
 
               {/* Header */}
-              <div className="flex items-start justify-between border-b border-white/10 pb-3 shrink-0">
+              <div className="flex items-start justify-between border-b border-white/10 pb-2.5 shrink-0">
                 <div className="space-y-0.5">
-                  <h3 className="text-lg sm:text-xl font-black italic uppercase tracking-tight text-white flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black italic uppercase tracking-tight text-white flex items-center gap-2">
                     Let's customize your experience! 🎉
                   </h3>
-                  <p className="text-xs font-semibold text-gray-400">
+                  <p className="text-[11px] font-semibold text-gray-400">
                     Get custom greetings in your favorite language!
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Form with scrollable body & sticky submit button */}
-              <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 pt-4">
-                <div className="overflow-y-auto space-y-4 pr-1 flex-1 pb-4">
+              {/* Form with compact inputs & visible save button */}
+              <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 pt-3">
+                <div className="overflow-y-auto space-y-3 pr-1 flex-1 pb-2">
                   {/* 1. Name Input */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
                       1. Enter Your Name
                     </label>
@@ -576,16 +576,16 @@ export default function FunGreetingBanner() {
                       value={inputName}
                       onChange={(e) => setInputName(e.target.value)}
                       required
-                      className="w-full bg-[#222222] border border-white/15 focus:border-amber-400 rounded-2xl py-3 px-4 outline-none font-bold text-sm text-white placeholder:text-gray-500 transition-colors shadow-inner"
+                      className="w-full bg-[#222222] border border-white/15 focus:border-amber-400 rounded-xl py-2.5 px-3.5 outline-none font-bold text-xs text-white placeholder:text-gray-500 transition-colors shadow-inner"
                     />
                   </div>
 
                   {/* 2. Role Title Selector */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
                       2. Select Your Persona
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2.5">
                       {/* King Option */}
                       <button
                         type="button"
@@ -593,17 +593,17 @@ export default function FunGreetingBanner() {
                           setSelectedTitle('King');
                           playSound(SOUNDS.CLICK);
                         }}
-                        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                           selectedTitle === 'King'
                             ? 'bg-gradient-to-b from-amber-500/25 to-orange-500/20 border-amber-400 text-white shadow-lg shadow-amber-500/10 scale-[1.01]'
                             : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                         }`}
                       >
-                        <span className="text-xl">👑</span>
-                        <span className="font-black text-xs uppercase tracking-wider">King</span>
+                        <span className="text-lg">👑</span>
+                        <span className="font-black text-[11px] uppercase tracking-wider">King</span>
                         {selectedTitle === 'King' && (
-                          <span className="text-[9px] font-bold text-amber-400 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Selected
+                          <span className="text-[8px] font-bold text-amber-400 flex items-center gap-0.5">
+                            <Check className="w-2.5 h-2.5" /> Selected
                           </span>
                         )}
                       </button>
@@ -615,17 +615,17 @@ export default function FunGreetingBanner() {
                           setSelectedTitle('Queen');
                           playSound(SOUNDS.CLICK);
                         }}
-                        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                           selectedTitle === 'Queen'
                             ? 'bg-gradient-to-b from-pink-500/25 to-purple-500/20 border-pink-400 text-white shadow-lg shadow-pink-500/10 scale-[1.01]'
                             : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                         }`}
                       >
-                        <span className="text-xl">👑</span>
-                        <span className="font-black text-xs uppercase tracking-wider">Queen</span>
+                        <span className="text-lg">👑</span>
+                        <span className="font-black text-[11px] uppercase tracking-wider">Queen</span>
                         {selectedTitle === 'Queen' && (
-                          <span className="text-[9px] font-bold text-pink-400 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Selected
+                          <span className="text-[8px] font-bold text-pink-400 flex items-center gap-0.5">
+                            <Check className="w-2.5 h-2.5" /> Selected
                           </span>
                         )}
                       </button>
@@ -633,27 +633,27 @@ export default function FunGreetingBanner() {
                   </div>
 
                   {/* 3. Language Selector */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1">
                         <Languages className="w-3 h-3 text-amber-400" />
                         3. Preferred Language(s)
                       </label>
-                      <span className="text-[9px] text-gray-400 font-bold">Select preference</span>
+                      <span className="text-[8px] text-gray-400 font-bold">Select preference</span>
                     </div>
 
                     {/* All 3 / Mix Quick Toggle */}
                     <button
                       type="button"
                       onClick={selectAllThree}
-                      className={`w-full py-2 px-3 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      className={`w-full py-2 px-3 rounded-xl border text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                         isAllThreeSelected
                           ? 'bg-gradient-to-r from-amber-500/30 via-pink-500/30 to-purple-500/30 border-amber-400 text-amber-300 shadow-md scale-[1.01]'
                           : 'bg-[#1e1e1e] border-white/10 text-gray-400 hover:border-white/20'
                       }`}
                     >
                       <span>🌈 All 3 (Mix of All!)</span>
-                      {isAllThreeSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                      {isAllThreeSelected && <Check className="w-3 h-3 text-amber-400" />}
                     </button>
 
                     {/* Individual Language Chips */}
@@ -662,16 +662,16 @@ export default function FunGreetingBanner() {
                       <button
                         type="button"
                         onClick={() => toggleLanguage('kannada')}
-                        className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                        className={`p-1.5 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                           selectedLangs.includes('kannada')
                             ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black'
                             : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                         }`}
                       >
-                        <span className="text-sm">🟡</span>
+                        <span className="text-xs">🟡</span>
                         <span className="text-[10px] font-bold">Kannada</span>
                         {selectedLangs.includes('kannada') && (
-                          <span className="text-[8px] text-amber-400">Selected</span>
+                          <span className="text-[7px] text-amber-400">Selected</span>
                         )}
                       </button>
 
@@ -679,16 +679,16 @@ export default function FunGreetingBanner() {
                       <button
                         type="button"
                         onClick={() => toggleLanguage('hindi')}
-                        className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                        className={`p-1.5 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                           selectedLangs.includes('hindi')
                             ? 'bg-orange-500/20 border-orange-400 text-orange-300 font-black'
                             : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                         }`}
                       >
-                        <span className="text-sm">🟠</span>
+                        <span className="text-xs">🟠</span>
                         <span className="text-[10px] font-bold">Hindi</span>
                         {selectedLangs.includes('hindi') && (
-                          <span className="text-[8px] text-orange-400">Selected</span>
+                          <span className="text-[7px] text-orange-400">Selected</span>
                         )}
                       </button>
 
@@ -696,29 +696,29 @@ export default function FunGreetingBanner() {
                       <button
                         type="button"
                         onClick={() => toggleLanguage('english')}
-                        className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                        className={`p-1.5 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                           selectedLangs.includes('english')
                             ? 'bg-blue-500/20 border-blue-400 text-blue-300 font-black'
                             : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                         }`}
                       >
-                        <span className="text-sm">🔵</span>
+                        <span className="text-xs">🔵</span>
                         <span className="text-[10px] font-bold">English</span>
                         {selectedLangs.includes('english') && (
-                          <span className="text-[8px] text-blue-400">Selected</span>
+                          <span className="text-[7px] text-blue-400">Selected</span>
                         )}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Always-Visible Sticky Submit Button Footer */}
-                <div className="shrink-0 pt-3 border-t border-white/10 bg-[#161616]">
+                {/* Always-Visible Prominent Submit Button */}
+                <div className="shrink-0 pt-2.5 border-t border-white/10 bg-[#161616]">
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all cursor-pointer"
+                    className="w-full h-11 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black font-black text-xs uppercase tracking-widest rounded-xl shadow-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all cursor-pointer"
                   >
                     <PartyPopper className="w-4 h-4 fill-black" />
                     <span>Save & Start Experience</span>

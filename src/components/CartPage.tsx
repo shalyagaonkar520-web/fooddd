@@ -17,8 +17,7 @@ export default function CartPage() {
   const settings = useSystemStore(state => state.settings);
   const distanceKm = deliveryLocation?.distance ?? 0;
   const deliveryCharge = calculateDeliveryCharge(distanceKm);
-  const rainySeasonFee = 5;
-  const grandTotal = total + deliveryCharge + rainySeasonFee;
+  const grandTotal = total + deliveryCharge;
 
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');
@@ -158,19 +157,27 @@ export default function CartPage() {
                   <span className="font-semibold text-gray-900">₹{total}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>GST & Restaurant Charges ({settings.taxRate ?? 5}%)</span>
-                  <span className="font-semibold text-gray-900">₹{(total * 0.05).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Rainy Season Fee</span>
-                  <span className="font-semibold text-gray-900">₹{rainySeasonFee}</span>
-                </div>
-                <div className="flex justify-between items-center">
                   <div className="flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Delivery Fee</span>
                   </div>
                   <span className="font-semibold text-gray-900">₹{deliveryCharge}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Hotel Charges</span>
+                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Platform Fee</span>
+                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Handling Charges</span>
+                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Payment Gateway Charges</span>
+                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
                 </div>
 
                 <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-sm font-bold text-gray-900">

@@ -257,7 +257,7 @@ export default function Checkout() {
     }
   }
 
-  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
+  const grandTotal      = Math.max(0, subtotal + deliveryCharge - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
   
@@ -994,10 +994,6 @@ export default function Checkout() {
               <span className="text-gray-900 text-lg font-black">₹{subtotal}</span>
             </div>
             <div className="flex justify-between items-center text-gray-500 font-bold text-xs uppercase tracking-[3px]">
-              <span>Rainy Season Fee</span>
-              <span className="text-gray-900 text-lg font-black">₹{rainySeasonFee}</span>
-            </div>
-            <div className="flex justify-between items-center text-gray-500 font-bold text-xs uppercase tracking-[3px]">
               <div className="flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-orange-500" />
                 <span>Delivery</span>
@@ -1013,6 +1009,22 @@ export default function Checkout() {
                   </div>
                 ) : `₹${deliveryCharge}`}
               </span>
+            </div>
+            <div className="flex justify-between items-center text-gray-500 font-bold text-xs uppercase tracking-[3px]">
+              <span>Hotel Charges</span>
+              <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+            </div>
+            <div className="flex justify-between items-center text-gray-500 font-bold text-xs uppercase tracking-[3px]">
+              <span>Platform Fee</span>
+              <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+            </div>
+            <div className="flex justify-between items-center text-gray-500 font-bold text-xs uppercase tracking-[3px]">
+              <span>Handling Charges</span>
+              <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+            </div>
+            <div className="flex justify-between items-center text-gray-500 font-bold text-xs uppercase tracking-[3px]">
+              <span>Payment Gateway Charges</span>
+              <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
             </div>
             {couponDiscount > 0 && (
               <div className="flex justify-between items-center text-orange-500 font-bold text-xs uppercase tracking-[3px]">
