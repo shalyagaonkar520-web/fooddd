@@ -2,7 +2,15 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const CHAT_IDS = (process.env.TELEGRAM_CHAT_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+
+  // CORS restriction
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
+  const requestOrigin = req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin === '*' ? (requestOrigin || '*') : allowedOrigin);
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
 
@@ -34,12 +42,16 @@ export default async function handler(req, res) {
     }
 
     if (!TELEGRAM_BOT_TOKEN) {
-      return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN is not configured in process.env' });
+      console.error('Server Configuration Error: TELEGRAM_BOT_TOKEN env var is missing.');
+      return res.status(500).json({
+        success: false,
+        error: 'Notification service unavailable',
+        correlationId: `err_tg_cfg_${Date.now().toString(36)}`
+      });
     }
 
     const targets = customChatId ? [customChatId] : CHAT_IDS;
     let sentCount = 0;
-    let lastError = null;
 
     for (const chatId of targets) {
       try {
@@ -57,21 +69,29 @@ export default async function handler(req, res) {
         if (tgResponse.ok && tgData.ok) {
           sentCount++;
         } else {
-          lastError = tgData.description || 'Failed to send to chat';
-          console.warn('Telegram API error for chat [REDACTED]:', tgData?.description || 'Failed');
+          console.warn('Telegram API warning for chat [REDACTED]:', tgData?.description || 'Failed');
         }
       } catch (e) {
-        lastError = e.message;
+        console.error('Telegram dispatch error for chat [REDACTED]:', e);
       }
     }
 
     if (sentCount > 0) {
       return res.status(200).json({ success: true, sentCount });
     } else {
-      return res.status(502).json({ success: false, error: lastError || 'All Telegram sends failed' });
+      return res.status(502).json({
+        success: false,
+        error: 'Failed to deliver notification message',
+        correlationId: `err_tg_send_${Date.now().toString(36)}`
+      });
     }
   } catch (err) {
-    console.error('Telegram send failed:', err);
-    return res.status(500).json({ success: false, error: 'Internal server error' });
+    const correlationId = `err_${Date.now().toString(36)}`;
+    console.error(`[${correlationId}] Telegram Handler Exception:`, err);
+    return res.status(500).json({
+      success: false,
+      error: 'An internal notification error occurred.',
+      correlationId
+    });
   }
 }
