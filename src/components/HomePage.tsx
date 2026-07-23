@@ -9,6 +9,7 @@ import { playSound, SOUNDS } from '../utils/audio';
 import { useMenuStore } from '../store/menuStore';
 import toast from 'react-hot-toast';
 import { Capacitor } from '@capacitor/core';
+import FunGreetingBanner from './FunGreetingBanner';
 
 const SEARCH_PLACEHOLDERS = [
   "Search for 'Burger'",
@@ -434,8 +435,13 @@ export default function HomePage() {
         </button>
       </div>
 
+      {/* Fun Personalized Onboarding & Greeting Banner */}
+      <div className="px-4 pt-1 pb-1">
+        <FunGreetingBanner />
+      </div>
+
       {/* Hero Promo Banner (Carousel) */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-3">
         <div className="relative w-full aspect-[3/2] overflow-hidden rounded-[28px] border border-white/5 bg-[#121212] shadow-xl group">
           <AnimatePresence mode="wait">
             <motion.div
