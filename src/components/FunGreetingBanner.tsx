@@ -648,11 +648,11 @@ export default function FunGreetingBanner() {
                       onClick={selectAllThree}
                       className={`w-full py-2 px-3 rounded-xl border text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                         isAllThreeSelected
-                          ? 'bg-gradient-to-r from-amber-500/30 via-pink-500/30 to-purple-500/30 border-amber-400 text-amber-300 shadow-md scale-[1.01]'
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-400 font-extrabold shadow-md scale-[1.01]'
                           : 'bg-[#1e1e1e] border-white/10 text-gray-400 hover:border-white/20'
                       }`}
                     >
-                      <span>🌈 All 3 (Mix of All!)</span>
+                      <span>All 3 (Mix of Kannada, Hindi & English)</span>
                       {isAllThreeSelected && <Check className="w-3 h-3 text-amber-400" />}
                     </button>
 
