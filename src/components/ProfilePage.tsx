@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
-  Wallet, 
   MapPin, 
   LogOut, 
   ChevronRight, 
@@ -15,33 +14,18 @@ import {
   ShieldCheck,
   Crown,
   Smartphone,
-  Mail,
-  Sparkles
+  Mail
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
-interface WalletTransaction {
-  id: string;
-  userId: string;
-  amount: number;
-  type: string;
-  orderId?: string;
-  description: string;
-  createdAt: string;
-}
-
 export default function ProfilePage() {
-  useSEO("My Profile", "Manage your profile, saved addresses, reward points, and check your wallet balance at Mintoo.");
+  useSEO("My Profile", "Manage your profile and saved addresses at Mintoo.");
   const navigate = useNavigate();
   const { user, profile, loading, logout, addAddress, deleteAddress } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'menu' | 'wallet' | 'addresses' | 'terms'>('menu');
-  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [activeTab, setActiveTab] = useState<'menu' | 'addresses' | 'terms'>('menu');
   const [orders, setOrders] = useState<any[]>([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   // Address Form State
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -59,35 +43,6 @@ export default function ProfilePage() {
       navigate('/');
     }
   }, [user, loading, localPhone, isGuest, navigate]);
-
-  // Load Wallet Transactions
-  useEffect(() => {
-    if (!user) {
-      setTransactions([]);
-      return;
-    }
-
-    const loadWalletData = async () => {
-      setLoadingTransactions(true);
-      try {
-        const transRef = collection(db, 'walletTransactions');
-        const q = query(transRef, where('userId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-        const list: WalletTransaction[] = [];
-        querySnapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() } as WalletTransaction);
-        });
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setTransactions(list);
-      } catch (err) {
-        console.error('Error loading wallet transactions:', err);
-      } finally {
-        setLoadingTransactions(false);
-      }
-    };
-
-    loadWalletData();
-  }, [user]);
 
   // Load local order history
   useEffect(() => {
@@ -175,8 +130,6 @@ export default function ProfilePage() {
     name: user?.displayName || 'Valued Foodie',
     email: user?.email || '',
     phone: localPhone || user?.phoneNumber || '',
-    walletBalance: 0,
-    rewardPoints: 0,
     addresses: []
   };
 
@@ -188,67 +141,45 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-50/70 pt-20 pb-36 font-sans">
       <div className="max-w-2xl mx-auto px-4 space-y-5">
         
-        {/* Swiggy/Zomato Style User Card Header */}
-        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
-          {/* Ambient Glow & Crown Decorative Badge */}
-          <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+        {/* Swiggy/Zomato Style User Card Header with High Contrast White & Gold Text */}
+        <div className="bg-gradient-to-br from-gray-950 via-zinc-900 to-black text-white rounded-3xl p-6 shadow-2xl relative overflow-hidden border border-gray-800">
+          {/* Decorative Crown Badge */}
+          <div className="absolute top-0 right-0 p-6 opacity-15 pointer-events-none">
             <Crown className="w-36 h-36 text-amber-400" />
           </div>
 
           <div className="flex items-center gap-4 relative z-10">
             {/* Avatar Circle */}
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 p-0.5 shadow-lg shrink-0 flex items-center justify-center">
-              <div className="w-full h-full bg-gray-900 rounded-[14px] flex items-center justify-center text-amber-400 font-extrabold text-2xl sm:text-3xl uppercase">
+              <div className="w-full h-full bg-gray-950 rounded-[14px] flex items-center justify-center text-amber-400 font-black text-2xl sm:text-3xl uppercase">
                 {userInitial}
               </div>
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0 space-y-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold text-white leading-tight truncate">
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate">
                   {displayProfile.name}
                 </h1>
-                <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                  <Crown className="w-3 h-3 text-amber-400" /> VIP Foodie
+                <span className="bg-amber-400 text-gray-950 border border-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0 shadow-xs">
+                  <Crown className="w-3 h-3 text-gray-950 fill-gray-950" /> VIP Foodie
                 </span>
               </div>
 
               {displayProfile.phone && (
-                <p className="text-xs text-gray-300 flex items-center gap-1.5 font-medium">
-                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                <p className="text-xs text-amber-300 flex items-center gap-1.5 font-bold">
+                  <Smartphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>{displayProfile.phone}</span>
                 </p>
               )}
 
               {displayProfile.email && (
-                <p className="text-xs text-gray-400 flex items-center gap-1.5 truncate">
-                  <Mail className="w-3.5 h-3.5 text-gray-400" />
+                <p className="text-xs text-gray-200 flex items-center gap-1.5 font-medium truncate">
+                  <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span className="truncate">{displayProfile.email}</span>
                 </p>
               )}
-            </div>
-          </div>
-
-          {/* Quick Balance Bar */}
-          <div className="grid grid-cols-2 gap-3 pt-5 mt-4 border-t border-white/10 relative z-10">
-            <button 
-              onClick={() => setActiveTab('wallet')}
-              className="bg-white/10 hover:bg-white/15 border border-white/10 rounded-2xl p-3 flex items-center justify-between text-left transition-all cursor-pointer"
-            >
-              <div>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Mintoo Cash</span>
-                <span className="text-base font-extrabold text-emerald-400">₹{displayProfile.walletBalance || 0}</span>
-              </div>
-              <Wallet className="w-5 h-5 text-emerald-400" />
-            </button>
-
-            <div className="bg-white/10 border border-white/10 rounded-2xl p-3 flex items-center justify-between text-left">
-              <div>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Reward Points</span>
-                <span className="text-base font-extrabold text-amber-400">⭐ {displayProfile.rewardPoints || 0}</span>
-              </div>
-              <Sparkles className="w-5 h-5 text-amber-400" />
             </div>
           </div>
         </div>
@@ -257,7 +188,6 @@ export default function ProfilePage() {
         <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-200 rounded-2xl shadow-xs overflow-x-auto no-scrollbar">
           {[
             { id: 'menu', label: 'Overview', icon: User },
-            { id: 'wallet', label: 'Wallet', icon: Wallet },
             { id: 'addresses', label: 'Addresses', icon: MapPin },
             { id: 'terms', label: 'Terms & Privacy', icon: FileText }
           ].map((t) => {
@@ -267,7 +197,7 @@ export default function ProfilePage() {
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isActive 
                     ? 'bg-emerald-600 text-white shadow-md' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -307,23 +237,6 @@ export default function ProfilePage() {
                       <div>
                         <h3 className="text-sm font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">My Orders</h3>
                         <p className="text-xs text-gray-500 font-medium">Track live orders & view past history ({orders.length})</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all" />
-                  </button>
-
-                  {/* Mintoo Wallet */}
-                  <button 
-                    onClick={() => setActiveTab('wallet')}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-xl transition-colors text-left cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                        <Wallet className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Mintoo Cash & Wallet</h3>
-                        <p className="text-xs text-gray-500 font-medium">Balance: ₹{displayProfile.walletBalance || 0} • Cashback & Refund history</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all" />
@@ -385,51 +298,6 @@ export default function ProfilePage() {
                       <span>Delete Account</span>
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* WALLET TAB */}
-            {activeTab === 'wallet' && (
-              <motion.div 
-                key="wallet"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-xs space-y-4"
-              >
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900">Mintoo Wallet</h3>
-                    <p className="text-xs text-gray-500 font-medium">Use wallet credits for instant 1-click checkout</p>
-                  </div>
-                  <span className="text-xl font-extrabold text-emerald-600">₹{displayProfile.walletBalance || 0}</span>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Recent Transactions</h4>
-                  {loadingTransactions ? (
-                    <p className="text-xs text-gray-400 font-medium py-4 text-center">Loading transactions...</p>
-                  ) : transactions.length === 0 ? (
-                    <div className="py-8 text-center space-y-2">
-                      <Wallet className="w-8 h-8 text-gray-300 mx-auto" />
-                      <p className="text-xs text-gray-500 font-medium">No wallet transactions found.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {transactions.map((tx) => (
-                        <div key={tx.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs">
-                          <div>
-                            <p className="font-bold text-gray-900">{tx.description || 'Wallet Update'}</p>
-                            <p className="text-[10px] text-gray-400">{new Date(tx.createdAt).toLocaleDateString()}</p>
-                          </div>
-                          <span className={`font-bold ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {tx.type === 'credit' ? '+' : '-'}₹{tx.amount}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </motion.div>
             )}
@@ -541,7 +409,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-1">
                     <h4 className="font-bold text-gray-900">3. Cancellation & Refunds</h4>
-                    <p className="leading-relaxed">Orders can be cancelled before kitchen confirmation. Refunds will be credited to your original payment mode or Mintoo Cash wallet within 5-7 working days.</p>
+                    <p className="leading-relaxed">Orders can be cancelled before kitchen confirmation. Refunds will be credited to your original payment mode within 5-7 working days.</p>
                   </div>
                 </div>
               </motion.div>
