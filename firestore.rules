@@ -18,14 +18,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Orders: User can create order and read their own orders; Admin/Rider authenticated can access
+    // Orders: Allow create and read for orders (User tracking and Kitchen Panel)
     match /orders/{orderId} {
-      allow create: if true;
-      allow read: if request.auth != null && (
-        resource.data.userId == request.auth.uid || 
-        request.auth.uid == resource.data.userId
-      );
-      allow update, delete: if request.auth != null;
+      allow create, read, update: if true;
+      allow delete: if request.auth != null;
     }
     
     // FCM Device Tokens

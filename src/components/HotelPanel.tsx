@@ -93,37 +93,62 @@ export default function HotelPanel() {
     return () => unsub();
   }, [navigate]);
 
-  // Load orders
+  // Load orders (realtime Firestore + local cache fallback)
   useEffect(() => {
     if (!hotelId) return;
 
-    const ACTIVE_STATUSES = ['pending', 'Preparing'];
+    const loadOrdersFromSnapshot = (snapshotDocs: any[]) => {
+      const remoteOrders: any[] = snapshotDocs.map(d => ({ id: d.id, ...d.data() }));
+      
+      let localOrders: any[] = [];
+      try {
+        localOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+      } catch (_) {}
 
-    const ordersQuery = query(collection(db, 'orders'), where('status', 'in', ACTIVE_STATUSES));
+      // Merge remote and local orders by ID
+      const orderMap = new Map<string, any>();
+      localOrders.forEach(o => { if (o && o.id) orderMap.set(o.id, o); });
+      remoteOrders.forEach(o => { if (o && o.id) orderMap.set(o.id, o); });
+
+      const allOrders = Array.from(orderMap.values());
+
+      // Filter active non-completed orders
+      const activeList = allOrders.filter((o: any) => {
+        const st = (o.status || '').toLowerCase();
+        return st !== 'delivered' && st !== 'cancelled' && st !== 'completed';
+      });
+
+      activeList.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+      if (assignedFood) {
+        const filtered = activeList.filter((order: any) => {
+          return order.items?.some((item: any) =>
+            item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim()
+          );
+        }).map((order: any) => ({
+          ...order,
+          items: order.items?.filter((item: any) => item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim())
+        }));
+        setActiveOrders(filtered);
+      } else {
+        setActiveOrders(activeList);
+      }
+    };
+
+    const ordersCol = collection(db, 'orders');
     const unsubscribe = onSnapshot(
-      ordersQuery,
+      ordersCol,
       (snapshot) => {
-        const orders: any[] = [];
-        snapshot.forEach(d => orders.push({ id: d.id, ...d.data() }));
-        orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        
-        // Filter by hotel's assigned food item if defined
-        if (assignedFood) {
-          const filtered = orders.filter((order: any) => {
-            return order.items?.some((item: any) =>
-              item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim()
-            );
-          }).map((order: any) => ({
-            ...order,
-            items: order.items?.filter((item: any) => item.name.toLowerCase().trim() === assignedFood.toLowerCase().trim())
-          }));
-          setActiveOrders(filtered);
-        } else {
-          setActiveOrders(orders);
-        }
+        loadOrdersFromSnapshot(snapshot.docs);
       },
-      (error) => console.error('Error fetching kitchen orders:', error)
+      (error) => {
+        console.warn('Firestore orders snapshot fallback to local:', error);
+        loadOrdersFromSnapshot([]);
+      }
     );
+
+    // Initial check from local storage immediately
+    loadOrdersFromSnapshot([]);
 
     return () => unsubscribe();
   }, [hotelId, assignedFood]);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronRight } from 'lucide-react';
+import { User, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useSEO } from '../utils/seo';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
@@ -77,6 +77,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -315,13 +316,21 @@ export default function AuthPage() {
               {!isForgotPassword && (
                 <div className="relative group">
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
-                    className="w-full px-5 py-4 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-sm shadow-inner"
+                    className="w-full px-5 py-4 pr-12 bg-[#080808] border border-white/10 rounded-2xl focus:outline-none focus:bg-[#0A0A0A] focus:border-[#D4AF37] transition-all font-bold text-white placeholder:text-gray-600 text-sm shadow-inner"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               )}
 

@@ -343,36 +343,64 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
 
       <div className="h-px bg-gray-100" />
 
-      {/* Rider Information */}
+      {/* Rider Information & Direct Text / Call Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {rider ? (
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3 text-left">
+          <div className="flex items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-3 text-left min-w-0 flex-1">
               <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center text-lg font-extrabold shadow-md shrink-0">
                 {rider.name ? rider.name.charAt(0).toUpperCase() : '🛵'}
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Delivery Partner</p>
-                <h4 className="text-sm font-bold text-gray-900 mt-0.5">{rider.name || 'Delivery Partner'}</h4>
+                <h4 className="text-sm font-bold text-gray-900 mt-0.5 truncate">{rider.name || 'Delivery Partner'}</h4>
                 <p className="text-[10px] text-emerald-600 font-extrabold">★ 4.9 Super Rider</p>
               </div>
             </div>
 
-            {rider.phone && (
-              <a 
-                href={`tel:${rider.phone}`}
-                className="w-11 h-11 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-all shadow-md active:scale-95 shrink-0"
-                title="Call Rider"
-              >
-                <Phone className="w-4 h-4 fill-current" />
-              </a>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {rider.phone && (
+                <>
+                  {/* Text / SMS Button */}
+                  <a 
+                    href={`sms:${rider.phone}?body=${encodeURIComponent(`Hi ${rider.name || 'Rider'}, regarding my Mintoo order #${order?.id || ''}`)}`}
+                    className="h-10 px-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                    title="Text Rider"
+                  >
+                    <MessageSquare className="w-4 h-4 fill-current" />
+                    <span>Text</span>
+                  </a>
+
+                  {/* Call Button */}
+                  <a 
+                    href={`tel:${rider.phone}`}
+                    className="h-10 px-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                    title="Call Rider"
+                  >
+                    <Phone className="w-4 h-4 fill-current" />
+                    <span>Call</span>
+                  </a>
+                </>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="text-left py-1">
-            <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Delivery Partner</p>
-            <h4 className="text-sm font-bold text-gray-900 mt-0.5">Assigning delivery agent... 🛵</h4>
-            <p className="text-xs text-gray-500 font-medium">Your food is baking. We are matching a delivery executive to hand off your meal.</p>
+          <div className="flex items-center justify-between w-full gap-2">
+            <div className="text-left py-1 flex-1 min-w-0">
+              <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Delivery Partner</p>
+              <h4 className="text-sm font-bold text-gray-900 mt-0.5">Assigning delivery agent... 🛵</h4>
+              <p className="text-xs text-gray-500 font-medium truncate">Matching a delivery executive to hand off your meal.</p>
+            </div>
+
+            {/* Text Delivery Support Button */}
+            <button
+              onClick={() => navigate('/chat')}
+              className="h-10 px-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
+              title="Text Delivery Support"
+            >
+              <MessageSquare className="w-4 h-4 fill-current" />
+              <span>Text Support</span>
+            </button>
           </div>
         )}
       </div>
