@@ -14,7 +14,7 @@ import { useSEO } from '../utils/seo';
 import { useAuthStore } from '../store/authStore';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { haversineDistance } from '../lib/location';
+import { haversineDistance, isBTMServiceable } from '../lib/location';
 import { Capacitor } from '@capacitor/core';
 import { checkIsOnline, useNetworkStatus } from '../utils/network';
 
@@ -235,6 +235,7 @@ export default function Checkout() {
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
   const baseDeliveryCharge = calculateDeliveryCharge(distanceKm);
+  const isNonBTM = deliveryLocation ? (!deliveryLocation.isDeliverable || !isBTMServiceable(deliveryLocation.address, deliveryLocation.lat, deliveryLocation.lng)) : false;
 
   // Free delivery before 2:00 PM every day
   const now = new Date();
@@ -715,6 +716,23 @@ export default function Checkout() {
                 >
                   <MapPin className="w-3.5 h-3.5" /> Change Location
                 </button>
+
+                {isNonBTM && (
+                  <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-5 text-center space-y-2 mt-3">
+                    <div className="text-3xl">🚀</div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-amber-900">Just wait... We are coming to your area soon!</h3>
+                    <p className="text-xs text-amber-800 font-medium leading-relaxed max-w-md mx-auto">
+                      Mintoo is currently only serving orders in <b>BTM Layout</b> (1st Stage, 2nd Stage, Main Road & Crosses). Please select a BTM Layout address to place your order!
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openLocationPicker}
+                      className="mt-1 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-gray-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-md cursor-pointer transition-all"
+                    >
+                      Change Address to BTM Layout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 sm:p-6 space-y-4">
@@ -1261,10 +1279,10 @@ export default function Checkout() {
 
               <button
                 type="submit"
-                disabled={isSubmitting || isOffline}
-                className={`flex-1 text-white h-14 sm:h-16 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] cursor-pointer ${
-                  isOffline
-                    ? 'bg-gray-800 text-gray-400 border border-red-500/40 cursor-not-allowed opacity-75 shadow-none'
+                disabled={isSubmitting || isOffline || isNonBTM}
+                className={`flex-1 text-white h-14 sm:h-16 rounded-2xl text-xs sm:text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] cursor-pointer ${
+                  isOffline || isNonBTM
+                    ? 'bg-gray-800 text-amber-400 border border-amber-500/40 cursor-not-allowed opacity-90 shadow-none'
                     : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 shadow-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed'
                 }`}
               >
@@ -1272,6 +1290,11 @@ export default function Checkout() {
                   <>
                     <WifiOff className="w-5 h-5 text-red-400 animate-pulse" />
                     <span>Offline - Internet Required</span>
+                  </>
+                ) : isNonBTM ? (
+                  <>
+                    <MapPin className="w-5 h-5 text-amber-400" />
+                    <span>Just wait... We are coming to your area soon! (BTM Only)</span>
                   </>
                 ) : isSubmitting ? (
                   <>

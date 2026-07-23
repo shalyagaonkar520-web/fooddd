@@ -15,8 +15,32 @@ export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2
   return R * c;
 }
 
+// BTM Layout Center Coordinates (16th Main Road, BTM 2nd Stage)
+export const BTM_CENTER = { lat: 12.9165, lng: 77.6101 };
+export const MAX_BTM_RANGE = 3.5; // km radius for BTM Layout service area
+
+// Check if location or address is in BTM Layout
+export function isBTMServiceable(address: string, lat: number, lng: number): boolean {
+  if (!address) {
+    const dist = haversineDistance(BTM_CENTER.lat, BTM_CENTER.lng, lat, lng);
+    return dist <= MAX_BTM_RANGE;
+  }
+
+  const addrLower = address.toLowerCase();
+  const containsBTM = 
+    addrLower.includes('btm') || 
+    addrLower.includes('btm layout') || 
+    addrLower.includes('btm 1st') || 
+    addrLower.includes('btm 2nd') || 
+    addrLower.includes('btm stage') ||
+    addrLower.includes('kuvempu nagar');
+
+  const dist = haversineDistance(BTM_CENTER.lat, BTM_CENTER.lng, lat, lng);
+  return containsBTM || dist <= MAX_BTM_RANGE;
+}
+
 // ═══════════════════════════════════════════════════════════════
-// NOMINATIM REVERSE GEOCODING
+// DETAILED NOMINATIM REVERSE GEOCODING FOR BTM LAYOUT & ROADS
 // ═══════════════════════════════════════════════════════════════
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
@@ -27,17 +51,29 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
     const data = await res.json();
     if (data && data.address) {
       const addr = data.address;
-      const parts = [
-        addr.house_number || '',
-        addr.road || '',
-        addr.neighbourhood || addr.suburb || addr.hamlet || '',
-        addr.city || addr.town || addr.village || addr.county || '',
-        addr.state || '',
-      ].filter(Boolean);
-      return parts.join(', ') || data.display_name || 'Unknown Location';
+      
+      const houseBuilding = addr.house_number || addr.building || addr.office || '';
+      const road = addr.road || addr.pedestrian || addr.footway || addr.path || '';
+      const mainCross = addr.neighbourhood || addr.suburb || addr.residential || addr.quarter || '';
+      const cityDistrict = addr.city_district || addr.district || '';
+
+      const parts = [houseBuilding, road, mainCross, cityDistrict].filter(Boolean);
+      let fullAddress = parts.join(', ');
+
+      if (!fullAddress) {
+        fullAddress = data.display_name || 'BTM Layout, Bengaluru';
+      }
+
+      // If near BTM Layout, append BTM Layout to address for clarity
+      const distToBtm = haversineDistance(BTM_CENTER.lat, BTM_CENTER.lng, lat, lng);
+      if (distToBtm <= MAX_BTM_RANGE && !fullAddress.toLowerCase().includes('btm')) {
+        fullAddress += ', BTM Layout, Bengaluru';
+      }
+
+      return fullAddress;
     }
-    return data.display_name || 'Unknown Location';
+    return data.display_name || 'BTM Layout, Bengaluru';
   } catch {
-    return 'Unable to fetch address';
+    return '16th Main Road, BTM Layout, Bengaluru';
   }
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { haversineDistance, reverseGeocode } from '../lib/location';
+import { haversineDistance, reverseGeocode, isBTMServiceable, BTM_CENTER, MAX_BTM_RANGE } from '../lib/location';
 
 export interface NearbyRestaurant {
   id: number;
@@ -33,19 +33,18 @@ interface LocationStore {
   isLoading: boolean;
 }
 
-// Fixed restaurant location (BTM Layout, Bangalore area)
-const RESTAURANT_LOCATION = { lat: 12.9165, lng: 77.6101 };
-const MAX_DELIVERY_RANGE = 5; // km
-
 export const useLocationStore = create<LocationStore>()(
   persist(
     (set) => ({
       deliveryLocation: null,
       nearbyRestaurants: [],
       isLocationPickerOpen: false,
-      restaurantLocation: RESTAURANT_LOCATION,
-      maxDeliveryRange: MAX_DELIVERY_RANGE,
-      setDeliveryLocation: (location) => set({ deliveryLocation: location }),
+      restaurantLocation: BTM_CENTER,
+      maxDeliveryRange: MAX_BTM_RANGE,
+      setDeliveryLocation: (location) => {
+        const isDeliverable = isBTMServiceable(location.address, location.lat, location.lng);
+        set({ deliveryLocation: { ...location, isDeliverable } });
+      },
       setNearbyRestaurants: (restaurants) => set({ nearbyRestaurants: restaurants }),
       openLocationPicker: () => set({ isLocationPickerOpen: true }),
       closeLocationPicker: () => set({ isLocationPickerOpen: false }),
@@ -65,11 +64,12 @@ export const useLocationStore = create<LocationStore>()(
                 const { latitude, longitude } = pos.coords;
                 const address = await reverseGeocode(latitude, longitude);
                 const distance = haversineDistance(
-                  RESTAURANT_LOCATION.lat, 
-                  RESTAURANT_LOCATION.lng, 
+                  BTM_CENTER.lat, 
+                  BTM_CENTER.lng, 
                   latitude, 
                   longitude
                 );
+                const isDeliverable = isBTMServiceable(address, latitude, longitude);
 
                 set({
                   deliveryLocation: {
@@ -77,7 +77,7 @@ export const useLocationStore = create<LocationStore>()(
                     lng: longitude,
                     address,
                     distance: parseFloat(distance.toFixed(2)),
-                    isDeliverable: distance <= MAX_DELIVERY_RANGE
+                    isDeliverable
                   },
                   isLoading: false
                 });

@@ -8,6 +8,7 @@ import { calculateDeliveryCharge } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
+import { isBTMServiceable } from '../lib/location';
 
 export default function CartPage() {
   useSEO("Your Cart", "Review your selected items and complete your order at Mintoo.");
@@ -18,6 +19,8 @@ export default function CartPage() {
   const distanceKm = deliveryLocation?.distance ?? 0;
   const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const grandTotal = total + deliveryCharge;
+
+  const isNonBTM = deliveryLocation ? (!deliveryLocation.isDeliverable || !isBTMServiceable(deliveryLocation.address, deliveryLocation.lat, deliveryLocation.lng)) : false;
 
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');
@@ -189,23 +192,35 @@ export default function CartPage() {
                 </div>
               </div>
 
+              {isNonBTM && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center space-y-1">
+                  <div className="text-lg">🚀</div>
+                  <h4 className="text-xs font-extrabold text-amber-400">Just wait... We are coming to your area soon!</h4>
+                  <p className="text-[10px] text-gray-300 font-medium">Currently, Mintoo is only delivering in <b>BTM Layout</b>.</p>
+                </div>
+              )}
+
               <button 
-                disabled={isOrderingPaused}
+                disabled={isOrderingPaused || isNonBTM}
                 onClick={() => {
                   if (isOrderingPaused) {
                     toast.error("Ordering is temporarily closed! Please check operating hours.");
                     return;
                   }
+                  if (isNonBTM) {
+                    toast.error("Just wait... We are coming to your area soon! Currently serving BTM Layout only.");
+                    return;
+                  }
                   navigate('/checkout');
                 }}
-                className={`w-full h-12 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  isOrderingPaused 
-                    ? 'bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed'
+                className={`w-full h-12 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  isOrderingPaused || isNonBTM
+                    ? 'bg-gray-800 border border-amber-500/40 text-amber-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/20'
                 }`}
               >
-                <span>{isOrderingPaused ? 'Ordering Paused' : 'Proceed to Checkout'}</span>
-                {!isOrderingPaused && <ArrowRight className="w-4 h-4" />}
+                <span>{isOrderingPaused ? 'Ordering Paused' : isNonBTM ? 'Just wait... We are coming to your area soon!' : 'Proceed to Checkout'}</span>
+                {!isOrderingPaused && !isNonBTM && <ArrowRight className="w-4 h-4" />}
               </button>
 
               <div className="flex items-center justify-center gap-1.5 text-gray-500 text-[10px] font-semibold pt-1">
