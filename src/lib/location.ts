@@ -40,9 +40,49 @@ export function isBTMServiceable(address: string, lat: number, lng: number): boo
 }
 
 // ═══════════════════════════════════════════════════════════════
-// DETAILED NOMINATIM REVERSE GEOCODING FOR BTM LAYOUT & ROADS
+// HIGH-ACCURACY DUAL-PROVIDER REVERSE GEOCODING
 // ═══════════════════════════════════════════════════════════════
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  const distToBtm = haversineDistance(BTM_CENTER.lat, BTM_CENTER.lng, lat, lng);
+  const isNearBtm = distToBtm <= MAX_BTM_RANGE;
+
+  // 1. Try BigDataCloud API (Client Geocoding Engine)
+  try {
+    const bdcRes = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+    );
+    if (bdcRes.ok) {
+      const bdcData = await bdcRes.json();
+      
+      const informatives = bdcData.localityInfo?.informative || [];
+      const subLocalityObj = informatives.find((i: any) => 
+        i.name && (
+          i.name.toLowerCase().includes('btm') || 
+          i.name.toLowerCase().includes('stage') || 
+          i.name.toLowerCase().includes('layout') ||
+          i.name.toLowerCase().includes('road') ||
+          i.name.toLowerCase().includes('cross') ||
+          i.name.toLowerCase().includes('main')
+        )
+      );
+
+      const roadOrSub = subLocalityObj?.name || bdcData.locality || bdcData.city || '';
+      
+      if (isNearBtm) {
+        const detailPart = (roadOrSub && !roadOrSub.toLowerCase().includes('btm') && !roadOrSub.toLowerCase().includes('bengaluru')) 
+          ? `${roadOrSub}, ` 
+          : '';
+        return `${detailPart}BTM Layout, Bengaluru`;
+      } else if (roadOrSub) {
+        const city = bdcData.city || 'Bengaluru';
+        return `${roadOrSub}, ${city}`;
+      }
+    }
+  } catch (err) {
+    console.warn('BigDataCloud geocode failed, trying Nominatim fallback:', err);
+  }
+
+  // 2. OpenStreetMap Nominatim Fallback with strict filters
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
@@ -54,26 +94,41 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
       
       const houseBuilding = addr.house_number || addr.building || addr.office || '';
       const road = addr.road || addr.pedestrian || addr.footway || addr.path || '';
-      const mainCross = addr.neighbourhood || addr.suburb || addr.residential || addr.quarter || '';
-      const cityDistrict = addr.city_district || addr.district || '';
+      const suburb = addr.suburb || addr.neighbourhood || addr.residential || addr.quarter || '';
+      
+      // Clean noise words like "Bengaluru South taluk"
+      const cleanParts = [houseBuilding, road, suburb].filter(p => {
+        if (!p) return false;
+        const low = p.toLowerCase();
+        return !low.includes('taluk') && !low.includes('division') && !low.includes('district') && !low.includes('karnataka') && !low.includes('india');
+      });
 
-      const parts = [houseBuilding, road, mainCross, cityDistrict].filter(Boolean);
-      let fullAddress = parts.join(', ');
+      let fullAddress = cleanParts.join(', ');
 
-      if (!fullAddress) {
-        fullAddress = data.display_name || 'BTM Layout, Bengaluru';
+      if (isNearBtm) {
+        if (!fullAddress || fullAddress.toLowerCase() === 'bengaluru') {
+          fullAddress = '16th Main Road, BTM 2nd Stage';
+        }
+        if (!fullAddress.toLowerCase().includes('btm')) {
+          fullAddress += ', BTM Layout, Bengaluru';
+        } else if (!fullAddress.toLowerCase().includes('bengaluru')) {
+          fullAddress += ', Bengaluru';
+        }
+        return fullAddress;
       }
 
-      // If near BTM Layout, append BTM Layout to address for clarity
-      const distToBtm = haversineDistance(BTM_CENTER.lat, BTM_CENTER.lng, lat, lng);
-      if (distToBtm <= MAX_BTM_RANGE && !fullAddress.toLowerCase().includes('btm')) {
-        fullAddress += ', BTM Layout, Bengaluru';
+      if (fullAddress) {
+        return `${fullAddress}, Bengaluru`;
       }
-
-      return fullAddress;
     }
-    return data.display_name || 'BTM Layout, Bengaluru';
-  } catch {
-    return '16th Main Road, BTM Layout, Bengaluru';
+  } catch (err) {
+    console.warn('Nominatim fallback failed:', err);
   }
+
+  // 3. Guaranteed BTM Layout fallback if near BTM
+  if (isNearBtm) {
+    return '16th Main Road, BTM 2nd Stage, BTM Layout, Bengaluru';
+  }
+
+  return 'Bengaluru, Karnataka';
 }
