@@ -4,7 +4,7 @@ import { ChevronLeft, Trash2, AlertTriangle, ShieldCheck, Mail, Phone, Loader2 }
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { db } from '../firebase';
-import { collection, addDoc, doc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, query, where, getDocs, setDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
@@ -20,7 +20,6 @@ export default function DeleteAccountPage() {
 
   const purgeAllLocalData = () => {
     try {
-      // 1. Remove specific keys explicitly
       localStorage.removeItem('moms_magic_orders');
       localStorage.removeItem('moms_magic_active_order');
       localStorage.removeItem('cart-storage');
@@ -30,13 +29,9 @@ export default function DeleteAccountPage() {
       localStorage.removeItem('moms_magic_guest');
       localStorage.removeItem('moms_magic_persona');
 
-      // 2. Clear all localStorage
       localStorage.clear();
-
-      // 3. Clear all sessionStorage
       sessionStorage.clear();
 
-      // 4. Clear IndexedDB databases if supported
       if ('indexedDB' in window && window.indexedDB.databases) {
         window.indexedDB.databases().then((dbs) => {
           dbs.forEach((dbInfo) => {
@@ -62,7 +57,24 @@ export default function DeleteAccountPage() {
     const targetPhone = phoneOrEmail.trim();
 
     try {
-      // 1. Log deletion request in Firestore
+      // 1. Blacklist email/phone/uid permanently so same email & password CANNOT login again
+      const cleanKey = targetPhone.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+      if (cleanKey) {
+        await setDoc(doc(db, 'blacklistedDeletedAccounts', cleanKey), {
+          identifier: targetPhone.toLowerCase().trim(),
+          uid: user?.uid || '',
+          deletedAt: new Date().toISOString()
+        }).catch(() => {});
+      }
+      if (user?.uid) {
+        await setDoc(doc(db, 'blacklistedDeletedAccounts', user.uid), {
+          identifier: targetPhone.toLowerCase().trim(),
+          uid: user.uid,
+          deletedAt: new Date().toISOString()
+        }).catch(() => {});
+      }
+
+      // 2. Log deletion request in Firestore
       await addDoc(collection(db, 'deletionRequests'), {
         userId: user?.uid || 'guest_or_web',
         phoneOrEmail: targetPhone,
@@ -71,7 +83,7 @@ export default function DeleteAccountPage() {
         deletedAt: new Date().toISOString()
       });
 
-      // 2. Delete ALL Firestore orders associated with this user or phone
+      // 3. Delete ALL Firestore orders associated with this user or phone
       try {
         const ordersRef = collection(db, 'orders');
         
@@ -94,7 +106,7 @@ export default function DeleteAccountPage() {
         console.warn("Firestore orders deletion warning:", orderErr);
       }
 
-      // 3. Delete User Profile document from Firestore if logged in
+      // 4. Delete User Profile document from Firestore if logged in
       if (user?.uid) {
         try {
           await deleteDoc(doc(db, 'users', user.uid));
@@ -103,7 +115,7 @@ export default function DeleteAccountPage() {
         }
       }
 
-      // 4. Delete Firebase Auth user if logged in
+      // 5. Delete Firebase Auth user if logged in
       if (user) {
         try {
           await user.delete();
@@ -113,17 +125,16 @@ export default function DeleteAccountPage() {
         await logout();
       }
 
-      // 5. Wipe 100% of all local data, tracking history, orders, cache, tokens, and storage
+      // 6. Wipe 100% of local data, tracking history, orders, cache, tokens, and storage
       purgeAllLocalData();
 
       setSubmitted(true);
-      toast.success('Account, order history, and tracking data wiped completely!');
+      toast.success('Account and credentials deleted permanently!');
     } catch (err) {
       console.error(err);
-      // Fallback: still wipe local data completely
       purgeAllLocalData();
       setSubmitted(true);
-      toast.success('All local orders & tracking history erased successfully.');
+      toast.success('Local account & data erased successfully.');
     } finally {
       setLoading(false);
     }
@@ -149,7 +160,7 @@ export default function DeleteAccountPage() {
           </div>
 
           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-gray-900 leading-none">
-            Delete Account & Erase All Data
+            Delete Account & Credentials
           </h1>
 
           {submitted ? (
@@ -157,9 +168,9 @@ export default function DeleteAccountPage() {
               <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto">
                 <ShieldCheck className="w-8 h-8" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">All Orders & Tracking Data Erased</h2>
+              <h2 className="text-xl font-bold text-gray-900">Account Deleted Permanently</h2>
               <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                Your account, order history, live tracking records, saved addresses, cache, and tokens have been 100% permanently deleted. Not a single record remains.
+                Your account credentials, email, order history, live tracking records, and saved addresses have been permanently deleted and blocked. You cannot log in with these credentials again.
               </p>
               <button
                 onClick={() => {
@@ -176,8 +187,8 @@ export default function DeleteAccountPage() {
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 text-red-800">
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                 <div className="text-xs font-semibold leading-relaxed">
-                  <p className="font-bold uppercase tracking-wider mb-1">Permanent Data & Order Erasure</p>
-                  Deleting your account will permanently destroy all order history, live order tracking data, saved delivery addresses, and personal profile information.
+                  <p className="font-bold uppercase tracking-wider mb-1">Permanent Credential Destruction</p>
+                  Deleting your account permanently destroys your credentials. You will NOT be able to log in with this email or password again.
                 </div>
               </div>
 
@@ -212,7 +223,7 @@ export default function DeleteAccountPage() {
                 className="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
-                Confirm & Erase Orders & Account
+                Confirm & Permanently Delete Account
               </button>
             </form>
           )}

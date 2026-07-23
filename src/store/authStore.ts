@@ -20,6 +20,7 @@ import {
   runTransaction, 
   collection, 
   addDoc, 
+  deleteDoc,
   serverTimestamp, 
   arrayUnion, 
   arrayRemove 
@@ -65,6 +66,26 @@ interface AuthStore {
   addWalletBalance: (amount: number, reason: string) => Promise<void>;
 }
 
+// Helper to check if credentials/UID have been permanently deleted
+const checkIsBlacklisted = async (identifier: string, uid?: string): Promise<boolean> => {
+  try {
+    if (uid) {
+      const snapUid = await getDoc(doc(db, 'blacklistedDeletedAccounts', uid));
+      if (snapUid.exists()) return true;
+    }
+    if (identifier) {
+      const cleanKey = identifier.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+      if (cleanKey) {
+        const snapId = await getDoc(doc(db, 'blacklistedDeletedAccounts', cleanKey));
+        if (snapId.exists()) return true;
+      }
+    }
+  } catch (e) {
+    console.warn("Blacklist check error:", e);
+  }
+  return false;
+};
+
 export const useAuthStore = create<AuthStore>((set, get) => {
   // Sync profile document with Firestore and credit ₹50 welcome bonus atomically
   const syncProfile = async (firebaseUser: User) => {
@@ -109,7 +130,6 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       });
     } catch (error) {
       console.error('Error syncing profile document:', error);
-      // Fallback read if transaction fails
       const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         set({ profile: docSnap.data() as UserProfile });
@@ -121,7 +141,16 @@ export const useAuthStore = create<AuthStore>((set, get) => {
   onAuthStateChanged(auth, async (firebaseUser) => {
     set({ loading: true });
     if (firebaseUser) {
-      // Set default local phone number to sync with legacy session data
+      // Reject if account was deleted
+      const isBlacklisted = await checkIsBlacklisted(firebaseUser.email || firebaseUser.phoneNumber || '', firebaseUser.uid);
+      if (isBlacklisted) {
+        await signOut(auth);
+        localStorage.clear();
+        sessionStorage.clear();
+        set({ user: null, profile: null, loading: false, initialized: true });
+        return;
+      }
+
       if (firebaseUser.phoneNumber) {
         localStorage.setItem('moms_magic_user_phone', firebaseUser.phoneNumber);
       }
@@ -143,28 +172,38 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       set({ loading: true });
       try {
         if (Capacitor.isNativePlatform()) {
-          // Try Native Google Sign-In flow first
           try {
             const user = await GoogleAuth.signIn();
             const idToken = user.authentication?.idToken;
             if (idToken) {
               const credential = GoogleAuthProvider.credential(idToken);
-              await signInWithCredential(auth, credential);
+              const cred = await signInWithCredential(auth, credential);
+              
+              const isBlacklisted = await checkIsBlacklisted(cred.user.email || '', cred.user.uid);
+              if (isBlacklisted) {
+                await signOut(auth);
+                throw new Error("This account has been deleted. Please register with a new account.");
+              }
               return;
             }
-          } catch (nativeErr) {
+          } catch (nativeErr: any) {
+            if (nativeErr.message?.includes('deleted')) throw nativeErr;
             console.warn('Native Google Auth failed, trying web popup fallback', nativeErr);
           }
         }
         
-        // Web Google Sign-In flow fallback
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         
         try {
-          await signInWithPopup(auth, provider);
+          const cred = await signInWithPopup(auth, provider);
+          const isBlacklisted = await checkIsBlacklisted(cred.user.email || '', cred.user.uid);
+          if (isBlacklisted) {
+            await signOut(auth);
+            throw new Error("This account has been deleted. Please register with a new account.");
+          }
         } catch (popupError: any) {
-          console.warn('Popup sign in error:', popupError);
+          if (popupError.message?.includes('deleted')) throw popupError;
           const errorCode = popupError.code || '';
           const errorMsg = popupError.message || '';
           
@@ -174,9 +213,7 @@ export const useAuthStore = create<AuthStore>((set, get) => {
             errorMsg.toLowerCase().includes('missing initial state') ||
             errorMsg.toLowerCase().includes('cross-origin')
           ) {
-            console.log('Falling back to signInWithRedirect...');
             await signInWithRedirect(auth, provider);
-            // Return a non-resolving promise because the page will redirect
             return new Promise(() => {});
           }
           throw popupError;
@@ -192,7 +229,20 @@ export const useAuthStore = create<AuthStore>((set, get) => {
     loginWithEmail: async (email, password) => {
       set({ loading: true });
       try {
-        await signInWithEmailAndPassword(auth, email, password);
+        // Pre-check blacklist
+        const isBlacklistedBefore = await checkIsBlacklisted(email);
+        if (isBlacklistedBefore) {
+          throw new Error("This account has been deleted. Please register with a new account.");
+        }
+
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Post-check blacklist with UID
+        const isBlacklistedAfter = await checkIsBlacklisted(email, cred.user.uid);
+        if (isBlacklistedAfter) {
+          await signOut(auth);
+          throw new Error("This account has been deleted. Please register with a new account.");
+        }
       } catch (error: any) {
         console.error('Email login error:', error);
         throw new Error(formatAuthError(error));
@@ -204,9 +254,14 @@ export const useAuthStore = create<AuthStore>((set, get) => {
     signUpWithEmail: async (email, password, name) => {
       set({ loading: true });
       try {
+        // Clear old blacklist entry if registering fresh account
+        const cleanKey = email.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+        if (cleanKey) {
+          await deleteDoc(doc(db, 'blacklistedDeletedAccounts', cleanKey)).catch(() => {});
+        }
+
         const credential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(credential.user, { displayName: name });
-        // Manually trigger sync since displayName changes
         await syncProfile(credential.user);
       } catch (error: any) {
         console.error('Email sign up error:', error);
@@ -219,6 +274,10 @@ export const useAuthStore = create<AuthStore>((set, get) => {
     resetPassword: async (email) => {
       set({ loading: true });
       try {
+        const isBlacklisted = await checkIsBlacklisted(email);
+        if (isBlacklisted) {
+          throw new Error("This account has been deleted.");
+        }
         await sendPasswordResetEmail(auth, email);
       } catch (error: any) {
         console.error('Password reset error:', error);
@@ -244,17 +303,21 @@ export const useAuthStore = create<AuthStore>((set, get) => {
 
     addAddress: async (label, address, lat, lng) => {
       const { user, profile } = get();
-      if (!user || !profile) return;
+      if (!user || !profile) throw new Error('Must be logged in to add address');
 
-      const addressId = Date.now().toString();
-      const newAddress = { id: addressId, label, address, lat, lng };
-      
+      const newAddress = {
+        id: Date.now().toString(),
+        label,
+        address,
+        lat,
+        lng
+      };
+
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         addresses: arrayUnion(newAddress)
       });
 
-      // Update state locally
       set({
         profile: {
           ...profile,
@@ -275,7 +338,6 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         addresses: arrayRemove(addressToDelete)
       });
 
-      // Update state locally
       set({
         profile: {
           ...profile,
@@ -295,7 +357,6 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         walletBalance: newBalance
       });
 
-      // Create transaction record
       await addDoc(collection(db, 'walletTransactions'), {
         userId: user.uid,
         amount: -amount,
@@ -324,7 +385,6 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         walletBalance: newBalance
       });
 
-      // Create transaction record
       await addDoc(collection(db, 'walletTransactions'), {
         userId: user.uid,
         amount: amount,
