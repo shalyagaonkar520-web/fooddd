@@ -1,115 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Crown, Edit3, X, Check, PartyPopper, Heart } from 'lucide-react';
+import { Sparkles, Crown, Edit3, X, Check, PartyPopper } from 'lucide-react';
 import { playSound, SOUNDS } from '../utils/audio';
 
-// 👑 KING DIALOGUES (50+ unique, witty, family-friendly Hindi+English dialogues)
-const KING_DIALOGUES = [
-  "😎 Dhurandhar aagaya! Kya chahiye bhai?",
-  "🔥 Legend online! Kitchen ready hai.",
-  "🍗 Protein king is back!",
-  "👑 King, today's cravings are waiting.",
-  "😎 Boss aa gaya... chef panic mode ON.",
-  "🚀 Bhai entry maar diya!",
-  "🍕 Hero has entered the kitchen.",
-  "💪 Gym beast spotted.",
-  "😏 Kya order karega champion?",
-  "🤝 Welcome back, King!",
-  "🔥 Hunger level over 9000!",
-  "⚡ Speed delivery squad on alert for King!",
-  "👑 Sarkar aapke liye garma-garam biryani tayyar karein?",
-  "🍔 Raja sahab, aaj cheat day hai kya?",
-  "🌶️ Teekha khane ka mood hai ya sweet king?",
-  "👑 Kingdom is hungry... time to feast!",
-  "🛵 Rider bhai is waiting for King's order!",
-  "🔥 Swad ka Baadshah is back in action!",
-  "👑 Bow down! The Food King has arrived.",
-  "🍛 Biryani or Burger, King's choice today?",
-  "😎 Extra cheese for the King, no questions asked!",
-  "🚀 Speed order activated for your Highness!",
-  "🍗 Royal feast mode: ENABLED.",
-  "⚡ Chef is putting extra butter for the King!",
-  "👑 Welcome back, Chief of Cravings!",
-  "🔥 Aaj kya tabaahi machane ka plan hai Bhai?",
-  "🍕 Pizza slices are saluting the King!",
-  "💪 No diet today, only royal delight!",
-  "🌶️ Spiciest food in town for our toughest King!",
-  "😋 Mouth watering already, King?",
-  "👑 Food Commander in Chief is online!",
-  "🍔 Bigger burgers for the Biggest Boss!",
-  "🔥 Kitchen pan temperature raised for King's entry!",
-  "👑 Rajaji, aaj kya mangwaayein aapke mahal mein?",
-  "🛵 Delivery jet engine started for King!",
-  "🍗 Legs, wings, or rolls... what's the command?",
-  "👑 King's appetite has no limits!",
-  "🔥 Aaj ka dinner hoga Aitihasik!",
-  "😎 Style dekho King ka, order placement incoming!",
-  "👑 Cravings satisfied at royal speed!",
-  "🍕 Slices baked specially for your majesty!",
-  "💪 Fuel for the Champion loading...",
-  "😏 Swaad aisa jo Hosh uda de, King!",
-  "🚀 Fasten seatbelts, Royal delivery incoming!",
-  "👑 The throne of taste belongs to you today!",
-  "🔥 Master Chef is sharpening knives for King's order!",
-  "🍗 High protein royal feast incoming!",
-  "😋 Appetite level: Pure Legend status!",
-  "👑 Your wish is our kitchen's command!",
-  "⚡ VIP service active for King!"
+// 👑 DEFAULT KING DIALOGUES
+export const DEFAULT_KING_DIALOGUES = [
+  "😒 Ab yaad aaya mai? Chalo... khaana order kar.",
+  "Oye hero! Pet yaad aaya ya hum? 😂",
+  "😎 Dhurandhar aa gaya! Kitchen alert 🚨",
+  "Bhai... fridge ne bhi block kar diya kya? 😂",
+  "Aagaye? Ab order bhi kar do. 😌",
+  'Chef bola, "Bhai kab aayega?" 🥹',
+  "Wallet mana kar raha hai... pet nahi. 😂",
+  "Gym khatam? Protein idhar hai. 💪",
+  "Oye King! Diet kal se, order aaj se. 😏",
+  "Bhook ne complaint file kar di hai. 😭",
+  "Legend online! Kitchen ready hai. 🔥",
+  "Bhai... app khol liya, ab order bhi kar. 😂",
+  "Welcome back King... aaj kya udaana hai? 🍕",
+  "Hero ki entry ho gayi... ab party shuru. 🎉",
+  "Kya scene hai boss? Same order ya surprise? 😎",
+  "Finally! VIP customer online. 🚀",
+  "Aaj notification nahi... bhook tumhe khud le aayi. 😂",
+  "Chef ne bola tha, 'Aaj woh zaroor aayega/aayegi.' 😌",
+  "Tum aaye... kitchen mein festival shuru ho gaya. 🎉",
+  "Order nahi kiya toh app naraz ho jayega. 😤"
 ];
 
-// 👑 QUEEN DIALOGUES (50+ unique, witty, family-friendly Hindi+English dialogues)
-const QUEEN_DIALOGUES = [
-  "👑 Oops... Our Queen is back!",
-  "💖 Queen entered, everyone stay classy.",
-  "🌸 Kitchen becomes royal today.",
-  "✨ Welcome back, Your Majesty.",
-  "🍰 Dessert got excited seeing you.",
-  "💕 Queen's favourite meals are waiting.",
-  "🌟 Royal cravings incoming.",
-  "😍 Beautiful people deserve beautiful food.",
-  "🎀 Chef says Welcome Queen.",
-  "💖 Ready to rule today's cravings?",
-  "🌸 Sweet or spicy today, Your Highness?",
-  "👑 Royal carpet rolled out for our Queen!",
-  "💖 Chef is putting extra love in Queen's food!",
-  "🍰 Zero calories count for the Queen today!",
-  "✨ Sparkles everywhere! Queen has arrived.",
-  "👑 Queen's orders are top priority!",
-  "🌸 Today's menu curated for Royalty.",
-  "💕 Hot delicious food for our favourite Queen!",
-  "🌟 Make way! The Food Queen is here.",
-  "😍 Swaad aur Style, Queen's signature move!",
-  "🎀 Dessert section is bowing down to Queen!",
-  "💖 Queen, your favorite dish misses you!",
-  "🍰 A sweet treat fit for Her Royal Highness!",
-  "✨ Magic in the air and food in the cart!",
-  "👑 Queen's taste is always 10/10!",
-  "🌸 Royal tastebuds activated!",
-  "💕 What does the Queen desire today?",
-  "🌟 Pure elegance on your plate, Your Majesty!",
-  "😍 Chef special dish prepared for the Queen!",
-  "🎀 Extra garnishing for Queen's order!",
-  "💖 Happiness is hot food for the Queen!",
-  "🍰 Sweetest smile, sweetest desserts for Queen!",
-  "✨ Starry night and royal cravings!",
-  "👑 Only premium dishes for our Queen!",
-  "🌸 Queen's vibe is unmatched today!",
-  "💕 Royalty on arrival, deliciousness on delivery!",
-  "🌟 Queen enters, mood gets upgraded 100%!",
-  "😍 Food served with royal love!",
-  "🎀 Make a wish Queen, kitchen is ready!",
-  "💖 Royalty deserves 5-star taste!",
-  "🍰 Cake or Momos today, Queen?",
-  "✨ Glamour + Good Food = Queen's Day!",
-  "👑 Royalty at its finest!",
-  "🌸 Fresh ingredients for our Queen!",
-  "💕 Smile Queen, your delicious food is coming!",
-  "🌟 Queen of Cravings is online!",
-  "😍 VIP treatment for Her Royal Highness!",
-  "🎀 Elegance served hot and fresh!",
-  "💖 Sweet cravings for the Sweetest Queen!",
-  "✨ Pure bliss on every bite for our Queen!"
+// 👑 DEFAULT QUEEN DIALOGUES
+export const DEFAULT_QUEEN_DIALOGUES = [
+  "😒 Ab yaad aayi main? Chalo... maaf kiya, pehle order karo. 😂",
+  "Oops... Our Queen is back! 👑✨",
+  "Arre wah... Queen ne yaad kiya hume? 😌",
+  "Itni der? Chef wait karte karte emotional ho gaya. 🥹",
+  "Aap aa gayi... ab kitchen bhi smile kar raha hai. 🌸",
+  "Queen online... cravings offline hone wali hain. 🍕",
+  "Mood off? Hum aur food dono ready hain. 💖",
+  "Aaj bhi itni stylish? Ab food bhi premium hona chahiye. 😌",
+  "Royal entry detected! 👑",
+  "Lagta hai kisi ko hamari yaad aa hi gayi. 😏",
+  "Queen aayi hai... chef ne apron seedha kar liya. 😂",
+  "Pretty Queen deserves pretty food. 💕",
+  "Aaj cooking ki chhutti... hum hain na. 🍔",
+  "Queen ji... aaj kya khilayein? 😋",
+  "Welcome back, Your Majesty. Kitchen is all yours. 👑",
+  "Finally! VIP customer online. 🚀",
+  "Aaj notification nahi... bhook tumhe khud le aayi. 😂",
+  "Chef ne bola tha, 'Aaj woh zaroor aayega/aayegi.' 😌",
+  "Tum aaye... kitchen mein festival shuru ho gaya. 🎉",
+  "Order nahi kiya toh app naraz ho jayega. 😤"
 ];
+
+// 📱 DEFAULT ANONYMOUS DIALOGUES
+export const DEFAULT_ANONYMOUS_DIALOGUES = [
+  "Fir aa gaye? Addiction hai na? 😂",
+  "App khol hi liya hai... order bhi kar do. 😏",
+  "Bhook ka Wi-Fi full signal pe hai. 📶",
+  "Aaj diet ka RIP hone wala hai. 😂",
+  'Pet: "Order kar." Dil: "Ek aur burger." 🍔',
+  "Sirf dekhne aaye ho ya order bhi karoge? 👀",
+  "Kitchen aapka wait kar raha tha. 😌",
+  "Mood fix in 3...2...1... 🍕",
+  "Aaj bhi wahi order? Consistency level 💯.",
+  "Swiggy ko break do... Mintoo try karo. 😎",
+  "Finally! VIP customer online. 🚀",
+  "Aaj notification nahi... bhook tumhe khud le aayi. 😂",
+  "Chef ne bola tha, 'Aaj woh zaroor aayega/aayegi.' 😌",
+  "Tum aaye... kitchen mein festival shuru ho gaya. 🎉",
+  "Order nahi kiya toh app naraz ho jayega. 😤"
+];
+
+export function getActiveKingDialogues(): string[] {
+  try {
+    const custom = localStorage.getItem('moms_magic_king_greetings');
+    if (custom) {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return DEFAULT_KING_DIALOGUES;
+}
+
+export function getActiveQueenDialogues(): string[] {
+  try {
+    const custom = localStorage.getItem('moms_magic_queen_greetings');
+    if (custom) {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return DEFAULT_QUEEN_DIALOGUES;
+}
+
+export function getActiveAnonymousDialogues(): string[] {
+  try {
+    const custom = localStorage.getItem('moms_magic_anon_greetings');
+    if (custom) {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return DEFAULT_ANONYMOUS_DIALOGUES;
+}
 
 interface UserPersona {
   name: string;
@@ -122,6 +114,7 @@ export default function FunGreetingBanner() {
   const [inputName, setInputName] = useState('');
   const [selectedTitle, setSelectedTitle] = useState<'King' | 'Queen'>('King');
   const [greeting, setGreeting] = useState('');
+  const [anonGreeting, setAnonGreeting] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
 
   // Load stored persona on mount & pick random greeting
@@ -132,14 +125,24 @@ export default function FunGreetingBanner() {
         const parsed: UserPersona = JSON.parse(stored);
         setPersona(parsed);
         pickRandomGreeting(parsed.title);
+      } else {
+        pickRandomAnonGreeting();
       }
-    } catch (_) {}
+    } catch (_) {
+      pickRandomAnonGreeting();
+    }
   }, []);
 
   const pickRandomGreeting = (title: 'King' | 'Queen') => {
-    const list = title === 'King' ? KING_DIALOGUES : QUEEN_DIALOGUES;
+    const list = title === 'King' ? getActiveKingDialogues() : getActiveQueenDialogues();
     const random = list[Math.floor(Math.random() * list.length)];
     setGreeting(random);
+  };
+
+  const pickRandomAnonGreeting = () => {
+    const list = getActiveAnonymousDialogues();
+    const random = list[Math.floor(Math.random() * list.length)];
+    setAnonGreeting(random);
   };
 
   const handleOpenModal = () => {
@@ -233,12 +236,12 @@ export default function FunGreetingBanner() {
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
-                    👋 Welcome back! Let's eat something delicious today.
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    👋 Welcome to Mintoo!
                   </span>
                 </div>
-                <p className="text-xs text-amber-300 font-bold uppercase tracking-wider">
-                  Personalize your royal food experience!
+                <p className="text-sm sm:text-base font-black italic tracking-tight text-white leading-snug drop-shadow-md">
+                  {anonGreeting || "Fir aa gaye? Addiction hai na? 😂"}
                 </p>
               </>
             )}
@@ -251,7 +254,7 @@ export default function FunGreetingBanner() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleOpenModal}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer border border-amber-300/40"
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer border border-amber-300/40 shrink-0"
               >
                 <Sparkles className="w-4 h-4 fill-black" />
                 <span>✨ What should we call you?</span>

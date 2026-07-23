@@ -40,6 +40,7 @@ import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 import { useMenuStore } from '../store/menuStore';
 import { AnimatePresence, motion } from 'framer-motion';
+import { getActiveKingDialogues, getActiveQueenDialogues, getActiveAnonymousDialogues, DEFAULT_KING_DIALOGUES, DEFAULT_QUEEN_DIALOGUES, DEFAULT_ANONYMOUS_DIALOGUES } from './FunGreetingBanner';
 const PREASSIGNED_EMAILS = Array.from({ length: 10 }, (_, i) => `hotel${i + 1}@minto.com`);
 
 export default function AdminPage() {
@@ -54,8 +55,41 @@ export default function AdminPage() {
   const [hotels, setHotels] = useState<any[]>([]);
   
   // Navigation Tabs
-  const [activeTab, setActiveTab] = useState<'orders' | 'hotels'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'hotels' | 'greetings'>('orders');
   const [subTab, setSubTab] = useState<'hotels' | 'foods'>('hotels');
+
+  // Greetings Manager State
+  const [kingGreetingsText, setKingGreetingsText] = useState(() => getActiveKingDialogues().join('\n'));
+  const [queenGreetingsText, setQueenGreetingsText] = useState(() => getActiveQueenDialogues().join('\n'));
+  const [anonGreetingsText, setAnonGreetingsText] = useState(() => getActiveAnonymousDialogues().join('\n'));
+
+  const handleSaveGreetings = (e: React.FormEvent) => {
+    e.preventDefault();
+    const kingLines = kingGreetingsText.split('\n').map(l => l.trim()).filter(Boolean);
+    const queenLines = queenGreetingsText.split('\n').map(l => l.trim()).filter(Boolean);
+    const anonLines = anonGreetingsText.split('\n').map(l => l.trim()).filter(Boolean);
+
+    if (kingLines.length === 0 || queenLines.length === 0 || anonLines.length === 0) {
+      toast.error('Please enter at least one line for King, Queen, and Anonymous.');
+      return;
+    }
+
+    localStorage.setItem('moms_magic_king_greetings', JSON.stringify(kingLines));
+    localStorage.setItem('moms_magic_queen_greetings', JSON.stringify(queenLines));
+    localStorage.setItem('moms_magic_anon_greetings', JSON.stringify(anonLines));
+    toast.success('👑 Royal & Anonymous Greeting lines updated successfully! 🎉');
+  };
+
+  const handleResetGreetings = () => {
+    if (!window.confirm('Reset all greeting lines back to the default dialogues?')) return;
+    localStorage.removeItem('moms_magic_king_greetings');
+    localStorage.removeItem('moms_magic_queen_greetings');
+    localStorage.removeItem('moms_magic_anon_greetings');
+    setKingGreetingsText(DEFAULT_KING_DIALOGUES.join('\n'));
+    setQueenGreetingsText(DEFAULT_QUEEN_DIALOGUES.join('\n'));
+    setAnonGreetingsText(DEFAULT_ANONYMOUS_DIALOGUES.join('\n'));
+    toast.success('Reset greeting lines to defaults!');
+  };
 
   // New Hotel Form State
   const [newHotelName, setNewHotelName] = useState('');
@@ -649,7 +683,7 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Selection */}
-        <div className="flex gap-2 p-1 bg-gray-200/50 rounded-2xl max-w-md shadow-inner">
+        <div className="flex gap-2 p-1 bg-gray-200/50 rounded-2xl max-w-xl shadow-inner">
           <button
             onClick={() => setActiveTab('orders')}
             className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer ${
@@ -665,6 +699,14 @@ export default function AdminPage() {
             }`}
           >
             Hotel Manager
+          </button>
+          <button
+            onClick={() => setActiveTab('greetings')}
+            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer ${
+              activeTab === 'greetings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            👑 Greetings Manager
           </button>
         </div>
 
@@ -840,7 +882,7 @@ export default function AdminPage() {
               )}
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'hotels' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Add Hotel Form */}
             <div className="bg-white rounded-3xl border border-gray-200 p-6 shadow-sm h-fit">
@@ -1132,6 +1174,109 @@ export default function AdminPage() {
                 )
               )}
             </div>
+          </div>
+        ) : (
+          /* Greetings Manager Tab */
+          <div className="bg-white rounded-3xl border border-gray-200 p-6 md:p-8 shadow-sm space-y-8 text-left">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight text-gray-900 flex items-center gap-2">
+                  👑 Royal Greeting Lines Manager
+                </h3>
+                <p className="text-xs text-gray-500 font-semibold mt-1">
+                  Customize the funny rotating dialogues displayed on the Hero section for King & Queen users!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleResetGreetings}
+                  className="bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Reset to Defaults
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveGreetings} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* King Greetings Card */}
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-amber-600 uppercase tracking-widest flex items-center gap-1.5">
+                      👑 King Lines (1 per line)
+                    </label>
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                      {kingGreetingsText.split('\n').filter(l => l.trim()).length}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-semibold">
+                    Shown when a King opens the app:
+                  </p>
+                  <textarea
+                    rows={12}
+                    value={kingGreetingsText}
+                    onChange={(e) => setKingGreetingsText(e.target.value)}
+                    placeholder="Enter one funny greeting dialogue per line..."
+                    className="w-full bg-white border border-gray-200 rounded-xl p-3.5 text-xs font-bold text-gray-900 outline-none focus:border-amber-400 font-mono leading-relaxed shadow-inner"
+                  />
+                </div>
+
+                {/* Queen Greetings Card */}
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-pink-600 uppercase tracking-widest flex items-center gap-1.5">
+                      👑 Queen Lines (1 per line)
+                    </label>
+                    <span className="bg-pink-100 text-pink-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                      {queenGreetingsText.split('\n').filter(l => l.trim()).length}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-semibold">
+                    Shown when a Queen opens the app:
+                  </p>
+                  <textarea
+                    rows={12}
+                    value={queenGreetingsText}
+                    onChange={(e) => setQueenGreetingsText(e.target.value)}
+                    placeholder="Enter one funny greeting dialogue per line..."
+                    className="w-full bg-white border border-gray-200 rounded-xl p-3.5 text-xs font-bold text-gray-900 outline-none focus:border-pink-400 font-mono leading-relaxed shadow-inner"
+                  />
+                </div>
+
+                {/* Anonymous / Default Greetings Card */}
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
+                      📱 Default Lines (Unregistered)
+                    </label>
+                    <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                      {anonGreetingsText.split('\n').filter(l => l.trim()).length}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-semibold">
+                    Shown when user hasn't set their name/title yet:
+                  </p>
+                  <textarea
+                    rows={12}
+                    value={anonGreetingsText}
+                    onChange={(e) => setAnonGreetingsText(e.target.value)}
+                    placeholder="Enter one default greeting dialogue per line..."
+                    className="w-full bg-white border border-gray-200 rounded-xl p-3.5 text-xs font-bold text-gray-900 outline-none focus:border-blue-400 font-mono leading-relaxed shadow-inner"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  className="bg-orange-500 hover:brightness-105 text-black font-black text-xs uppercase tracking-widest px-8 py-4 rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 fill-black" /> Save Greeting Lines
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
