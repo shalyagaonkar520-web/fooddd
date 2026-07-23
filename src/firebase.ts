@@ -43,7 +43,7 @@ export const requestForToken = async (): Promise<string | null> => {
       });
 
       if (currentToken) {
-        console.log('FCM Registration Token retrieved successfully:', currentToken);
+        console.log('FCM Registration Token retrieved successfully: [REDACTED]');
 
         // Save token to Firestore deviceTokens collection.
         // Using the token as the document ID prevents duplicate entries.

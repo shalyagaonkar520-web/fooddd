@@ -58,7 +58,7 @@ export default async function handler(req, res) {
           sentCount++;
         } else {
           lastError = tgData.description || 'Failed to send to chat';
-          console.warn(`Telegram API error for chat ${chatId}:`, tgData);
+          console.warn('Telegram API error for chat [REDACTED]:', tgData?.description || 'Failed');
         }
       } catch (e) {
         lastError = e.message;

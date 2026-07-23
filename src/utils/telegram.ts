@@ -29,7 +29,7 @@ export const sendTelegramMessage = async (text: string): Promise<void> => {
           }),
         });
       } catch (err) {
-        console.error(`Failed to send Telegram notification to ${chatId}:`, err);
+        console.error('Failed to send Telegram notification to chat [REDACTED]');
       }
     }
   }

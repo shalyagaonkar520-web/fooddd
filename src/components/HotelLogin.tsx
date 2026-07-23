@@ -37,30 +37,16 @@ export default function HotelLogin() {
         const querySnap = await getDocs(q);
         if (!querySnap.empty) {
           const hotelDoc = querySnap.docs[0];
-          hotelData = { id: hotelDoc.id, ...hotelDoc.data() };
+          const data = hotelDoc.data();
+          hotelData = { id: hotelDoc.id, name: data.name || 'Kitchen Partner', email: data.email };
         }
       } catch (e) {
-        console.warn('Firestore hotel query failed, trying local storage cache...', e);
-      }
-
-      if (!hotelData) {
-        const cachedHotelsStr = localStorage.getItem('moms_magic_hotels');
-        if (cachedHotelsStr) {
-          try {
-            const cachedHotels = JSON.parse(cachedHotelsStr);
-            const found = cachedHotels.find((h: any) => 
-              h.email.toLowerCase() === email.trim().toLowerCase() && 
-              h.password === password.trim()
-            );
-            if (found) {
-              hotelData = found;
-            }
-          } catch (_) {}
-        }
+        console.warn('Firestore hotel query error:', e);
       }
 
       if (hotelData) {
-        localStorage.setItem('hotel_auth', JSON.stringify(hotelData));
+        const safeSession = { id: hotelData.id, name: hotelData.name, email: hotelData.email };
+        localStorage.setItem('hotel_auth', JSON.stringify(safeSession));
         toast.success(`Welcome back! Redirecting to Kitchen panel... 🎯`);
         setTimeout(() => navigate('/hotel'), 800);
       } else {

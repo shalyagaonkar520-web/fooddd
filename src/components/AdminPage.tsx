@@ -214,7 +214,8 @@ export default function AdminPage() {
         snapshot.forEach(d => arr.push({ id: d.id, ...d.data() }));
         arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setHotels(arr);
-        localStorage.setItem('moms_magic_hotels', JSON.stringify(arr));
+        const sanitized = arr.map(({ password, ...rest }: any) => rest);
+        localStorage.setItem('moms_magic_hotels', JSON.stringify(sanitized));
       },
       (error) => {
         console.warn('Error subscribing to hotels Firestore collection (rules blocking?):', error);
@@ -323,7 +324,8 @@ export default function AdminPage() {
       updatedHotels = [newHotel, ...hotels];
     }
     setHotels(updatedHotels);
-    localStorage.setItem('moms_magic_hotels', JSON.stringify(updatedHotels));
+    const sanitizedUpdated = updatedHotels.map(({ password, ...rest }: any) => rest);
+    localStorage.setItem('moms_magic_hotels', JSON.stringify(sanitizedUpdated));
 
     // Save to local custom menu storage
     const cachedCustom = localStorage.getItem('moms_magic_custom_menu');
@@ -389,7 +391,8 @@ export default function AdminPage() {
     // Update local state and cache optimistically
     const updatedHotels = hotels.filter(h => h.id !== id);
     setHotels(updatedHotels);
-    localStorage.setItem('moms_magic_hotels', JSON.stringify(updatedHotels));
+    const sanitizedDeleted = updatedHotels.map(({ password, ...rest }: any) => rest);
+    localStorage.setItem('moms_magic_hotels', JSON.stringify(sanitizedDeleted));
 
     const menuProductId = `item-${email.replace('@', '-')}`;
 
