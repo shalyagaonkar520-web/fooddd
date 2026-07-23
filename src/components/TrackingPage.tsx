@@ -326,12 +326,12 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
           <p className="text-xs text-gray-500 font-medium">Mintoo Kitchen • BTM Layout</p>
         </div>
 
-        {/* Dynamic Countdown Pill */}
+        {/* Delivery Time Pill */}
         <div className="flex flex-col items-end text-right shrink-0">
           <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md">
-            <Clock className="w-4 h-4 text-emerald-200 animate-spin" style={{ animationDuration: '3s' }} />
+            <Clock className="w-4 h-4 text-emerald-200" />
             <span className="text-sm font-extrabold tracking-tight">
-              {formatETA(remainingSeconds)}
+              {isDelivered ? 'DELIVERED' : '15-20 MINS'}
             </span>
           </div>
           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">
@@ -347,7 +347,7 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
 
       <div className="h-px bg-gray-100" />
 
-      {/* Rider Information & Direct Text / Call Buttons */}
+      {/* Rider Information & Direct Call Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {rider ? (
           <div className="flex items-center justify-between w-full gap-2">
@@ -363,24 +363,14 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {/* Direct Live In-App Chat with Rider */}
-              <button 
-                onClick={() => navigate(`/chat/${order?.id}`)}
-                className="h-10 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                title="Chat Live with Rider"
-              >
-                <MessageSquare className="w-4 h-4 fill-current" />
-                <span>Chat</span>
-              </button>
-
               {rider.phone && (
                 <a 
                   href={`tel:${rider.phone}`}
-                  className="h-10 px-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                  className="h-10 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
                   title="Call Rider"
                 >
                   <Phone className="w-4 h-4 fill-current" />
-                  <span>Call</span>
+                  <span>Call Rider</span>
                 </a>
               )}
             </div>
@@ -392,16 +382,6 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
               <h4 className="text-sm font-bold text-gray-900 mt-0.5">Assigning delivery agent... 🛵</h4>
               <p className="text-xs text-gray-500 font-medium truncate">Matching a delivery executive to hand off your meal.</p>
             </div>
-
-            {/* Text Delivery Support Button */}
-            <button
-              onClick={() => navigate('/chat')}
-              className="h-10 px-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
-              title="Text Delivery Support"
-            >
-              <MessageSquare className="w-4 h-4 fill-current" />
-              <span>Text Support</span>
-            </button>
           </div>
         )}
       </div>

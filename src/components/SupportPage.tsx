@@ -1,24 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Mail, Phone, MapPin, Send, HelpCircle } from 'lucide-react';
+import { ChevronLeft, Mail, Phone, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import toast from 'react-hot-toast';
 
 export default function SupportPage() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [orderId, setOrderId] = useState('');
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const faqs = [
     {
       q: "How long does delivery usually take?",
-      a: "Most orders are delivered within 30 to 45 minutes of placement, depending on restaurant preparation time and distance from your location."
+      a: "Most orders are delivered within 15 to 20 minutes of placement in BTM Layout, Bengaluru."
     },
     {
       q: "Can I cancel my food order?",
@@ -30,39 +22,9 @@ export default function SupportPage() {
     },
     {
       q: "How do I request a refund?",
-      a: "If there is an issue with your order (e.g., wrong items, missing food), please reach out to us using the contact form below or email shalyagaonkar@gmail.com with details and your order ID."
+      a: "If there is an issue with your order (e.g., wrong items, missing food), please contact us via email or phone and we'll resolve it quickly."
     }
   ];
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !email.trim() || !message.trim()) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, 'supportTickets'), {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        orderId: orderId.trim(),
-        message: message.trim(),
-        createdAt: serverTimestamp(),
-        status: 'pending'
-      });
-      toast.success("Support ticket submitted! We'll contact you shortly.");
-      setName('');
-      setEmail('');
-      setOrderId('');
-      setMessage('');
-    } catch (error: any) {
-      console.error("Error submitting support ticket", error);
-      toast.error(error.message || "Failed to submit ticket. Please email us directly.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-12 px-6">
@@ -107,109 +69,46 @@ export default function SupportPage() {
             </div>
           </div>
 
-          {/* Form & FAQs */}
-          <div className="space-y-8 md:col-span-2">
-            {/* Ticket Form */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6"
-            >
-              <h2 className="text-xl font-black uppercase text-gray-900">Send a Message</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Full Name *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={name} 
-                      onChange={e => setName(e.target.value)} 
-                      placeholder="Your Name"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FC8019] text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Email Address *</label>
-                    <input 
-                      type="email" 
-                      required 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      placeholder="Your Email"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FC8019] text-sm"
-                    />
-                  </div>
-                </div>
+          {/* FAQs */}
+          <div className="space-y-4 md:col-span-2">
+            <h2 className="text-xl font-black uppercase text-gray-900 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-[#FC8019]" /> Frequently Asked Questions
+            </h2>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Order ID (Optional)</label>
-                  <input 
-                    type="text" 
-                    value={orderId} 
-                    onChange={e => setOrderId(e.target.value)} 
-                    placeholder="e.g. #ORD-12345"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FC8019] text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Describe your issue *</label>
-                  <textarea 
-                    required 
-                    rows={4} 
-                    value={message} 
-                    onChange={e => setMessage(e.target.value)} 
-                    placeholder="Describe how we can help you..."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FC8019] text-sm resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 bg-[#FC8019] hover:bg-[#e07010] text-white rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(252,128,25,0.25)] transition-all cursor-pointer disabled:opacity-50"
+            <div className="space-y-2">
+              {faqs.map((faq, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.07 }}
+                  className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm"
                 >
-                  {isSubmitting ? "Submitting..." : <>Submit Ticket <Send className="w-4 h-4" /></>}
-                </button>
-              </form>
-            </motion.div>
-
-            {/* FAQs */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-black uppercase text-gray-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-[#FC8019]" /> Frequently Asked Questions
-              </h2>
-              
-              <div className="space-y-2">
-                {faqs.map((faq, index) => (
-                  <div key={index} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                    <button
-                      onClick={() => setActiveFaq(activeFaq === index ? null : index)}
-                      className="w-full px-6 py-4 text-left font-bold text-sm text-gray-800 hover:bg-gray-50 flex justify-between items-center"
-                    >
-                      {faq.q}
-                      <span className="text-[#FC8019] font-black text-lg">
-                        {activeFaq === index ? "−" : "+"}
-                      </span>
-                    </button>
-                    <AnimatePresence>
-                      {activeFaq === index && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: "auto" }}
-                          exit={{ height: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <p className="px-6 pb-4 text-xs font-semibold text-gray-500 leading-relaxed">
-                            {faq.a}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ))}
-              </div>
+                  <button
+                    onClick={() => setActiveFaq(activeFaq === index ? null : index)}
+                    className="w-full px-6 py-4 text-left font-bold text-sm text-gray-800 hover:bg-gray-50 flex justify-between items-center"
+                  >
+                    {faq.q}
+                    <span className="text-[#FC8019] font-black text-lg">
+                      {activeFaq === index ? "−" : "+"}
+                    </span>
+                  </button>
+                  <AnimatePresence>
+                    {activeFaq === index && (
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: "auto" }}
+                        exit={{ height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-6 pb-4 text-xs font-semibold text-gray-500 leading-relaxed">
+                          {faq.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
