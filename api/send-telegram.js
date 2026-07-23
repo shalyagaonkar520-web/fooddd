@@ -1,5 +1,5 @@
-const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
-const CHAT_IDS = ['1750770370', '-1003803637741'];
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const CHAT_IDS = (process.env.TELEGRAM_CHAT_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,6 +31,10 @@ export default async function handler(req, res) {
 
     if (!text) {
       return res.status(400).json({ error: 'Missing message text' });
+    }
+
+    if (!TELEGRAM_BOT_TOKEN) {
+      return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN is not configured in process.env' });
     }
 
     const targets = customChatId ? [customChatId] : CHAT_IDS;

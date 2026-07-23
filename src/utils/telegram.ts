@@ -1,6 +1,3 @@
-const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
-const CHAT_IDS = ['1750770370', '-1003803637741'];
-
 export const sendTelegramMessage = async (text: string): Promise<void> => {
   try {
     const response = await fetch('/api/send-telegram', {
@@ -14,20 +11,26 @@ export const sendTelegramMessage = async (text: string): Promise<void> => {
     }
   } catch (e) {}
 
-  // Fallback to direct Telegram API calls to all target chat IDs
-  for (const chatId of CHAT_IDS) {
-    try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: text,
-          parse_mode: 'HTML',
-        }),
-      });
-    } catch (err) {
-      console.error(`Failed to send Telegram notification to ${chatId}:`, err);
+  // Fallback if environment variables are provided client-side
+  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+  const chatIdsStr = import.meta.env.VITE_TELEGRAM_CHAT_IDS;
+  
+  if (botToken && chatIdsStr) {
+    const chatIds = chatIdsStr.split(',');
+    for (const chatId of chatIds) {
+      try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId.trim(),
+            text: text,
+            parse_mode: 'HTML',
+          }),
+        });
+      } catch (err) {
+        console.error(`Failed to send Telegram notification to ${chatId}:`, err);
+      }
     }
   }
 };

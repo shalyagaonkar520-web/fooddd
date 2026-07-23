@@ -19,9 +19,8 @@ import { Capacitor } from '@capacitor/core';
 import { checkIsOnline, useNetworkStatus } from '../utils/network';
 
 import DeliveryAnimation from './DeliveryAnimation';
+import { sendTelegramOrderNotification } from '../utils/telegram';
 
-const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
-const TELEGRAM_CHAT_IDS = ['1750770370', '-1003803637741'];
 const WHATSAPP_BULK_NUMBER = '917483187572';
 const WHATSAPP_FOOD_NUMBER = '919606001790';
 
@@ -44,15 +43,20 @@ async function sendTelegramMessage(text: string): Promise<void> {
     });
 
   const sendDirect = async () => {
-    for (const chatId of TELEGRAM_CHAT_IDS) {
-      try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
-        });
-      } catch (e) {
-        console.error(`Telegram direct error for ${chatId}:`, e);
+    const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const chatIdsStr = import.meta.env.VITE_TELEGRAM_CHAT_IDS;
+    if (botToken && chatIdsStr) {
+      const chatIds = chatIdsStr.split(',');
+      for (const chatId of chatIds) {
+        try {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId.trim(), text, parse_mode: 'HTML' }),
+          });
+        } catch (e) {
+          console.error(`Telegram direct error for ${chatId}:`, e);
+        }
       }
     }
   };
@@ -206,12 +210,7 @@ export default function Checkout() {
       return;
     }
 
-    const isAdmin =
-      adminToken === 'mock-jwt-admin-token-123456' ||
-      userPhone === '+917483187572' ||
-      userPhone === '+919606001790' ||
-      userPhone === '7483187572' ||
-      userPhone === '9606001790';
+    const isAdmin = Boolean(adminToken && adminToken.length > 5) || (settings.adminPhones || []).includes(userPhone || '');
 
     const isStoreOpen = () => { return true; };
     if (!isStoreOpen() && !isAdmin) {

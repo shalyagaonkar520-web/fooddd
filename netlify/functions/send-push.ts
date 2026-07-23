@@ -41,7 +41,8 @@ export const handler: Handler = async (event) => {
 
   // Validate admin token/access
   const authHeader = event.headers['authorization'];
-  if (!authHeader || !authHeader.includes('mock-jwt-admin-token-123456')) {
+  const requiredToken = process.env.ADMIN_AUTH_TOKEN;
+  if (requiredToken && (!authHeader || !authHeader.includes(requiredToken))) {
     return {
       statusCode: 401,
       headers,

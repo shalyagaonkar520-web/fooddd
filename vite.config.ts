@@ -68,16 +68,19 @@ export default defineConfig(({mode}) => {
               req.on('end', () => {
                 try {
                   const data = JSON.parse(body);
-                  const { email = '', password = '' } = data;
-                  if (email.trim().toLowerCase() === 'shalyagaonkar@gmail.com' && password.trim() === 'Shalya@2004') {
+                  const adminEmail = process.env.ADMIN_EMAIL || '';
+                  const adminPassword = process.env.ADMIN_PASSWORD || '';
+                  const adminToken = process.env.ADMIN_AUTH_TOKEN || 'admin-authenticated-token';
+
+                  if (adminEmail && adminPassword && email.trim().toLowerCase() === adminEmail.trim().toLowerCase() && password.trim() === adminPassword.trim()) {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                       success: true,
-                      token: 'mock-jwt-admin-token-123456',
+                      token: adminToken,
                       user: {
                         id: 'admin-1',
-                        name: 'Shalya Gaonkar',
-                        email: 'shalyagaonkar@gmail.com',
+                        name: 'Admin',
+                        email: adminEmail,
                         role: 'super_admin'
                       }
                     }));

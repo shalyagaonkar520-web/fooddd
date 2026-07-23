@@ -51,7 +51,8 @@ export default async function handler(req, res) {
   }
 
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.includes('mock-jwt-admin-token-123456')) {
+  const requiredToken = process.env.ADMIN_AUTH_TOKEN;
+  if (requiredToken && (!authHeader || !authHeader.includes(requiredToken))) {
     return res.status(401).json({ success: false, error: 'Unauthorized access' });
   }
 

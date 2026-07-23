@@ -28,12 +28,22 @@ export default function StaffLogin() {
     }
     setIsLoading(true);
     try {
-      if (email.trim() === 'shalyagaonkar@gmail.com' && password.trim() === '-Shalya@2004') {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         localStorage.setItem('admin_auth', 'true');
+        if (data.token) {
+          localStorage.setItem('moms_magic_admin_token', data.token);
+        }
         toast.success(`Welcome back, Admin! Redirecting... 👑`);
         setTimeout(() => navigate('/admin'), 800);
       } else {
-        toast.error('Invalid admin credentials.');
+        toast.error(data.message || 'Invalid admin credentials.');
       }
     } catch (err: any) {
       toast.error('An error occurred during login.');

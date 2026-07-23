@@ -1,7 +1,7 @@
 import { Handler } from '@netlify/functions';
 
-const TELEGRAM_BOT_TOKEN = '8410372745:AAFSmmk7sBujLmfI0QZFAg_Qh-qZwhKnmxM';
-const CHAT_IDS = ['1750770370', '-1003803637741'];
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const CHAT_IDS = (process.env.TELEGRAM_CHAT_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -32,6 +32,13 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Missing message text' })
+      };
+    }
+
+    if (!TELEGRAM_BOT_TOKEN) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Telegram bot token not configured in environment variables' })
       };
     }
 

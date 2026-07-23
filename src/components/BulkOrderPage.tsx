@@ -25,11 +25,7 @@ export default function BulkOrderPage() {
 
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');
-  const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
-                  userPhone === '+917483187572' || 
-                  userPhone === '+919606001790' || 
-                  userPhone === '7483187572' || 
-                  userPhone === '9606001790';
+  const isAdmin = Boolean(adminToken && adminToken.length > 5) || (settings.adminPhones || []).includes(userPhone || '');
 
   const isStoreOpen = () => { return true; };
 

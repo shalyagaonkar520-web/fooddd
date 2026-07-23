@@ -14,16 +14,21 @@ export default function handler(req, res) {
 
   try {
     const { email = '', password = '' } = req.body;
-    const adminEmail = process.env.ADMIN_EMAIL || 'shalyagaonkar@gmail.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Shalya@2004';
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminAuthToken = process.env.ADMIN_AUTH_TOKEN || 'admin-session-authenticated-token';
 
-    if (email.trim().toLowerCase() === adminEmail && password.trim() === adminPassword) {
+    if (!adminEmail || !adminPassword) {
+      return res.status(500).json({ success: false, message: 'Server admin credentials not configured' });
+    }
+
+    if (email.trim().toLowerCase() === adminEmail.trim().toLowerCase() && password.trim() === adminPassword.trim()) {
       return res.status(200).json({
         success: true,
-        token: 'mock-jwt-admin-token-123456',
+        token: adminAuthToken,
         user: {
           id: 'admin-1',
-          name: 'Shalya Gaonkar',
+          name: 'Super Admin',
           email: adminEmail,
           role: 'super_admin'
         }

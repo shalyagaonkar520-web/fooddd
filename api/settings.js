@@ -3,7 +3,7 @@ import path from 'path';
 
 let memorySettings = {
   websiteStatus: "ON",
-  maintenanceMessage: "Mom's Magic is temporarily closed. We'll reopen soon ❤️",
+  maintenanceMessage: "Mintoo is temporarily closed. We'll reopen soon ❤️",
   openTime: "12:30",
   closeTime: "22:45",
   reopenMessage: "We will reopen normally on May 29, 2026.",
@@ -45,7 +45,9 @@ export default function handler(req, res) {
   // Handle POST Settings
   if (req.method === 'POST') {
     const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.includes('mock-jwt-admin-token-123456')) {
+    const requiredToken = process.env.ADMIN_AUTH_TOKEN;
+
+    if (requiredToken && (!authHeader || !authHeader.includes(requiredToken))) {
       return res.status(401).json({ success: false, message: 'Unauthorized access' });
     }
 
