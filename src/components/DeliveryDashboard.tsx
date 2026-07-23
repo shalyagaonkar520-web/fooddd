@@ -944,9 +944,14 @@ export default function DeliveryDashboard() {
                 <div className="space-y-4">
                   {visibleAssigned.map((order) => {
                     const customerLoc = order.deliveryLocation;
+                    const hotelLat = order.hotelLocation?.lat || 12.9165;
+                    const hotelLng = order.hotelLocation?.lng || 77.6101;
+                    const custLat = customerLoc?.lat || 12.9200;
+                    const custLng = customerLoc?.lng || 77.6150;
+
                     const distance = customerLoc?.distance || 3;
                     const payout = Math.round(distance * 15);
-                    const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${customerLoc?.lat || 12.9200},${customerLoc?.lng || 77.6150}`;
+                    const mapLink = `https://www.google.com/maps/dir/?api=1&origin=${hotelLat},${hotelLng}&destination=${custLat},${custLng}`;
                     
                     return (
                       <div key={order.id} className="bg-white border border-gray-200 rounded-3xl p-6 text-left space-y-6 hover:border-orange-200 transition-all relative">

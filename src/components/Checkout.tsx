@@ -450,6 +450,27 @@ export default function Checkout() {
       const waMsg    = buildWaMessage(paymentId);
       const tgMsg    = buildTgMessage(paymentId);
 
+      const itemHotelLocStr = activeItems.find((i: any) => i.hotelLocation || i.location)?.hotelLocation || 
+                              activeItems.find((i: any) => i.hotelLocation || i.location)?.location;
+
+      let parsedHotelLocation = { lat: 12.9165, lng: 77.6101, address: 'BTM Layout Kitchen' };
+      if (itemHotelLocStr) {
+        const match = String(itemHotelLocStr).match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+        if (match) {
+          parsedHotelLocation = {
+            lat: parseFloat(match[1]),
+            lng: parseFloat(match[2]),
+            address: String(itemHotelLocStr)
+          };
+        } else {
+          parsedHotelLocation = {
+            lat: 12.9165,
+            lng: 77.6101,
+            address: String(itemHotelLocStr)
+          };
+        }
+      }
+
       const order = {
         id: orderId,
         userId: user?.uid || null,
@@ -466,6 +487,7 @@ export default function Checkout() {
         paymentMethod: payableAmount === 0 ? 'wallet' : paymentMethod,
         paymentId: paymentId || null,
         deliveryLocation,
+        hotelLocation: parsedHotelLocation,
         status: 'pending',
         createdAt: new Date().toISOString(),
         instructions: formData.additionalMessage.trim(),

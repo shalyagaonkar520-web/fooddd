@@ -100,7 +100,7 @@ export default function AdminPage() {
   const [newHotelLocation, setNewHotelLocation] = useState('');
   const [newHotelPrice, setNewHotelPrice] = useState('');
   const [newHotelEmail, setNewHotelEmail] = useState('hotel1@minto.com');
-  const [newHotelPassword, setNewHotelPassword] = useState('kitchen123');
+  const [newHotelPassword, setNewHotelPassword] = useState('minto@2026');
   const [showHotelPasswords, setShowHotelPasswords] = useState<Record<string, boolean>>({});
   const [isAddingHotel, setIsAddingHotel] = useState(false);
   
@@ -299,7 +299,7 @@ export default function AdminPage() {
       location: newHotelLocation.trim(),
       price: Number(newHotelPrice),
       email: emailToAssign,
-      password: newHotelPassword.trim() || 'kitchen123',
+      password: newHotelPassword.trim() || 'minto@2026',
       createdAt: new Date().toISOString()
     };
 
@@ -313,7 +313,8 @@ export default function AdminPage() {
       image: newHotelImageUrl.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80',
       type: 'food',
       isVeg: true,
-      hotelId: emailToAssign
+      hotelId: emailToAssign,
+      hotelLocation: newHotelLocation.trim()
     };
 
     // Optimistically update state & local storage cache

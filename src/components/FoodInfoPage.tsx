@@ -169,10 +169,6 @@ export default function FoodInfoPage() {
                 {item.name}
               </h1>
               <div className="flex items-center gap-2.5 mt-1 text-[11px] font-semibold text-gray-400">
-                <span className="flex items-center gap-0.5 text-yellow-500">
-                  <Star className="w-3.5 h-3.5 fill-yellow-500" /> 4.8
-                </span>
-                <span>•</span>
                 <span className="flex items-center gap-0.5">
                   <Clock className="w-3.5 h-3.5 text-[#39B54A]" /> 25-30 mins
                 </span>

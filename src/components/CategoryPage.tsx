@@ -222,10 +222,6 @@ export default function CategoryPage() {
                     <h4 className="font-bold text-white leading-tight text-xs line-clamp-2 min-h-[32px]">
                       {item.name}
                     </h4>
-                    <div className="flex items-center gap-1 mt-1 text-gray-500 text-[9px] font-bold uppercase tracking-wider">
-                      <Star className="w-2.5 h-2.5 fill-orange-500 text-orange-500" />
-                      <span>4.9</span>
-                    </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-1">

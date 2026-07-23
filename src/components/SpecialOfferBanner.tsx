@@ -90,12 +90,7 @@ export default function SpecialOfferBanner() {
           <div className="w-full lg:w-1/2 p-8 md:p-16 space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-brand">
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <span className="text-[10px] font-black uppercase tracking-[3px] ml-2 text-gray-500">Today's Highest Rated</span>
+                <span className="text-[10px] font-black uppercase tracking-[3px] text-gray-500">Today's Special Pick</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-black italic tracking-tighter leading-none uppercase">

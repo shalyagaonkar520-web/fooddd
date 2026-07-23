@@ -100,7 +100,11 @@ const TrackMap: React.FC<TrackMapProps> = ({ order, rider, mapError }) => {
         lastOrderId.current = order.id;
       }
 
-      const restCoords: [number, number] = [12.9165, 77.6101]; // Kitchen Coordinates (BTM Layout)
+      const restCoords: [number, number] = (order.hotelLocation?.lat && order.hotelLocation?.lng) 
+        ? [order.hotelLocation.lat, order.hotelLocation.lng]
+        : (order.items?.[0]?.hotelLocation?.lat && order.items?.[0]?.hotelLocation?.lng)
+          ? [order.items[0].hotelLocation.lat, order.items[0].hotelLocation.lng]
+          : [12.9165, 77.6101];
       const custCoords: [number, number] = [
         order.deliveryLocation?.lat || 12.9200,
         order.deliveryLocation?.lng || 77.6150
@@ -354,7 +358,7 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({ order, rider, remaini
               <div className="min-w-0 flex-1">
                 <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Delivery Partner</p>
                 <h4 className="text-sm font-bold text-gray-900 mt-0.5 truncate">{rider.name || 'Delivery Partner'}</h4>
-                <p className="text-[10px] text-emerald-600 font-extrabold">★ 4.9 Super Rider</p>
+                <p className="text-[10px] text-emerald-600 font-extrabold">Verified Delivery Partner</p>
               </div>
             </div>
 
