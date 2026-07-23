@@ -1,10 +1,81 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Crown, Edit3, X, Check, PartyPopper } from 'lucide-react';
+import { Sparkles, Crown, Edit3, X, Check, PartyPopper, RefreshCw, Languages } from 'lucide-react';
 import { playSound, SOUNDS } from '../utils/audio';
 
-// 👑 DEFAULT KING DIALOGUES
-export const DEFAULT_KING_DIALOGUES = [
+export type LanguageCode = 'kannada' | 'hindi' | 'english';
+
+export interface UserPersona {
+  name: string;
+  title: 'King' | 'Queen';
+  languages: LanguageCode[];
+}
+
+// ==================== KANNADA DIALOGUES ====================
+export const KANNADA_KING_DIALOGUES = [
+  "😒 Yen guru... finally nenap aytha?",
+  "🤨 App open madidya... order elli?",
+  "🔥 Oho! Dhurandhar entry aythu!",
+  "🍗 Gym mugsi bandya? Protein ready ide.",
+  "😂 Fridge reject madtha? Naan idini alva.",
+  "😏 Boss... just checking ah? Order madu guru.",
+  "🚨 Kitchen alert! VIP customer online.",
+  "🤣 Bro... diet tomorrow, biryani today.",
+  "🍕 Bhook level: Criminal.",
+  "😌 Ninna wait madtha idvi guru.",
+  "😎 Welcome back macha... wallet ready idya?",
+  '😂 Chef: "Avnu banda? Gas on madi!"'
+];
+
+export const KANNADA_QUEEN_DIALOGUES = [
+  "👑 Oops... nam Queen bandbitlu!",
+  "🌸 Ayyo... finally nenap aytha?",
+  "😌 Queen online... kitchen smiling.",
+  "💖 App open madidya... nam luck open aythu.",
+  "🥹 Chef full waiting madtha idda.",
+  "😏 Queen... today cooking cancel okay?",
+  "🍰 Pretty Queen deserves tasty food.",
+  "😂 Diet ge bye heli banni.",
+  "👀 Queen order madidre taste double agutte.",
+  '🌹 Kitchen saying "Welcome back Your Highness."',
+  "💕 Smile cute ide... now make your tummy happy.",
+  "👑 Royal customer detected."
+];
+
+export const KANNADA_UNIVERSAL_DIALOGUES = [
+  "😒 Ab yaad aaya na?",
+  "🤨 Just stalking menu ah?",
+  "😂 Order madu... don't be shy.",
+  "🍕 Your stomach is typing...",
+  "😭 Bro... fridge complaint kotide.",
+  "😌 Food waiting... what are YOU waiting for?",
+  "🤤 One click away from happiness.",
+  "🚨 Bhook emergency detected.",
+  "🍟 Calories won't tell anyone. 🤫",
+  "😂 Today cheat day automatically activated.",
+  "🫡 Chef attendance hakidare... neevu late.",
+  '😭 Kitchen asking "Where were you?"',
+  "👀 Looking at food won't fill your tummy.",
+  "😂 Wallet crying... tummy smiling.",
+  "🔥 Warning: One order can cause addiction.",
+  "😌 Swiggy who? We got you.",
+  "🍔 Mood off? Burger on.",
+  "🤣 Nodu beda... order madu.",
+  "💀 App open madidya andre, half order agbitu.",
+  "😎 Welcome back, troublemaker.",
+  "😏 Came to see offers or me?",
+  "😂 Don't act expensive... order something.",
+  "💸 Bank balance: 😭 | Cravings: 😎",
+  "🍕 Your diet just unfollowed you.",
+  "😌 Food won't judge you... we promise.",
+  "🤣 You again? We missed your money.",
+  "👀 Your stomach sent us a notification.",
+  "🔥 Don't worry... calories are sleeping today.",
+  "😂 One order won't make you poor... maybe."
+];
+
+// ==================== HINDI DIALOGUES ====================
+export const HINDI_KING_DIALOGUES = [
   "😒 Ab yaad aaya mai? Chalo... khaana order kar.",
   "Oye hero! Pet yaad aaya ya hum? 😂",
   "😎 Dhurandhar aa gaya! Kitchen alert 🚨",
@@ -27,8 +98,7 @@ export const DEFAULT_KING_DIALOGUES = [
   "Order nahi kiya toh app naraz ho jayega. 😤"
 ];
 
-// 👑 DEFAULT QUEEN DIALOGUES
-export const DEFAULT_QUEEN_DIALOGUES = [
+export const HINDI_QUEEN_DIALOGUES = [
   "😒 Ab yaad aayi main? Chalo... maaf kiya, pehle order karo. 😂",
   "Oops... Our Queen is back! 👑✨",
   "Arre wah... Queen ne yaad kiya hume? 😌",
@@ -51,8 +121,7 @@ export const DEFAULT_QUEEN_DIALOGUES = [
   "Order nahi kiya toh app naraz ho jayega. 😤"
 ];
 
-// 📱 DEFAULT ANONYMOUS DIALOGUES
-export const DEFAULT_ANONYMOUS_DIALOGUES = [
+export const HINDI_UNIVERSAL_DIALOGUES = [
   "Fir aa gaye? Addiction hai na? 😂",
   "App khol hi liya hai... order bhi kar do. 😏",
   "Bhook ka Wi-Fi full signal pe hai. 📶",
@@ -69,6 +138,81 @@ export const DEFAULT_ANONYMOUS_DIALOGUES = [
   "Tum aaye... kitchen mein festival shuru ho gaya. 🎉",
   "Order nahi kiya toh app naraz ho jayega. 😤"
 ];
+
+// ==================== ENGLISH DIALOGUES ====================
+export const ENGLISH_KING_DIALOGUES = [
+  "😒 Oh... NOW you remembered me?",
+  "😂 Finally! The legend is back.",
+  "🔥 The King has entered. Kitchen, stay calm.",
+  "🍔 Bro... your stomach snitched on you.",
+  "😏 Just browsing? Nice joke. Order something.",
+  "💀 Your diet just left the chat.",
+  "🚨 VIP customer detected!",
+  "🤝 Welcome back, boss. Let's feed that beast.",
+  "🍕 Your cravings have been waiting.",
+  "😎 We knew you'd come back.",
+  "😂 Don't worry... calories are on leave today.",
+  "🍗 Gym done? Time to refill.",
+  "👀 Looking at food burns 0 calories.",
+  "💸 Wallet says no. Stomach says YES.",
+  "😌 One order won't hurt... probably."
+];
+
+export const ENGLISH_QUEEN_DIALOGUES = [
+  "👑 Oops... Our Queen is back!",
+  "💖 Finally! We were getting worried.",
+  "🌸 Welcome back, Your Majesty.",
+  "😌 Pretty people deserve great food.",
+  "🍰 Queen energy detected.",
+  "✨ The kitchen just got happier.",
+  "😏 Looking gorgeous... now order something.",
+  "💕 Your cravings have been waiting for you.",
+  "👀 The chef smiled when you opened the app.",
+  "🎀 Today's menu looks better because you're here.",
+  "🌹 The Queen has arrived. Let the feast begin.",
+  "💖 Happiness is one order away.",
+  "😌 You showed up... now make your tummy smile.",
+  "🍕 Warning: This app may spoil you.",
+  "✨ We missed your royal visits."
+];
+
+export const ENGLISH_UNIVERSAL_DIALOGUES = [
+  "😒 Oh... NOW you remember us?",
+  "😂 Back again? We knew it.",
+  "🍕 Just one bite away from happiness.",
+  "👀 Browsing won't fill your stomach.",
+  "🤤 Your cravings brought you here.",
+  "💀 Your fridge officially gave up.",
+  "🚨 Hunger emergency detected.",
+  "🍟 Your stomach has entered the chat.",
+  "😏 Don't overthink it... just order.",
+  "😂 Looking is free. Ordering is better.",
+  "🍔 Your diet is watching... ignore it.",
+  "😌 Food is ready. What are YOU waiting for?",
+  "🤝 Welcome back, troublemaker.",
+  "💸 Your wallet is scared already.",
+  "🔥 One order = Instant happiness.",
+  "😂 We both know you're ordering.",
+  "👀 Don't pretend you're \"just looking.\"",
+  "😏 Opened the app... mission almost complete.",
+  "🍕 Your stomach made this decision, not you.",
+  "💀 Diet starts tomorrow. As always.",
+  "🚨 Breaking News: Hunger wins again.",
+  "😂 You came. You saw. You ordered.",
+  "🤤 Self-control has left the chat.",
+  "🍔 If you're reading this... order already.",
+  "😌 Trust your cravings. They're usually right.",
+  "💸 Money comes back. This meal won't.",
+  "🔥 One tap. Infinite happiness.",
+  "😂 Stop scrolling. Start eating.",
+  "👀 You deserve this meal. Don't argue.",
+  "🍕 Welcome back... your favorite food missed you."
+];
+
+// ==================== DEFAULT POOLS FOR BACKWARDS COMPATIBILITY ====================
+export const DEFAULT_KING_DIALOGUES = [...KANNADA_KING_DIALOGUES, ...HINDI_KING_DIALOGUES, ...ENGLISH_KING_DIALOGUES];
+export const DEFAULT_QUEEN_DIALOGUES = [...KANNADA_QUEEN_DIALOGUES, ...HINDI_QUEEN_DIALOGUES, ...ENGLISH_QUEEN_DIALOGUES];
+export const DEFAULT_ANONYMOUS_DIALOGUES = [...KANNADA_UNIVERSAL_DIALOGUES, ...HINDI_UNIVERSAL_DIALOGUES, ...ENGLISH_UNIVERSAL_DIALOGUES];
 
 export function getActiveKingDialogues(): string[] {
   try {
@@ -103,9 +247,28 @@ export function getActiveAnonymousDialogues(): string[] {
   return DEFAULT_ANONYMOUS_DIALOGUES;
 }
 
-interface UserPersona {
-  name: string;
-  title: 'King' | 'Queen';
+// Function to construct pool based on title & selected languages
+export function getPersonaDialoguePool(title: 'King' | 'Queen', languages: LanguageCode[]): string[] {
+  const activeLangs = languages && languages.length > 0 ? languages : ['kannada', 'hindi', 'english'];
+  const pool: string[] = [];
+
+  if (activeLangs.includes('kannada')) {
+    pool.push(...(title === 'King' ? KANNADA_KING_DIALOGUES : KANNADA_QUEEN_DIALOGUES));
+    pool.push(...KANNADA_UNIVERSAL_DIALOGUES);
+  }
+  if (activeLangs.includes('hindi')) {
+    pool.push(...(title === 'King' ? HINDI_KING_DIALOGUES : HINDI_QUEEN_DIALOGUES));
+    pool.push(...HINDI_UNIVERSAL_DIALOGUES);
+  }
+  if (activeLangs.includes('english')) {
+    pool.push(...(title === 'King' ? ENGLISH_KING_DIALOGUES : ENGLISH_QUEEN_DIALOGUES));
+    pool.push(...ENGLISH_UNIVERSAL_DIALOGUES);
+  }
+
+  if (pool.length === 0) {
+    return title === 'King' ? DEFAULT_KING_DIALOGUES : DEFAULT_QUEEN_DIALOGUES;
+  }
+  return Array.from(new Set(pool));
 }
 
 export default function FunGreetingBanner() {
@@ -113,6 +276,7 @@ export default function FunGreetingBanner() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputName, setInputName] = useState('');
   const [selectedTitle, setSelectedTitle] = useState<'King' | 'Queen'>('King');
+  const [selectedLangs, setSelectedLangs] = useState<LanguageCode[]>(['kannada', 'hindi', 'english']);
   const [greeting, setGreeting] = useState('');
   const [anonGreeting, setAnonGreeting] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
@@ -122,27 +286,45 @@ export default function FunGreetingBanner() {
     try {
       const stored = localStorage.getItem('mintoo_user_persona');
       if (stored) {
-        const parsed: UserPersona = JSON.parse(stored);
-        setPersona(parsed);
-        pickRandomGreeting(parsed.title);
+        const parsed = JSON.parse(stored);
+        const userLangs: LanguageCode[] = Array.isArray(parsed.languages) && parsed.languages.length > 0 
+          ? parsed.languages 
+          : ['kannada', 'hindi', 'english'];
+        const userPersona: UserPersona = {
+          name: parsed.name || 'User',
+          title: parsed.title === 'Queen' ? 'Queen' : 'King',
+          languages: userLangs
+        };
+        setPersona(userPersona);
+        pickRandomGreeting(userPersona.title, userPersona.languages);
       } else {
-        pickRandomAnonGreeting();
+        pickRandomAnonGreeting(['kannada', 'hindi', 'english']);
       }
     } catch (_) {
-      pickRandomAnonGreeting();
+      pickRandomAnonGreeting(['kannada', 'hindi', 'english']);
     }
   }, []);
 
-  const pickRandomGreeting = (title: 'King' | 'Queen') => {
-    const list = title === 'King' ? getActiveKingDialogues() : getActiveQueenDialogues();
+  const pickRandomGreeting = (title: 'King' | 'Queen', languages: LanguageCode[]) => {
+    const list = getPersonaDialoguePool(title, languages);
     const random = list[Math.floor(Math.random() * list.length)];
     setGreeting(random);
   };
 
-  const pickRandomAnonGreeting = () => {
-    const list = getActiveAnonymousDialogues();
+  const pickRandomAnonGreeting = (languages: LanguageCode[]) => {
+    const list = getPersonaDialoguePool('King', languages);
     const random = list[Math.floor(Math.random() * list.length)];
     setAnonGreeting(random);
+  };
+
+  const handleShuffleGreeting = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    playSound(SOUNDS.CLICK);
+    if (persona) {
+      pickRandomGreeting(persona.title, persona.languages);
+    } else {
+      pickRandomAnonGreeting(selectedLangs);
+    }
   };
 
   const handleOpenModal = () => {
@@ -150,28 +332,66 @@ export default function FunGreetingBanner() {
     if (persona) {
       setInputName(persona.name);
       setSelectedTitle(persona.title);
+      setSelectedLangs(persona.languages || ['kannada', 'hindi', 'english']);
+    } else {
+      setSelectedLangs(['kannada', 'hindi', 'english']);
     }
     setIsModalOpen(true);
+  };
+
+  const toggleLanguage = (lang: LanguageCode) => {
+    playSound(SOUNDS.CLICK);
+    if (selectedLangs.includes(lang)) {
+      // Don't allow deselecting all languages
+      if (selectedLangs.length > 1) {
+        setSelectedLangs(selectedLangs.filter(l => l !== lang));
+      }
+    } else {
+      setSelectedLangs([...selectedLangs, lang]);
+    }
+  };
+
+  const selectAllThree = () => {
+    playSound(SOUNDS.CLICK);
+    setSelectedLangs(['kannada', 'hindi', 'english']);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputName.trim()) return;
 
+    const finalLangs = selectedLangs.length > 0 ? selectedLangs : ['kannada', 'hindi', 'english'];
+
     const newPersona: UserPersona = {
       name: inputName.trim(),
-      title: selectedTitle
+      title: selectedTitle,
+      languages: finalLangs
     };
 
     setPersona(newPersona);
     localStorage.setItem('mintoo_user_persona', JSON.stringify(newPersona));
-    pickRandomGreeting(selectedTitle);
+    pickRandomGreeting(selectedTitle, finalLangs);
     setIsModalOpen(false);
 
     // Trigger celebratory confetti animation
     setShowConfetti(true);
     playSound(SOUNDS.ORDER_SUCCESS);
     setTimeout(() => setShowConfetti(false), 3000);
+  };
+
+  const isAllThreeSelected = selectedLangs.length === 3 && 
+    selectedLangs.includes('kannada') && 
+    selectedLangs.includes('hindi') && 
+    selectedLangs.includes('english');
+
+  const getLanguageLabel = (langs: LanguageCode[]) => {
+    if (!langs || langs.length === 3) return '🗣️ Mix (KN+HI+EN)';
+    if (langs.length === 1) {
+      if (langs[0] === 'kannada') return '🗣️ Kannada';
+      if (langs[0] === 'hindi') return '🗣️ Hindi';
+      if (langs[0] === 'english') return '🗣️ English';
+    }
+    return `🗣️ ${langs.map(l => l.substring(0, 2).toUpperCase()).join('+')}`;
   };
 
   return (
@@ -228,21 +448,47 @@ export default function FunGreetingBanner() {
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-400/20 border border-amber-400/40 text-amber-300">
                     {persona.title === 'King' ? '👑 King' : '👑 Queen'}
                   </span>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/10 border border-white/15 text-gray-300">
+                    {getLanguageLabel(persona.languages)}
+                  </span>
                 </div>
-                <p className="text-sm sm:text-base font-black italic tracking-tight text-white leading-snug drop-shadow-md">
-                  {greeting}
-                </p>
+                <div className="flex items-center gap-2 group cursor-pointer" onClick={() => handleShuffleGreeting()}>
+                  <p className="text-sm sm:text-base font-black italic tracking-tight text-white leading-snug drop-shadow-md flex-1">
+                    "{greeting}"
+                  </p>
+                  <button 
+                    type="button"
+                    onClick={(e) => handleShuffleGreeting(e)}
+                    className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 transition-all shrink-0 active:scale-95"
+                    title="Click to shuffle quote"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                     👋 Welcome to Mintoo!
                   </span>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/10 border border-white/15 text-gray-300">
+                    🗣️ KN + HI + EN
+                  </span>
                 </div>
-                <p className="text-sm sm:text-base font-black italic tracking-tight text-white leading-snug drop-shadow-md">
-                  {anonGreeting || "Fir aa gaye? Addiction hai na? 😂"}
-                </p>
+                <div className="flex items-center gap-2 group cursor-pointer" onClick={handleOpenModal}>
+                  <p className="text-sm sm:text-base font-black italic tracking-tight text-white leading-snug drop-shadow-md flex-1">
+                    "{anonGreeting || "Fir aa gaye? Addiction hai na? 😂"}"
+                  </p>
+                  <button 
+                    type="button"
+                    onClick={(e) => handleShuffleGreeting(e)}
+                    className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 transition-all shrink-0 active:scale-95"
+                    title="Click to shuffle quote"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -263,7 +509,7 @@ export default function FunGreetingBanner() {
               <button
                 onClick={handleOpenModal}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-amber-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Change Title or Name"
+                title="Change Persona or Languages"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Edit</span>
@@ -292,7 +538,7 @@ export default function FunGreetingBanner() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-md bg-[#161616] border border-amber-500/30 rounded-t-[32px] sm:rounded-[28px] p-6 text-left shadow-2xl z-10 space-y-6 overflow-hidden"
+              className="relative w-full max-w-md bg-[#161616] border border-amber-500/30 rounded-t-[32px] sm:rounded-[28px] p-6 text-left shadow-2xl z-10 space-y-5 overflow-y-auto max-h-[90vh]"
             >
               {/* Top ambient glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 blur-3xl pointer-events-none" />
@@ -301,10 +547,10 @@ export default function FunGreetingBanner() {
               <div className="flex items-start justify-between border-b border-white/10 pb-4">
                 <div className="space-y-1">
                   <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-white flex items-center gap-2">
-                    Let's make your experience more fun! 🎉
+                    Let's customize your experience! 🎉
                   </h3>
                   <p className="text-xs font-semibold text-gray-400">
-                    Get custom royal greetings every time you open Mintoo!
+                    Get funny royal greetings in your favorite language!
                   </p>
                 </div>
                 <button
@@ -318,10 +564,10 @@ export default function FunGreetingBanner() {
 
               {/* Form */}
               <form onSubmit={handleSave} className="space-y-5">
-                {/* Name Input */}
+                {/* 1. Name Input */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
-                    Enter Your Name
+                    1. Enter Your Name
                   </label>
                   <input
                     type="text"
@@ -333,10 +579,10 @@ export default function FunGreetingBanner() {
                   />
                 </div>
 
-                {/* Role Title Selector */}
+                {/* 2. Role Title Selector */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
-                    Select Your Royal Persona
+                    2. Select Your Royal Persona
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     {/* King Option */}
@@ -346,14 +592,14 @@ export default function FunGreetingBanner() {
                         setSelectedTitle('King');
                         playSound(SOUNDS.CLICK);
                       }}
-                      className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                      className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         selectedTitle === 'King'
                           ? 'bg-gradient-to-b from-amber-500/25 to-orange-500/20 border-amber-400 text-white shadow-lg shadow-amber-500/10 scale-[1.02]'
                           : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                       }`}
                     >
-                      <span className="text-3xl">👑</span>
-                      <span className="font-black text-sm uppercase tracking-wider">King</span>
+                      <span className="text-2xl">👑</span>
+                      <span className="font-black text-xs uppercase tracking-wider">King</span>
                       {selectedTitle === 'King' && (
                         <span className="text-[9px] font-bold text-amber-400 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Selected
@@ -368,18 +614,97 @@ export default function FunGreetingBanner() {
                         setSelectedTitle('Queen');
                         playSound(SOUNDS.CLICK);
                       }}
-                      className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                      className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         selectedTitle === 'Queen'
                           ? 'bg-gradient-to-b from-pink-500/25 to-purple-500/20 border-pink-400 text-white shadow-lg shadow-pink-500/10 scale-[1.02]'
                           : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
                       }`}
                     >
-                      <span className="text-3xl">👑</span>
-                      <span className="font-black text-sm uppercase tracking-wider">Queen</span>
+                      <span className="text-2xl">👑</span>
+                      <span className="font-black text-xs uppercase tracking-wider">Queen</span>
                       {selectedTitle === 'Queen' && (
                         <span className="text-[9px] font-bold text-pink-400 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Selected
                         </span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Language Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1">
+                      <Languages className="w-3 h-3 text-amber-400" />
+                      3. Do you know Kannada, Hindi, English?
+                    </label>
+                    <span className="text-[9px] text-gray-400 font-bold">Select preference</span>
+                  </div>
+
+                  {/* All 3 / Mix Quick Toggle */}
+                  <button
+                    type="button"
+                    onClick={selectAllThree}
+                    className={`w-full py-2.5 px-4 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      isAllThreeSelected
+                        ? 'bg-gradient-to-r from-amber-500/30 via-pink-500/30 to-purple-500/30 border-amber-400 text-amber-300 shadow-md scale-[1.01]'
+                        : 'bg-[#1e1e1e] border-white/10 text-gray-400 hover:border-white/20'
+                    }`}
+                  >
+                    <span>🌈 All 3 (Mix of All!)</span>
+                    {isAllThreeSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                  </button>
+
+                  {/* Individual Language Chips */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {/* Kannada Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleLanguage('kannada')}
+                      className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        selectedLangs.includes('kannada')
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black'
+                          : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
+                      }`}
+                    >
+                      <span className="text-base">🟡</span>
+                      <span className="text-[11px] font-bold">Kannada</span>
+                      {selectedLangs.includes('kannada') && (
+                        <span className="text-[8px] text-amber-400">Selected</span>
+                      )}
+                    </button>
+
+                    {/* Hindi Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleLanguage('hindi')}
+                      className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        selectedLangs.includes('hindi')
+                          ? 'bg-orange-500/20 border-orange-400 text-orange-300 font-black'
+                          : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
+                      }`}
+                    >
+                      <span className="text-base">🟠</span>
+                      <span className="text-[11px] font-bold">Hindi</span>
+                      {selectedLangs.includes('hindi') && (
+                        <span className="text-[8px] text-orange-400">Selected</span>
+                      )}
+                    </button>
+
+                    {/* English Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleLanguage('english')}
+                      className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        selectedLangs.includes('english')
+                          ? 'bg-blue-500/20 border-blue-400 text-blue-300 font-black'
+                          : 'bg-[#222222] border-white/10 text-gray-400 hover:border-white/20'
+                      }`}
+                    >
+                      <span className="text-base">🔵</span>
+                      <span className="text-[11px] font-bold">English</span>
+                      {selectedLangs.includes('english') && (
+                        <span className="text-[8px] text-blue-400">Selected</span>
                       )}
                     </button>
                   </div>
@@ -390,7 +715,7 @@ export default function FunGreetingBanner() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full h-13 mt-2 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all cursor-pointer"
+                  className="w-full h-12 mt-2 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all cursor-pointer"
                 >
                   <PartyPopper className="w-4 h-4 fill-black" />
                   <span>Save & Start Royal Experience</span>
