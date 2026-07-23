@@ -26,10 +26,13 @@ export const hotelData: Record<string, { hotel: number, app: number }> = {
   "2 Butter Roti": { hotel: 40, app: 59 },
   "Naan": { hotel: 40, app: 50 },
   "Butter Naan": { hotel: 50, app: 60 },
+  "Butter Kulcha": { hotel: 45, app: 55 },
   "Khuska Full": { hotel: 70, app: 79 },
   "Garlic Naan": { hotel: 55, app: 65 },
   "4 Chapati": { hotel: 40, app: 49 },
   "Veg Manchow Soup": { hotel: 100, app: 130 },
+  "Hot and Sour Soup": { hotel: 100, app: 130 },
+  "Mutton Soup": { hotel: 120, app: 160 },
   "Mutton Fry": { hotel: 150, app: 180 },
   "Gobi Manchurian": { hotel: 80, app: 109 },
   "Gobi Chilli": { hotel: 120, app: 149 },
@@ -56,6 +59,7 @@ export const hotelData: Record<string, { hotel: number, app: number }> = {
   "Shawarma": { hotel: 70, app: 99 },
   "Burger": { hotel: 50, app: 94 },
   "Keema Pav": { hotel: 25, app: 40 },
+  "Egg Puff": { hotel: 20, app: 35 },
   "Veg Fried Rice": { hotel: 100, app: 129 },
   "Veg Pulav": { hotel: 130, app: 159 },
   "Chicken Fried Rice": { hotel: 120, app: 149 },
@@ -65,7 +69,19 @@ export const hotelData: Record<string, { hotel: number, app: number }> = {
   "Mutton Fried Rice": { hotel: 170, app: 200 },
   "Schezwan Mutton Rice": { hotel: 200, app: 240 },
   "Chicken Noodles": { hotel: 110, app: 149 },
-  "Veg Noodles": { hotel: 80, app: 100 }
+  "Veg Noodles": { hotel: 80, app: 100 },
+  "Butterscotch Milkshake": { hotel: 70, app: 99 },
+  "Vanilla Milkshake": { hotel: 70, app: 99 },
+  "Mango Milkshake": { hotel: 80, app: 110 },
+  "Cold Coffee": { hotel: 70, app: 99 },
+  "Blue Curacao": { hotel: 70, app: 99 },
+  "Classic Mojito": { hotel: 70, app: 99 },
+  "Coke 500ml": { hotel: 40, app: 50 },
+  "Black Forest Cake": { hotel: 380, app: 450 },
+  "Butterscotch Cake": { hotel: 400, app: 480 },
+  "Kiwi Cake": { hotel: 400, app: 480 },
+  "Red Velvet Cake": { hotel: 480, app: 550 },
+  "Strawberry Cake": { hotel: 400, app: 480 }
 };
 
 export const hotelPrices: Record<string, number> = Object.fromEntries(
