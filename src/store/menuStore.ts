@@ -28,19 +28,40 @@ export const useMenuStore = create<MenuState>((set, get) => ({
       if (cachedCustom) {
         try { customItems = JSON.parse(cachedCustom); } catch (_) {}
       }
-      
-      let base = firestoreItems.length > 0 ? firestoreItems : [...FALLBACK_MENU];
-      
-      const merged = [...base];
-      for (const item of customItems) {
-        const idx = merged.findIndex(i => i.id === item.id);
-        if (idx !== -1) {
-          merged[idx] = item;
-        } else {
-          merged.push(item);
+
+      const cachedDeleted = localStorage.getItem('moms_magic_deleted_menu');
+      let deletedIds: string[] = [];
+      if (cachedDeleted) {
+        try { deletedIds = JSON.parse(cachedDeleted); } catch (_) {}
+      }
+
+      const itemMap = new Map<string, Product>();
+
+      // 1. Start with default fallback menu items
+      for (const item of FALLBACK_MENU) {
+        if (!deletedIds.includes(item.id)) {
+          itemMap.set(item.id, item);
         }
       }
-      return merged;
+
+      // 2. Merge items from Firestore (overriding existing by ID or adding new)
+      for (const item of firestoreItems) {
+        if (!deletedIds.includes(item.id)) {
+          itemMap.set(item.id, item);
+        }
+      }
+
+      // 3. Merge custom items from local storage
+      for (const item of customItems) {
+        if (!deletedIds.includes(item.id)) {
+          itemMap.set(item.id, item);
+        }
+      }
+
+      return Array.from(itemMap.values()).map(item => ({
+        ...item,
+        hotelId: item.hotelId || 'hotel1@minto.com'
+      }));
     };
 
     // Set initial merged menu
@@ -81,6 +102,27 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   addMenuItem: async (item: Product) => {
     try {
+      const cachedCustom = localStorage.getItem('moms_magic_custom_menu');
+      let customItems: Product[] = [];
+      if (cachedCustom) {
+        try { customItems = JSON.parse(cachedCustom); } catch (_) {}
+      }
+      const existingIdx = customItems.findIndex(i => i.id === item.id);
+      if (existingIdx !== -1) {
+        customItems[existingIdx] = item;
+      } else {
+        customItems.push(item);
+      }
+      localStorage.setItem('moms_magic_custom_menu', JSON.stringify(customItems));
+
+      const cachedDeleted = localStorage.getItem('moms_magic_deleted_menu');
+      if (cachedDeleted) {
+        try {
+          const deletedIds: string[] = JSON.parse(cachedDeleted).filter((id: string) => id !== item.id);
+          localStorage.setItem('moms_magic_deleted_menu', JSON.stringify(deletedIds));
+        } catch (_) {}
+      }
+
       const docRef = doc(db, 'menu', item.id);
       await setDoc(docRef, item);
       return true;
@@ -92,6 +134,24 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   updateMenuItem: async (id: string, updates: Partial<Product>) => {
     try {
+      const currentItems = get().menuItems;
+      const targetItem = currentItems.find(i => i.id === id);
+      if (targetItem) {
+        const updatedItem = { ...targetItem, ...updates };
+        const cachedCustom = localStorage.getItem('moms_magic_custom_menu');
+        let customItems: Product[] = [];
+        if (cachedCustom) {
+          try { customItems = JSON.parse(cachedCustom); } catch (_) {}
+        }
+        const existingIdx = customItems.findIndex(i => i.id === id);
+        if (existingIdx !== -1) {
+          customItems[existingIdx] = updatedItem;
+        } else {
+          customItems.push(updatedItem);
+        }
+        localStorage.setItem('moms_magic_custom_menu', JSON.stringify(customItems));
+      }
+
       const docRef = doc(db, 'menu', id);
       await setDoc(docRef, updates, { merge: true });
       return true;
@@ -103,6 +163,27 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   deleteMenuItem: async (id: string) => {
     try {
+      const cachedDeleted = localStorage.getItem('moms_magic_deleted_menu');
+      let deletedIds: string[] = [];
+      if (cachedDeleted) {
+        try { deletedIds = JSON.parse(cachedDeleted); } catch (_) {}
+      }
+      if (!deletedIds.includes(id)) {
+        deletedIds.push(id);
+        localStorage.setItem('moms_magic_deleted_menu', JSON.stringify(deletedIds));
+      }
+
+      const cachedCustom = localStorage.getItem('moms_magic_custom_menu');
+      if (cachedCustom) {
+        try {
+          const arr = JSON.parse(cachedCustom).filter((i: any) => i.id !== id);
+          localStorage.setItem('moms_magic_custom_menu', JSON.stringify(arr));
+        } catch (_) {}
+      }
+
+      const currentStoreItems = get().menuItems.filter(i => i.id !== id);
+      set({ menuItems: currentStoreItems });
+
       const docRef = doc(db, 'menu', id);
       await deleteDoc(docRef);
       return true;

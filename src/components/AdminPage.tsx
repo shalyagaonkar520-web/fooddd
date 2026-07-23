@@ -65,7 +65,7 @@ export default function AdminPage() {
   const [newHotelImageUrl, setNewHotelImageUrl] = useState('');
   const [newHotelLocation, setNewHotelLocation] = useState('');
   const [newHotelPrice, setNewHotelPrice] = useState('');
-  const [newHotelEmail, setNewHotelEmail] = useState('');
+  const [newHotelEmail, setNewHotelEmail] = useState('hotel1@minto.com');
   const [newHotelPassword, setNewHotelPassword] = useState('kitchen123');
   const [showHotelPasswords, setShowHotelPasswords] = useState<Record<string, boolean>>({});
   const [isAddingHotel, setIsAddingHotel] = useState(false);
@@ -248,13 +248,14 @@ export default function AdminPage() {
     e.preventDefault();
     const finalCategory = selectedCategory === 'new' ? customCategory.trim() : selectedCategory.trim();
 
-    if (!newHotelName.trim() || !newHotelFood.trim() || !newHotelLocation.trim() || !newHotelPrice.trim() || !newHotelEmail.trim() || !finalCategory) {
-      toast.error('All fields are required. Please select/create a category and assign an account.');
+    const emailToAssign = newHotelEmail.trim() || 'hotel1@minto.com';
+    if (!newHotelName.trim() || !newHotelFood.trim() || !newHotelLocation.trim() || !newHotelPrice.trim() || !finalCategory) {
+      toast.error('All fields are required. Please select/create a category.');
       return;
     }
 
-    const hotelId = `hotel-${newHotelEmail.split('@')[0]}`;
-    const existingIndex = hotels.findIndex(h => h.email.toLowerCase() === newHotelEmail.trim().toLowerCase());
+    const hotelId = `hotel-${emailToAssign.split('@')[0]}`;
+    const existingIndex = hotels.findIndex(h => h.email.toLowerCase() === emailToAssign.toLowerCase());
 
     const newHotel = {
       id: hotelId,
@@ -262,13 +263,13 @@ export default function AdminPage() {
       foodName: newHotelFood.trim(),
       location: newHotelLocation.trim(),
       price: Number(newHotelPrice),
-      email: newHotelEmail.trim(),
+      email: emailToAssign,
       password: newHotelPassword.trim() || 'kitchen123',
       createdAt: new Date().toISOString()
     };
 
     // Prepare Menu Product Item to show in Customer menu
-    const menuProductId = `item-${newHotelEmail.replace('@', '-')}`;
+    const menuProductId = `item-${emailToAssign.replace('@', '-')}`;
     const menuProduct = {
       id: menuProductId,
       name: newHotelFood.trim(),
@@ -277,7 +278,7 @@ export default function AdminPage() {
       image: newHotelImageUrl.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80',
       type: 'food',
       isVeg: true,
-      hotelId: newHotelEmail.trim()
+      hotelId: emailToAssign
     };
 
     // Optimistically update state & local storage cache
@@ -331,7 +332,7 @@ export default function AdminPage() {
       setNewHotelImageUrl('');
       setNewHotelLocation('');
       setNewHotelPrice('');
-      setNewHotelEmail('');
+      setNewHotelEmail('hotel1@minto.com');
     } catch (err) {
       console.warn('Firestore write failed, falling back to local cache storage:', err);
       toast.success('Hotel saved to offline local cache successfully! 💾');
@@ -342,7 +343,7 @@ export default function AdminPage() {
       setNewHotelImageUrl('');
       setNewHotelLocation('');
       setNewHotelPrice('');
-      setNewHotelEmail('');
+      setNewHotelEmail('hotel1@minto.com');
     } finally {
       setIsAddingHotel(false);
     }
@@ -417,6 +418,17 @@ export default function AdminPage() {
         } catch (_) {}
       }
 
+      // Record in deleted items list
+      const cachedDeleted = localStorage.getItem('moms_magic_deleted_menu');
+      let deletedIds: string[] = [];
+      if (cachedDeleted) {
+        try { deletedIds = JSON.parse(cachedDeleted); } catch (_) {}
+      }
+      if (!deletedIds.includes(item.id)) {
+        deletedIds.push(item.id);
+        localStorage.setItem('moms_magic_deleted_menu', JSON.stringify(deletedIds));
+      }
+
       // Remove from useMenuStore state
       const currentStoreItems = useMenuStore.getState().menuItems;
       const updatedStoreItems = currentStoreItems.filter(i => i.id !== item.id);
@@ -435,7 +447,7 @@ export default function AdminPage() {
     setEditPrice(item.price.toString());
     setEditCategory(item.category);
     setEditImageUrl(item.image);
-    setEditHotelEmail(item.hotelId || '');
+    setEditHotelEmail(item.hotelId || 'hotel1@minto.com');
     setIsEditDrawerOpen(true);
   };
 
@@ -1093,7 +1105,7 @@ export default function AdminPage() {
                               </span>
                             </div>
                             <p className="text-[10px] text-gray-500 font-semibold mt-1">
-                              Price: <strong className="text-gray-950 font-bold">₹{item.price}</strong> • Kitchen: <strong className="text-orange-500 font-extrabold">{item.hotelId || "None"}</strong>
+                              Price: <strong className="text-gray-950 font-bold">₹{item.price}</strong> • Kitchen: <strong className="text-orange-500 font-extrabold">{item.hotelId || "hotel1@minto.com"}</strong>
                             </p>
                           </div>
                         </div>

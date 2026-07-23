@@ -154,7 +154,7 @@ export default function HotelPanel() {
         // Default fallback for instant Kitchen Partner login
         const em = email.trim().toLowerCase();
         const pw = password.trim();
-        if ((em === 'kitchen@mintoo.com' || em === 'hotel@mintoo.com' || em === 'kitchen@minto.com') && (pw === 'kitchen123' || pw === 'hotel123' || pw === '123456')) {
+        if ((em === 'kitchen@mintoo.com' || em === 'hotel@mintoo.com' || em === 'kitchen@minto.com' || em === 'hotel1@minto.com') && (pw === 'kitchen123' || pw === 'hotel123' || pw === '123456' || pw === 'minto@2026')) {
           hotelData = {
             id: 'hotel-partner-1',
             name: 'Mintoo Kitchen Partner',

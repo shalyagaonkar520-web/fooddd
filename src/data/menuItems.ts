@@ -4,6 +4,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍟 FAST FOOD (3 items)
   {
     id: 'ff-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Masala Papad',
     price: 69,
     category: 'Fast Food',
@@ -16,6 +17,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'ff-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Shawarma',
     price: 99,
     category: 'Fast Food',
@@ -28,6 +30,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'ff-3',
+    hotelId: 'hotel1@minto.com',
     name: 'Kheema Pav',
     price: 40,
     category: 'Fast Food',
@@ -41,6 +44,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍜 RICE & NOODLES (4 items)
   {
     id: 'rn-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Veg Noodles',
     price: 100,
     category: 'Rice & Noodles',
@@ -53,6 +57,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'rn-4',
+    hotelId: 'hotel1@minto.com',
     name: 'Veg Fried Rice',
     price: 129,
     category: 'Rice & Noodles',
@@ -63,6 +68,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'rn-7',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Fried Rice',
     price: 149,
     category: 'Rice & Noodles',
@@ -73,6 +79,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'rn-11',
+    hotelId: 'hotel1@minto.com',
     name: 'Mutton Fried Rice',
     price: 200,
     category: 'Rice & Noodles',
@@ -87,6 +94,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍛 BIRYANI (4 items)
   {
     id: 'br-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Egg Biryani',
     price: 149,
     category: 'Biryani',
@@ -99,6 +107,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'br-4',
+    hotelId: 'hotel1@minto.com',
     name: 'Veg Biryani',
     price: 139,
     category: 'Biryani',
@@ -109,6 +118,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'br-5',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Biryani Half',
     price: 129,
     category: 'Biryani',
@@ -121,6 +131,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'br-6',
+    hotelId: 'hotel1@minto.com',
     name: 'Mutton Biryani Half',
     price: 179,
     category: 'Biryani',
@@ -133,6 +144,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍗 STARTERS (4 items)
   {
     id: 'st-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Crispy',
     price: 220,
     category: 'Starters',
@@ -145,6 +157,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'st-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken 65',
     price: 200,
     category: 'Starters',
@@ -157,6 +170,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'st-3',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Kabab (12 Pcs)',
     price: 180,
     category: 'Starters',
@@ -169,6 +183,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'st-8',
+    hotelId: 'hotel1@minto.com',
     name: 'Fish Fry',
     price: 250,
     category: 'Starters',
@@ -181,6 +196,7 @@ export const MENU_ITEMS: Product[] = [
   // 🥦 VEG / GRAVY (4 items)
   {
     id: 'vg-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Palak Paneer',
     price: 200,
     category: 'Veg / Gravy',
@@ -193,6 +209,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'vg-8',
+    hotelId: 'hotel1@minto.com',
     name: 'Paneer Butter Masala',
     price: 299,
     category: 'Veg / Gravy',
@@ -203,6 +220,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'vg-9',
+    hotelId: 'hotel1@minto.com',
     name: 'Dal Tadka',
     price: 150,
     category: 'Veg / Gravy',
@@ -213,6 +231,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'mt-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Mutton Sukka',
     price: 249,
     category: 'Veg / Gravy',
@@ -227,6 +246,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍞 ROTI (4 items)
   {
     id: 'rt-1',
+    hotelId: 'hotel1@minto.com',
     name: '4 Chapati',
     price: 49,
     category: 'Roti',
@@ -239,6 +259,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'rt-2',
+    hotelId: 'hotel1@minto.com',
     name: '2 Parota',
     price: 39,
     category: 'Roti',
@@ -251,6 +272,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'rt-4',
+    hotelId: 'hotel1@minto.com',
     name: '2 Tandoori Roti',
     price: 49,
     category: 'Roti',
@@ -263,6 +285,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'rt-7',
+    hotelId: 'hotel1@minto.com',
     name: 'Butter Naan',
     price: 60,
     category: 'Roti',
@@ -275,6 +298,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍔 BURGERS & ROLLS (4 items)
   {
     id: 'main-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Burger',
     price: 54,
     originalPrice: 79,
@@ -287,6 +311,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'main-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Roll',
     price: 103,
     category: 'Burgers & Rolls',
@@ -298,6 +323,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'main-3',
+    hotelId: 'hotel1@minto.com',
     name: 'French Fries',
     price: 74,
     category: 'Burgers & Rolls',
@@ -308,6 +334,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'main-6',
+    hotelId: 'hotel1@minto.com',
     name: 'Burger Loaded',
     price: 173,
     category: 'Burgers & Rolls',
@@ -321,6 +348,7 @@ export const MENU_ITEMS: Product[] = [
   // 🍕 PIZZAS & MOMOS (4 items)
   {
     id: 'piz-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Chicken Pizza',
     price: 243,
     category: 'Pizzas & Momos',
@@ -331,6 +359,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'piz-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Cheese Pizza',
     price: 223,
     category: 'Pizzas & Momos',
@@ -341,6 +370,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'momo-1',
+    hotelId: 'hotel1@minto.com',
     name: 'Fried Momos 12 Pc',
     price: 263,
     category: 'Pizzas & Momos',
@@ -351,6 +381,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'momo-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Steamed Momos 12 Pc',
     price: 263,
     category: 'Pizzas & Momos',
@@ -363,6 +394,7 @@ export const MENU_ITEMS: Product[] = [
   // 🥤 DRINKS (4 items)
   {
     id: 'drink-special-2',
+    hotelId: 'hotel1@minto.com',
     name: 'Butterscotch Milkshake',
     price: 99,
     category: 'Drinks',
@@ -374,6 +406,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'drink-special-3',
+    hotelId: 'hotel1@minto.com',
     name: 'Vanilla Milkshake',
     price: 99,
     category: 'Drinks',
@@ -385,6 +418,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'drink-coke',
+    hotelId: 'hotel1@minto.com',
     name: 'Coke 500ml',
     price: 50,
     category: 'Drinks',
@@ -396,6 +430,7 @@ export const MENU_ITEMS: Product[] = [
   },
   {
     id: 'drink-sprite',
+    hotelId: 'hotel1@minto.com',
     name: 'Sprite 500ml',
     price: 50,
     category: 'Drinks',
