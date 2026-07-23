@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, X, Loader2, Search, Crosshair, Sparkles, Clock, AlertTriangle } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
-import { haversineDistance, reverseGeocode, isBTMServiceable, BTM_CENTER, MAX_BTM_RANGE } from '../lib/location';
+import { haversineDistance, reverseGeocode, isBTMServiceable, BTM_CENTER } from '../lib/location';
 import toast from 'react-hot-toast';
 
 export default function LocationPicker() {
-  const { isLocationPickerOpen, closeLocationPicker, setDeliveryLocation, deliveryLocation, restaurantLocation } = useLocationStore();
+  const { isLocationPickerOpen, closeLocationPicker, setDeliveryLocation, deliveryLocation } = useLocationStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -32,7 +32,7 @@ export default function LocationPicker() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 600);
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -96,7 +96,7 @@ export default function LocationPicker() {
       lat: BTM_CENTER.lat, 
       lng: BTM_CENTER.lng, 
       address, 
-      distance: 0, 
+      distance: 0.5, 
       isDeliverable 
     });
 
@@ -108,13 +108,29 @@ export default function LocationPicker() {
     }
   };
 
+  const useFallbackLocation = () => {
+    const fallbackAddress = "16th Main Road, 7th Cross, BTM 2nd Stage, BTM Layout, Bengaluru";
+    setDeliveryLocation({ 
+      lat: BTM_CENTER.lat, 
+      lng: BTM_CENTER.lng, 
+      address: fallbackAddress, 
+      distance: 0.5, 
+      isDeliverable: true 
+    });
+    setIsGeolocating(false);
+    toast.success('Location set to BTM Layout 📍');
+    closeLocationPicker();
+  };
+
   const handleGeolocate = () => {
     setShowDisclosure(false);
+    setIsGeolocating(true);
+
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your device');
+      useFallbackLocation();
       return;
     }
-    setIsGeolocating(true);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -132,23 +148,23 @@ export default function LocationPicker() {
           });
 
           if (isDeliverable) {
-            toast.success('BTM Location detected!');
+            toast.success('Exact location detected! 📍');
             closeLocationPicker();
           } else {
             toast.error('Just wait... We are coming to your area soon!');
+            closeLocationPicker();
           }
         } catch (error) {
-          toast.error('Failed to get address. Try searching BTM Layout.');
+          useFallbackLocation();
         } finally {
           setIsGeolocating(false);
         }
       },
       (err) => {
-        setIsGeolocating(false);
-        if (err.code === 1) toast.error('Please allow location access.');
-        else toast.error('Failed to detect location.');
+        console.warn('GPS position error:', err);
+        useFallbackLocation();
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   };
 
@@ -173,13 +189,22 @@ export default function LocationPicker() {
             </div>
             <h2 className="text-lg font-extrabold text-gray-900 leading-tight">Location Access Needed</h2>
             <p className="text-xs text-gray-600 font-medium leading-relaxed">
-              Mintoo uses your location to auto-detect your street, road & main in BTM Layout and calculate delivery range.
+              Mintoo uses your location to auto-detect your exact street, road & main in BTM Layout for accurate delivery.
             </p>
             <div className="pt-2 flex gap-2">
-              <button onClick={() => setShowDisclosure(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-200">
-                Not Now
+              <button 
+                onClick={() => {
+                  setShowDisclosure(false);
+                  useFallbackLocation();
+                }} 
+                className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-200 cursor-pointer"
+              >
+                Use BTM Default
               </button>
-              <button onClick={handleGeolocate} className="flex-1 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 shadow-md">
+              <button 
+                onClick={handleGeolocate} 
+                className="flex-1 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 shadow-md cursor-pointer"
+              >
                 I Agree
               </button>
             </div>
@@ -211,7 +236,7 @@ export default function LocationPicker() {
                 <p className="text-xs text-emerald-600 font-bold mt-0.5">Currently serving BTM Layout only</p>
               </div>
               {deliveryLocation && (
-                <button onClick={closeLocationPicker} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                <button onClick={closeLocationPicker} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               )}
@@ -230,7 +255,7 @@ export default function LocationPicker() {
 
             {/* Auto Detect Button */}
             <button
-              onClick={() => setShowDisclosure(true)}
+              onClick={handleGeolocate}
               disabled={isGeolocating}
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-3.5 rounded-2xl hover:brightness-105 transition-all disabled:opacity-50 shadow-md text-xs sm:text-sm uppercase tracking-wider cursor-pointer"
             >

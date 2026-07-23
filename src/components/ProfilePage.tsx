@@ -14,11 +14,14 @@ import {
   ShieldCheck,
   Crown,
   Smartphone,
-  Mail
+  Mail,
+  Crosshair,
+  Loader2
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
+import { reverseGeocode } from '../lib/location';
 
 export default function ProfilePage() {
   useSEO("My Profile", "Manage your profile and saved addresses at Mintoo.");
@@ -33,6 +36,41 @@ export default function ProfilePage() {
   const [addressText, setAddressText] = useState('');
   const [addressLat, setAddressLat] = useState('12.9165'); // Default BTM Layout
   const [addressLng, setAddressLng] = useState('77.6101');
+  const [isDetectingProfileLocation, setIsDetectingProfileLocation] = useState(false);
+
+  const handleAutoDetectProfileAddress = () => {
+    if (!navigator.geolocation) {
+      setAddressText('16th Main Road, BTM 2nd Stage, BTM Layout, Bengaluru');
+      toast.success('Pre-filled address for BTM Layout 📍');
+      return;
+    }
+
+    setIsDetectingProfileLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const fullAddress = await reverseGeocode(latitude, longitude);
+          setAddressText(fullAddress);
+          setAddressLat(latitude.toString());
+          setAddressLng(longitude.toString());
+          toast.success('Exact GPS location detected & pre-filled! 📍');
+        } catch (err) {
+          setAddressText('16th Main Road, BTM 2nd Stage, BTM Layout, Bengaluru');
+          toast.success('Location set to BTM Layout 📍');
+        } finally {
+          setIsDetectingProfileLocation(false);
+        }
+      },
+      (err) => {
+        console.warn('Profile geolocation fallback:', err);
+        setAddressText('16th Main Road, BTM 2nd Stage, BTM Layout, Bengaluru');
+        setIsDetectingProfileLocation(false);
+        toast.success('Location set to BTM Layout 📍');
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  };
 
   const localPhone = localStorage.getItem('moms_magic_user_phone');
   const isGuest = localStorage.getItem('moms_magic_guest');
@@ -338,14 +376,25 @@ export default function ProfilePage() {
                         className="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs font-bold"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-700 block">Full Address Details</label>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-gray-700 block">Full Address Details</label>
+                        <button
+                          type="button"
+                          onClick={handleAutoDetectProfileAddress}
+                          disabled={isDetectingProfileLocation}
+                          className="text-[10px] font-extrabold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 bg-emerald-100/80 px-2.5 py-1 rounded-lg border border-emerald-300 cursor-pointer shadow-xs"
+                        >
+                          {isDetectingProfileLocation ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+                          <span>{isDetectingProfileLocation ? 'Detecting...' : 'Auto-Detect GPS'}</span>
+                        </button>
+                      </div>
                       <textarea 
-                        placeholder="Enter building name, street, landmark, area" 
+                        placeholder="Enter building name, street, main, road & landmark or click Auto-Detect GPS" 
                         value={addressText} 
                         onChange={(e) => setAddressText(e.target.value)} 
                         required 
-                        className="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs font-medium h-20"
+                        className="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-xs font-medium h-20 focus:border-emerald-500 outline-none"
                       />
                     </div>
                     <div className="flex gap-2">
