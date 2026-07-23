@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCartStore } from '../store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, Trash2, ShoppingBag, Truck, ChevronLeft, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Truck, ChevronLeft, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLocationStore } from '../store/locationStore';
 import { calculateDeliveryCharge } from '../types';
@@ -28,19 +28,19 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6 text-center space-y-6 pt-20">
+        <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/5">
           <ShoppingBag className="w-10 h-10" />
         </div>
         <div className="space-y-2 max-w-sm">
-          <h2 className="text-2xl font-bold text-gray-900">Your cart is empty</h2>
-          <p className="text-sm font-medium text-gray-500">
-            Looks like you haven't added anything to your cart yet. Explore our menu to start ordering!
+          <h2 className="text-2xl font-bold text-white">Your cart is empty</h2>
+          <p className="text-sm font-medium text-gray-400">
+            Looks like you haven't added anything to your cart yet. Explore our delicious menu to start ordering!
           </p>
         </div>
         <button 
           onClick={() => navigate('/home')}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-md hover:brightness-105 transition-all flex items-center gap-2 cursor-pointer"
+          className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer"
         >
           <span>Browse Menu</span>
           <ArrowRight className="w-4 h-4" />
@@ -50,19 +50,22 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pt-20 pb-32">
+    <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-36">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-gray-800/60 pb-4">
           <button 
             onClick={() => navigate('/home')}
-            className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" /> Back to Menu
           </button>
           <div className="text-right">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Your Cart</h1>
-            <p className="text-xs text-gray-500 font-medium">{items.length} Item{items.length > 1 ? 's' : ''}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 justify-end">
+              <span>Your Cart</span>
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+            </h1>
+            <p className="text-xs text-gray-400 font-medium">{items.length} Item{items.length > 1 ? 's' : ''}</p>
           </div>
         </div>
 
@@ -78,13 +81,13 @@ export default function CartPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white border border-gray-200/80 rounded-2xl p-3.5 sm:p-4 shadow-sm flex items-center gap-3.5 sm:gap-4 hover:border-gray-300 transition-all"
+                  className="bg-[#141414] border border-gray-800/80 rounded-2xl p-3.5 sm:p-4 shadow-xl flex items-center gap-3.5 sm:gap-4 hover:border-gray-700/80 transition-all"
                 >
                   {item.image && (
                     <img 
                       src={item.image} 
                       alt={item.name} 
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0" 
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-800 shrink-0" 
                       referrerPolicy="no-referrer" 
                     />
                   )}
@@ -92,16 +95,16 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">
                           {item.category}
                         </span>
-                        <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug truncate">
+                        <h3 className="text-sm sm:text-base font-bold text-white leading-snug truncate">
                           {item.name}
                         </h3>
                       </div>
                       <button 
                         onClick={() => removeItem(item.id!)}
-                        className="text-gray-400 hover:text-red-500 p-1 transition-colors shrink-0"
+                        className="text-gray-500 hover:text-red-400 p-1 transition-colors shrink-0"
                         title="Remove Item"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -109,30 +112,30 @@ export default function CartPage() {
                     </div>
 
                     {item.items && item.items.length > 0 && (
-                      <p className="text-xs text-gray-500 font-medium truncate">
+                      <p className="text-xs text-gray-400 font-medium truncate">
                         {item.items.join(', ')}
                       </p>
                     )}
 
                     <div className="flex items-center justify-between pt-1">
-                      <p className="text-sm sm:text-base font-bold text-emerald-600">
+                      <p className="text-sm sm:text-base font-bold text-emerald-400">
                         ₹{item.price * item.quantity}
                       </p>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200/60">
+                      <div className="flex items-center gap-2 bg-[#222] p-1 rounded-lg border border-gray-700/60">
                         <button 
                           onClick={() => updateQuantity(item.id!, item.quantity - 1)}
-                          className="w-7 h-7 rounded-md bg-white text-gray-700 hover:bg-gray-200 flex items-center justify-center transition-colors shadow-xs"
+                          className="w-7 h-7 rounded-md bg-[#333] text-gray-200 hover:bg-[#444] flex items-center justify-center transition-colors shadow-xs"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-xs font-bold text-gray-900 min-w-[20px] text-center">
+                        <span className="text-xs font-bold text-white min-w-[20px] text-center">
                           {item.quantity}
                         </span>
                         <button 
                           onClick={() => updateQuantity(item.id!, item.quantity + 1)}
-                          className="w-7 h-7 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center transition-colors shadow-xs"
+                          className="w-7 h-7 rounded-md bg-emerald-500 text-white hover:bg-emerald-600 flex items-center justify-center transition-colors shadow-xs"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -146,43 +149,43 @@ export default function CartPage() {
 
           {/* Bill Summary Column */}
           <div className="lg:col-span-5">
-            <div className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-sm space-y-4 sticky top-24">
-              <h3 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">
+            <div className="bg-[#141414] border border-gray-800/80 rounded-2xl p-5 shadow-2xl space-y-4 sticky top-24">
+              <h3 className="text-base font-bold text-white border-b border-gray-800/80 pb-3">
                 Bill Summary
               </h3>
 
-              <div className="space-y-2.5 text-xs text-gray-600 font-medium">
+              <div className="space-y-2.5 text-xs text-gray-300 font-medium">
                 <div className="flex justify-between items-center">
-                  <span>Item Subtotal</span>
-                  <span className="font-semibold text-gray-900">₹{total}</span>
+                  <span className="text-gray-400">Item Subtotal</span>
+                  <span className="font-semibold text-white">₹{total}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                  <div className="flex items-center gap-1.5 text-gray-400">
+                    <Truck className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Delivery Fee</span>
                   </div>
-                  <span className="font-semibold text-gray-900">₹{deliveryCharge}</span>
+                  <span className="font-semibold text-white">₹{deliveryCharge}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Hotel Charges</span>
-                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                  <span className="text-gray-400">Hotel Charges</span>
+                  <span className="text-emerald-400 font-extrabold text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">FREE</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Platform Fee</span>
-                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                  <span className="text-gray-400">Platform Fee</span>
+                  <span className="text-emerald-400 font-extrabold text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">FREE</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Handling Charges</span>
-                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                  <span className="text-gray-400">Handling Charges</span>
+                  <span className="text-emerald-400 font-extrabold text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">FREE</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Payment Gateway Charges</span>
-                  <span className="text-emerald-600 font-extrabold text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">FREE</span>
+                  <span className="text-gray-400">Payment Gateway Charges</span>
+                  <span className="text-emerald-400 font-extrabold text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">FREE</span>
                 </div>
 
-                <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-sm font-bold text-gray-900">
+                <div className="border-t border-gray-800/80 pt-3 flex justify-between items-center text-sm font-bold text-white">
                   <span>To Pay</span>
-                  <span className="text-lg font-bold text-emerald-600">₹{grandTotal}</span>
+                  <span className="text-lg font-bold text-emerald-400">₹{grandTotal}</span>
                 </div>
               </div>
 
@@ -197,16 +200,16 @@ export default function CartPage() {
                 }}
                 className={`w-full h-12 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   isOrderingPaused 
-                    ? 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-md hover:shadow-lg'
+                    ? 'bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/20'
                 }`}
               >
                 <span>{isOrderingPaused ? 'Ordering Paused' : 'Proceed to Checkout'}</span>
                 {!isOrderingPaused && <ArrowRight className="w-4 h-4" />}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-gray-400 text-[10px] font-semibold pt-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="flex items-center justify-center gap-1.5 text-gray-500 text-[10px] font-semibold pt-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Safe & Secure Checkout</span>
               </div>
             </div>
