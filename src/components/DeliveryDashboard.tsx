@@ -1031,16 +1031,26 @@ export default function DeliveryDashboard() {
                             </button>
                           )}
 
-                          {/* Navigation Link Launcher */}
+                          {/* Navigation Link Launchers — Hotel Pickup + Customer Delivery */}
                           {order.riderStatus !== 'delivered' && (
-                            <a
-                              href={mapLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gray-50 border border-gray-200 hover:border-blue-400 text-blue-500 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                            >
-                              <Compass className="w-4 h-4" /> Navigate
-                            </a>
+                            <div className="flex flex-col gap-2 w-full">
+                              <a
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${hotelLat},${hotelLng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full bg-amber-50 border border-amber-300 hover:border-amber-500 text-amber-700 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                              >
+                                <Compass className="w-4 h-4" /> 🍽️ Navigate to Hotel (Pickup)
+                              </a>
+                              <a
+                                href={`https://www.google.com/maps/dir/?api=1&origin=${hotelLat},${hotelLng}&destination=${custLat},${custLng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full bg-blue-50 border border-blue-300 hover:border-blue-500 text-blue-700 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                              >
+                                <Compass className="w-4 h-4" /> 🏠 Navigate to Customer (Delivery)
+                              </a>
+                            </div>
                           )}
 
                            <div className="flex gap-2">
@@ -1050,12 +1060,6 @@ export default function DeliveryDashboard() {
                             >
                               <PhoneCall className="w-4 h-4 text-orange-500" />
                             </a>
-                            <button
-                              onClick={() => navigate(`/chat/${order.id}`)}
-                              className="bg-gray-50 border border-gray-200 hover:border-orange-500 text-gray-900 px-4 py-4 rounded-xl flex items-center justify-center transition-all cursor-pointer"
-                            >
-                              <MessageSquare className="w-4 h-4 text-orange-500" />
-                            </button>
                           </div>
                         </div>
                       </div>
