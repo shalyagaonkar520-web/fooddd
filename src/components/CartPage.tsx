@@ -48,17 +48,21 @@ export default function CartPage() {
           />
         </motion.div>
 
-        <div className="relative z-10 space-y-4">
-          <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter uppercase text-gray-900 leading-none">Your Plate is <br/><span className="text-luxury-gold">Empty</span></h2>
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-[4px] max-w-xs mx-auto">Explore our menu to find your favorites.</p>
+        <div className="relative z-10 space-y-4 max-w-lg">
+          <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter uppercase text-gray-900 leading-tight">
+            Oops! You forgot to <br/><span className="text-orange-500">add foods to your cart</span>
+          </h2>
+          <p className="text-gray-500 text-xs font-bold uppercase tracking-[3px] max-w-sm mx-auto">
+            Your plate is empty! Explore our delicious menu to find your favorites.
+          </p>
         </div>
 
         <motion.button 
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/home')}
-          className="relative z-10 btn-luxury-gold px-14"
+          className="relative z-10 btn-luxury-gold px-14 cursor-pointer"
         >
-          ORDER FOOD
+          EXPLORE MENU & ORDER FOOD
         </motion.button>
       </div>
     );
@@ -227,7 +231,7 @@ export default function CartPage() {
                       : 'btn-luxury-gold'
                   }`}
                 >
-                  {isOrderingPaused ? 'ORDERING PAUSED' : 'ORDER NOW'}
+                  {isOrderingPaused ? 'ORDERING PAUSED' : 'PROCEED TO CHECKOUT'}
                   {!isOrderingPaused && <Zap className="w-7 h-7 fill-matte-black" />}
                 </motion.button>
                 <div className="flex items-center justify-center gap-3 text-gray-500 font-black uppercase tracking-[4px] text-[9px] opacity-30">

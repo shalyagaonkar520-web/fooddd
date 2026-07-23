@@ -228,7 +228,7 @@ export default function App() {
                     <Route path="/home" element={<HomePage />} />
                     <Route path="/food/:foodId" element={<FoodInfoPage />} />
                     <Route path="/category/:categoryId" element={<CategoryPage />} />
-                    <Route path="/cart" element={<Navigate to="/checkout" replace />} />
+                    <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/track" element={<TrackingPage />} />

@@ -72,15 +72,15 @@ export default function BottomCartBar() {
               <motion.button 
                 whileHover={{ x: 3 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/checkout')}
+                onClick={() => navigate('/cart')}
                 className="h-10 md:h-14 px-3 md:px-6 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-[1px] md:tracking-[2px] text-white flex items-center justify-center gap-1 md:gap-2 relative overflow-hidden group/btn shadow-[0_0_15px_rgba(57,181,74,0.3)] shrink-0 whitespace-nowrap cursor-pointer"
                 style={{
                   background: 'linear-gradient(135deg, #39B54A, #2e9d3d)'
                 }}
               >
                 <div className="absolute inset-0 bg-[#248131] -translate-x-full group-hover/btn:translate-x-0 transition-transform duration-500" />
-                <span className="relative z-10 hidden sm:inline">Order Now</span>
-                <span className="relative z-10 sm:hidden">Order</span>
+                <span className="relative z-10 hidden sm:inline">View Cart</span>
+                <span className="relative z-10 sm:hidden">Cart</span>
                 <ArrowRight className="w-4 h-4 md:w-5 md:h-5 relative z-10 group-hover/btn:translate-x-1 transition-transform" />
               </motion.button>
  
