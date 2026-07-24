@@ -199,12 +199,23 @@ export default function OrdersPage() {
 
   if (!user && !localPhone) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center space-y-6">
-        <PackageSearch className="w-20 h-20 text-orange-500/50" />
-        <h2 className="text-xl font-black text-gray-900 italic uppercase text-center">No Order History Found</h2>
-        <p className="text-gray-500 text-xs font-bold text-center">Place your first order to start tracking!</p>
-        <button onClick={() => navigate('/home')} className="px-8 py-3 bg-orange-500 text-black font-black uppercase tracking-widest rounded-2xl shadow-sm">
-          Browse Menu
+      <div className="min-h-screen bg-gray-950 text-white p-6 flex flex-col items-center justify-center space-y-6 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/5">
+          <PackageSearch className="w-10 h-10 animate-bounce text-emerald-400" />
+        </div>
+        <div className="space-y-2 max-w-sm">
+          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tight text-white">
+            OOPS BOSS FORGET TO ORDER
+          </h2>
+          <p className="text-gray-400 text-xs sm:text-sm font-semibold">
+            No order history found for this device yet. Place your first order to start tracking live delivery!
+          </p>
+        </div>
+        <button 
+          onClick={() => navigate('/home')} 
+          className="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+        >
+          Explore Yummy Menu 🍔
         </button>
       </div>
     );
@@ -228,11 +239,19 @@ export default function OrdersPage() {
         </div>
 
         {orders.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-[40px] border border-gray-200">
-            <PackageSearch className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-500 text-sm font-bold uppercase tracking-widest">No orders found yet</p>
-            <button onClick={() => navigate('/home')} className="mt-6 px-6 py-3 bg-gray-100 text-gray-900 font-black uppercase text-[10px] rounded-xl hover:bg-orange-500 hover:text-black transition-colors">
-              Browse Menu
+          <div className="text-center py-16 bg-gray-50 rounded-[40px] border border-gray-200 p-8 space-y-4">
+            <PackageSearch className="w-16 h-16 text-emerald-500 mx-auto animate-pulse" />
+            <h3 className="text-2xl font-black italic uppercase tracking-tight text-gray-900">
+              OOPS BOSS FORGET TO ORDER
+            </h3>
+            <p className="text-gray-500 text-xs sm:text-sm font-bold max-w-sm mx-auto">
+              You haven't placed any food orders yet! Treat yourself to something delicious from Mintoo.
+            </p>
+            <button 
+              onClick={() => navigate('/home')} 
+              className="mt-4 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold uppercase text-xs rounded-2xl shadow-md transition-all cursor-pointer"
+            >
+              Order Delicious Food Now 🍕
             </button>
           </div>
         ) : (

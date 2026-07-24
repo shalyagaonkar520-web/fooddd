@@ -27,6 +27,7 @@ import CityGateway from './components/CityGateway';
 import LocationPicker from './components/LocationPicker';
 import UndoManager from './components/UndoManager';
 import CapacitorBackButtonHandler from './components/CapacitorBackButtonHandler';
+import OfflineGate from './components/OfflineGate';
 
 
 
@@ -196,66 +197,73 @@ export default function App() {
           }
         }}
       />
-      <LocationPicker />
-      <UndoManager />
-      <CapacitorBackButtonHandler />
+      <OfflineGate>
+        <LocationPicker />
+        <UndoManager />
+        <CapacitorBackButtonHandler />
 
-      
-      <MaintenanceGate>
-          <div className="min-h-screen bg-gradient-to-b from-white to-[#d1f2e5] text-gray-900 font-sans relative flex flex-col selection:bg-green-500/30">
-            <GoldenParticles />
+        <MaintenanceGate>
+            <div className="min-h-screen bg-gradient-to-b from-white to-[#d1f2e5] text-gray-900 font-sans relative flex flex-col selection:bg-green-500/30">
+              <GoldenParticles />
 
-            <main className="flex-1 relative z-10">
-              <PageTransition>
-                <Suspense fallback={
-                  <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center relative overflow-hidden">
-                    <style dangerouslySetInnerHTML={{__html: `
-                      @import url('https://api.fontshare.com/v2/css?f[]=clash-display@700&display=swap');
-                    `}} />
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] max-w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.18),transparent_60%)] pointer-events-none" />
-                    <div className="w-auto px-6 h-16 rounded-3xl mx-auto flex items-center justify-center shadow-[0_10px_30px_rgba(212,175,55,0.2)] border border-[#D4AF37]/30 bg-gradient-to-br from-[#D4AF37]/20 to-transparent mb-8 relative z-10">
-                      <span className="text-[#FFD86B] text-3xl font-black italic" style={{ fontFamily: "'Clash Display', sans-serif" }}>Mintoo</span>
+              <main className="flex-1 relative z-10">
+                <PageTransition>
+                  <Suspense fallback={
+                    <div className="min-h-screen bg-[#080808] text-white flex flex-col items-center justify-center relative overflow-hidden">
+                      <style dangerouslySetInnerHTML={{__html: `
+                        @import url('https://api.fontshare.com/v2/css?f[]=clash-display@700&display=swap');
+                      `}} />
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] max-w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.18),transparent_60%)] pointer-events-none" />
+                      <div className="w-auto px-6 h-16 rounded-3xl mx-auto flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.2)] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/20 to-transparent mb-6 relative z-10">
+                        <span className="text-emerald-400 text-3xl font-black italic" style={{ fontFamily: "'Clash Display', sans-serif" }}>Mintoo</span>
+                      </div>
+                      
+                      <div className="text-center space-y-2 mb-6 relative z-10">
+                        <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest animate-pulse">Mintoo Delivery Engine</p>
+                        <p className="text-gray-400 text-xs font-medium">Fetching fresh recipes & nearby kitchens...</p>
+                      </div>
+
+                      <div className="flex gap-2 relative z-10">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-[bounce_1s_infinite_0ms]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-[bounce_1s_infinite_150ms]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-[bounce_1s_infinite_300ms]" />
+                      </div>
                     </div>
-                    <div className="flex gap-2 relative z-10">
-                      <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-[bounce_1s_infinite_0ms]" />
-                      <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-[bounce_1s_infinite_150ms]" />
-                      <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-[bounce_1s_infinite_300ms]" />
-                    </div>
-                  </div>
-                }>
-                  <Routes>
-                    <Route path="/" element={<AuthPage />} />
-                    <Route path="/home" element={<HomePage />} />
-                    <Route path="/food/:foodId" element={<FoodInfoPage />} />
-                    <Route path="/category/:categoryId" element={<CategoryPage />} />
-                    <Route path="/cart" element={<CartPage />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/track" element={<TrackingPage />} />
-                    <Route path="/track/:orderId" element={<TrackingPage />} />
-                    <Route path="/delivery" element={<DeliveryDashboard />} />
-                    <Route path="/rider" element={<DeliveryDashboard />} />
-                    <Route path="/bulk" element={<BulkOrderPage />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                    <Route path="/hotel" element={<HotelPanel />} />
-                    <Route path="/staff" element={<StaffLogin />} />
-                    <Route path="/hotel-login" element={<HotelLogin />} />
-                    <Route path="/rider-login" element={<RiderLogin />} />
-                    <Route path="/orders" element={<OrdersPage />} />
-                    <Route path="/chat/:orderId" element={<ChatPage />} />
-                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                    <Route path="/terms" element={<TermsPage />} />
-                    <Route path="/support" element={<SupportPage />} />
-                    <Route path="/delete-account" element={<DeleteAccountPage />} />
-                  </Routes>
-                </Suspense>
-              </PageTransition>
-            </main>
+                  }>
+                    <Routes>
+                      <Route path="/" element={<AuthPage />} />
+                      <Route path="/home" element={<HomePage />} />
+                      <Route path="/food/:foodId" element={<FoodInfoPage />} />
+                      <Route path="/category/:categoryId" element={<CategoryPage />} />
+                      <Route path="/cart" element={<CartPage />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/track" element={<TrackingPage />} />
+                      <Route path="/track/:orderId" element={<TrackingPage />} />
+                      <Route path="/delivery" element={<DeliveryDashboard />} />
+                      <Route path="/rider" element={<DeliveryDashboard />} />
+                      <Route path="/bulk" element={<BulkOrderPage />} />
+                      <Route path="/admin" element={<AdminPage />} />
+                      <Route path="/hotel" element={<HotelPanel />} />
+                      <Route path="/staff" element={<StaffLogin />} />
+                      <Route path="/hotel-login" element={<HotelLogin />} />
+                      <Route path="/rider-login" element={<RiderLogin />} />
+                      <Route path="/orders" element={<OrdersPage />} />
+                      <Route path="/chat/:orderId" element={<ChatPage />} />
+                      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                      <Route path="/terms" element={<TermsPage />} />
+                      <Route path="/support" element={<SupportPage />} />
+                      <Route path="/delete-account" element={<DeleteAccountPage />} />
+                    </Routes>
+                  </Suspense>
+                </PageTransition>
+              </main>
 
-            <BottomCartBar />
-            <BottomNav />
-          </div>
-      </MaintenanceGate>
+              <BottomCartBar />
+              <BottomNav />
+            </div>
+        </MaintenanceGate>
+      </OfflineGate>
     </Router>
   );
 }

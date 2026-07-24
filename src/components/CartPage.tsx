@@ -32,20 +32,31 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6 text-center space-y-6 pt-20">
-        <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/5">
-          <ShoppingBag className="w-10 h-10" />
-        </div>
-        <div className="space-y-2 max-w-sm">
-          <h2 className="text-2xl font-bold text-white">Your cart is empty</h2>
-          <p className="text-sm font-medium text-gray-400">
-            Looks like you haven't added anything to your cart yet. Explore our delicious menu to start ordering!
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-2xl shadow-emerald-500/10 relative"
+        >
+          <ShoppingBag className="w-12 h-12 text-emerald-400 animate-bounce" />
+          <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+            Empty
+          </div>
+        </motion.div>
+
+        <div className="space-y-3 max-w-sm">
+          <h2 className="text-2xl sm:text-3xl font-black text-white uppercase italic tracking-tight">
+            OOPS BOSS FORGET TO ORDER
+          </h2>
+          <p className="text-xs sm:text-sm font-semibold text-gray-400 leading-relaxed">
+            Your cart is currently empty! Add some delicious biryanis, pizzas, burgers & refreshing drinks to get started.
           </p>
         </div>
+
         <button 
           onClick={() => navigate('/home')}
-          className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer"
+          className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-xl shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
         >
-          <span>Browse Menu</span>
+          <span>Explore Yummy Menu 🍕</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
