@@ -45,6 +45,9 @@ export default defineConfig(({mode}) => {
           ]
         },
         workbox: {
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
           globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg,ico,json}'],
           // Import the Firebase Cloud Messaging service worker script
           // to combine FCM background push alerts with PWA offline caching!
